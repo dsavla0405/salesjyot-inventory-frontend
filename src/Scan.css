@@ -1,0 +1,32 @@
+.dispatch-scan-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.scanners {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.scanner {
+    width: 45%; /* Adjust width as needed */
+}
+
+.orders-container {
+    float: right;
+    margin-right: 5%;
+    margin-top: 0;
+    background-color: aqua;
+    width: 30%; /* Adjust width as needed */
+    padding: 10px;
+}
+
+.order-item {
+    margin-bottom: 5px;
+}
+
+.title {
+    margin-bottom: 20px;
+}

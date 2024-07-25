@@ -1,0 +1,115 @@
+  .page-container {
+    margin: 20px; /* Add margin to page container */
+  }
+  
+  .order-card {
+    background: linear-gradient(to right, #f0f0f0, #dcdcdc); /* Modified gradient */
+    width: 30%;
+    margin-left: 1%;
+    margin-right: 1%;
+    margin-top: 2%; 
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    box-sizing: border-box;
+    transition: transform 0.1s; /* Add transition for zoom effect */
+}
+
+
+  
+  .order-card:hover {
+    transform: scale(1.02); /* Zoom in on hover */
+  }
+  
+  .selected {
+    border: 2px solid #00FF00; /* Add border to indicate selection */
+  }
+  
+  .order-cards-container {
+    display: flex; /* Enable flexbox layout for the container */
+    flex-wrap: wrap; /* Allow cards to wrap onto multiple rows */
+    justify-content: space-between;
+  }
+  
+  .button-container {
+    margin-top: 2%;
+    margin-left: 5%;
+    margin-right: 5%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .download-button {
+    height: 1%;
+    background-color: #007bff; /* Button background color */
+    color: #fff; /* Button text color */
+    text-decoration: none;
+    padding: 10px 20px; /* Adjust padding as needed */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Smooth transition */
+    margin-left: 1%;
+  }
+
+  .download-button:hover {
+    background-color: #0056b3; /* Change color on hover */
+  }
+
+  .selected-orders{
+    width: 100%;
+    margin-right: 10%;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .selected-order {
+    padding: 10px;
+  }
+  
+  .selected-order.even {
+    background-color: #f0f0f0; /* Example color for even-indexed orders */
+  }
+  
+  .selected-order.odd {
+    background-color: #e0e0e0; /* Example color for odd-indexed orders */
+  }
+  
+
+  .reset-buttons {
+    display: flex;
+    margin-top: 2%;
+    justify-content: center;
+  }
+
+  .reset-buttons button{
+    margin-right: 1%;
+  }
+  
+  
+  .even-row {
+    background-color: #FFA177FF; /* Light grey background for even rows */
+  }
+  
+  .odd-row {
+    background-color: #F5C7B8FF; /* Lighter grey background for odd rows */
+  }
+
+  .generateButtonDiv {
+    margin-top: 2%;
+    margin-left: 3%;
+  }
+
+  .generateButton {
+    background-color: #007bff;
+    color: aliceblue;
+    font-weight: 500;
+    width: 40%;
+    height: 100%;
+    border-radius: 7px;
+  }
+  
+  /* Add more CSS rules as needed */
+  
+
+  

@@ -1,0 +1,85 @@
+.home {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  display: flex;
+  flex-direction: column; /* Adjust to column layout for smaller screens */
+  justify-content: center;
+  align-items: center;
+  width: 80%;
+  max-width: 1200px; /* Limit maximum width for larger screens */
+  margin: 0 auto; /* Center align container */
+  padding: 0 20px; /* Add padding to the sides */
+}
+
+.content {
+  flex: 1;
+  text-align: center; /* Center align text content */
+  margin-bottom: 20px; /* Add margin for spacing */
+}
+
+.animated-text {
+  background: linear-gradient(315deg, #ffffff 0%, #274060 74%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 2rem;
+  animation: gradientAnimation 5s infinite, typewriter 3s steps(30, end) 1s 1 normal both, blinkTextCursor 500ms steps(30, end) infinite;
+}
+
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.background-image {
+  flex: 1;
+  text-align: center; /* Center align image for smaller screens */
+  margin-top: 20px; /* Add margin for spacing */
+}
+
+.background-image img {
+  max-width: 100%; /* Ensure image doesn't exceed container width */
+  height: auto; /* Maintain aspect ratio */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8); /* Shadow for 3D effect */
+  transition: transform 0.5s ease-in-out; /* Smooth transition */
+}
+
+@media (min-width: 768px) {
+  .container {
+    flex-direction: row; /* Change to row layout for larger screens */
+    justify-content: space-between; /* Space items evenly along the row */
+    align-items: center;
+  }
+
+  .content {
+    flex: 1; /* Take up remaining space */
+    text-align: left; /* Align text content to the left */
+    margin-right: 20px; /* Add margin to separate text and image */
+  }
+
+  .background-image {
+    flex: 1; /* Take up remaining space */
+    text-align: right; /* Align image content to the right */
+  }
+
+  .background-image img {
+    height: 500px;
+
+  }
+}

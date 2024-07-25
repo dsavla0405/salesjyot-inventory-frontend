@@ -1,0 +1,14 @@
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.tech {
+    text-decoration:none;
+}
+
+.tech img{
+    height: 40px;
+    border-radius: 10px;
+}
