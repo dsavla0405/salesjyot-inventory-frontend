@@ -58,7 +58,7 @@ function Supplier() {
     </Form.Group>
   );
   useEffect(() => {
-    axios.get('http://localhost:8080/supplier') 
+    axios.get('https://salesjyot-inventory-backend-production.up.railway.app/supplier') 
       .then(response => setApiData(response.data))
       .catch(error => console.error(error));
   }, []);
@@ -161,7 +161,7 @@ const handleSubmit = (event) => {
     };
 
     axios
-      .post('http://localhost:8080/supplier', formData)
+      .post('https://salesjyot-inventory-backend-production.up.railway.app/supplier', formData)
       .then((response) => {
         console.log('POST request successful:', response);
         setValidated(false);
@@ -193,7 +193,7 @@ const handleRowSubmit = () => {
     };
     console.log('form data: ', formData)
     console.log("id: ", selectedItem.supplierId)
-    axios.put(`http://localhost:8080/supplier/${selectedItem.supplierId}`, formData)
+    axios.put(`https://salesjyot-inventory-backend-production.up.railway.app/supplier/${selectedItem.supplierId}`, formData)
       .then(response => {
         
         console.log('PUT request successful:', response);
@@ -224,7 +224,7 @@ const handleRowClick = (supplier) => {
 };
 
 const postData = (data) => {
-  axios.post('http://localhost:8080/supplier', data)
+  axios.post('https://salesjyot-inventory-backend-production.up.railway.app/supplier', data)
       .then(response => {
           console.log('Data posted successfully:', response);
           setApiData(prevData => [...prevData, response.data]);
@@ -236,7 +236,7 @@ const postData = (data) => {
 
 const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
-  axios.delete(`http://localhost:8080/supplier/${id}`)
+  axios.delete(`https://salesjyot-inventory-backend-production.up.railway.app/supplier/${id}`)
     .then(response => {
       console.log('Row deleted successfully.');
       toast.success('Supplier deleted successfully', {
