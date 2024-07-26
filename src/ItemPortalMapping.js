@@ -547,6 +547,7 @@ const handleSupplierChange = (event, name) => {
           <h4>List View of ItemPortalMapping</h4>
         </AccordionSummary>
         <AccordionDetails>
+        <div style={{ overflowX: 'auto' }}> 
         <Table striped bordered hover>
             <thead>
               <tr>
@@ -622,6 +623,7 @@ const handleSupplierChange = (event, name) => {
               ))}
             </tbody>
           </Table>
+          </div>
           <div style={{display: 'flex', justifyContent: 'space-between'}}>
           <Button
               variant="contained"

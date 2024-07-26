@@ -515,7 +515,8 @@ const handleDropdownChange = (event, orderNo) => {
         </AccordionSummary>
         <AccordionDetails>
         <ToastContainer position="top-right" />
-       
+        <div style={{ overflowX: 'auto' }}> 
+
         <Table striped bordered hover className='custom-table'>
   <thead>
     <tr>
@@ -585,7 +586,7 @@ const handleDropdownChange = (event, orderNo) => {
     ))}
   </tbody>
 </Table>
-
+</div>
 
 
 {selectedRows.length > 0 && (
@@ -610,7 +611,8 @@ const handleDropdownChange = (event, orderNo) => {
           <h4>List View of PickList</h4>
         </AccordionSummary>
         <AccordionDetails>
-        
+        <div style={{ overflowX: 'auto' }}> 
+
         <Table striped bordered hover>
   <thead>
     <tr>
@@ -702,7 +704,7 @@ const handleDropdownChange = (event, orderNo) => {
 </tbody>
 
 </Table>
-
+</div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             {rowsPerPageDropdown}
             <Pagination>

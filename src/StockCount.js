@@ -150,6 +150,7 @@ function StockCount() {
             </Row>
             <Row>
                 <Col md={6}>
+                <div style={{ overflowX: 'auto' }}> 
                     <table className="table table-striped">
                         <thead>
                             <tr>
@@ -206,6 +207,7 @@ function StockCount() {
                             ))}
                         </tbody>
                     </table>
+                    </div>
                 </Col>
                 <Col md={6}>
                     <Card style={{ height: '100%' }}>

@@ -459,6 +459,7 @@ const exportToExcel = () => {
           <h4>List View of Stock Inward</h4>
         </AccordionSummary>
         <AccordionDetails>
+        <div style={{ overflowX: 'auto' }}> 
         <Table striped bordered hover>
             <thead>
               <tr>
@@ -530,6 +531,7 @@ const exportToExcel = () => {
               ))}
             </tbody>
           </Table>
+          </div>
           <div style={{display: 'flex', justifyContent: 'space-between'}}>
           <Button
               variant="contained"

@@ -582,7 +582,7 @@ const groupedData = picklistData.reduce((acc, picklist) => {
         </AccordionSummary>
         <AccordionDetails>
         <ToastContainer position="top-right" />
-       
+        <div style={{ overflowX: 'auto' }}> 
         <Table striped bordered hover className='custom-table'>
   <thead>
     <tr>
@@ -628,8 +628,9 @@ const groupedData = picklistData.reduce((acc, picklist) => {
   ))}
 </tbody>
 </Table>
+</div>
 
-
+<div style={{ overflowX: 'auto' }}> 
 {selectedRows.length > 0 && (
   <Table striped bordered hover className='custom-table picklist-table'>
     <thead>
@@ -672,6 +673,7 @@ const groupedData = picklistData.reduce((acc, picklist) => {
   </Table>
   
 )}
+</div>
 </AccordionDetails>
       </Accordion>
 
@@ -687,6 +689,7 @@ const groupedData = picklistData.reduce((acc, picklist) => {
           <h4>List View of PackingList</h4>
         </AccordionSummary>
         <AccordionDetails>
+        <div style={{ overflowX: 'auto' }}> 
 
         <Table striped bordered hover>
         <thead>
@@ -772,7 +775,7 @@ const groupedData = picklistData.reduce((acc, picklist) => {
             ))}
         </tbody>
     </Table>
-
+</div>
 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             {rowsPerPageDropdown}
             <Pagination>

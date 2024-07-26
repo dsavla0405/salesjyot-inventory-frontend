@@ -514,7 +514,7 @@ useEffect(() => {
           <h4>List View of Bom Items</h4>
         </AccordionSummary>
         <AccordionDetails>
-          
+        <div style={{ overflowX: 'auto' }}> 
           <Table striped bordered hover>
             <thead>
               <tr>
@@ -580,6 +580,7 @@ useEffect(() => {
 </tbody>
 
           </Table>
+          </div>
           <div style={{display: 'flex', justifyContent: 'space-between'}}>
           <Button
               variant="contained"
