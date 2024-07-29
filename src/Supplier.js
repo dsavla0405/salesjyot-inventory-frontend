@@ -58,7 +58,7 @@ function Supplier() {
     </Form.Group>
   );
   useEffect(() => {
-    axios.get('https://salesjyot-inventory-backend-production.up.railway.app/supplier') 
+    axios.get('${process.env.REACT_APP_API_URL}/supplier') 
       .then(response => setApiData(response.data))
       .catch(error => console.error(error));
   }, []);
@@ -161,7 +161,7 @@ const handleSubmit = (event) => {
     };
 
     axios
-      .post('https://salesjyot-inventory-backend-production.up.railway.app/supplier', formData)
+      .post('${process.env.REACT_APP_API_URL}/supplier', formData)
       .then((response) => {
         console.log('POST request successful:', response);
         setValidated(false);
@@ -193,7 +193,7 @@ const handleRowSubmit = () => {
     };
     console.log('form data: ', formData)
     console.log("id: ", selectedItem.supplierId)
-    axios.put(`https://salesjyot-inventory-backend-production.up.railway.app/supplier/${selectedItem.supplierId}`, formData)
+    axios.put(`${process.env.REACT_APP_API_URL}/supplier/${selectedItem.supplierId}`, formData)
       .then(response => {
         
         console.log('PUT request successful:', response);
@@ -224,7 +224,7 @@ const handleRowClick = (supplier) => {
 };
 
 const postData = (data) => {
-  axios.post('https://salesjyot-inventory-backend-production.up.railway.app/supplier', data)
+  axios.post('${process.env.REACT_APP_API_URL}/supplier', data)
       .then(response => {
           console.log('Data posted successfully:', response);
           setApiData(prevData => [...prevData, response.data]);
@@ -236,7 +236,7 @@ const postData = (data) => {
 
 const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
-  axios.delete(`https://salesjyot-inventory-backend-production.up.railway.app/supplier/${id}`)
+  axios.delete(`${process.env.REACT_APP_API_URL}/supplier/${id}`)
     .then(response => {
       console.log('Row deleted successfully.');
       toast.success('Supplier deleted successfully', {
