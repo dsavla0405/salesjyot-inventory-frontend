@@ -38,7 +38,8 @@ function Supplier() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const rowsPerPageOptions = [10, 20, 50];
-  const apiUrl = process.env.REACT_APP_API_URL;
+  const apiUrl = "https://salesjyot-inventory-backend-production.up.railway.app"
+  ;
   // Function to handle change in items per page
   const handleItemsPerPageChange = (e) => {
     setItemsPerPage(parseInt(e.target.value));
