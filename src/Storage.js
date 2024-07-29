@@ -24,6 +24,7 @@ import SwapVertIcon from '@mui/icons-material/SwapVert';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 function Storage() {
+  const apiUrl = process.env.REACT_APP_API_URL;
   const [validated, setValidated] = useState(false);
   const [binNumber, setBin] = useState("");
   const [rackNumber, setRack] = useState("");
@@ -98,7 +99,7 @@ function Storage() {
 
 
   const postData = (data) => {
-    axios.post('http://localhost:8080/storage', data)
+    axios.post('${apiUrl}/storage', data)
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -130,7 +131,7 @@ const handleFileUpload = (e) => {
           };
 
           // Fetch item details using skucode
-          axios.get(`http://localhost:8080/item/supplier/search/skucode/${item.skucode}`)
+          axios.get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`)
               .then(response => {
                   // Check if item exists
                   if (!response.data || response.data.length === 0) {
@@ -152,7 +153,7 @@ const handleFileUpload = (e) => {
                   console.log('Form data:', formData);
 
                   // Send data to server
-                  axios.post('http://localhost:8080/your-endpoint', formData)
+                  axios.post('${apiUrl}/your-endpoint', formData)
                       .then(response => {
                           console.log('POST request successful:', response);
                           toast.success('Data imported successfully', {
@@ -181,7 +182,7 @@ const handleSubmit = (event) => {
     event.stopPropagation();
   } else {
     // Fetch item based on supplier and supplier SKU code
-    axios.get(`http://localhost:8080/item/supplier/search/skucode/${skucode}`)
+    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
       .then(response => {
         console.log("data = " + response.data);
         if (response.data) {
@@ -195,7 +196,7 @@ const handleSubmit = (event) => {
             items: [item]
           };
           console.log('form data: ', formData);
-          axios.post(`http://localhost:8080/storage/${itemId}`, formData)
+          axios.post(`${apiUrl}/storage/${itemId}`, formData)
             .then(response => {
               console.log('POST request successful:', response);
               toast.success('Storage added successfully', {
@@ -237,7 +238,7 @@ const handleRowSubmit = () => {
     };
     console.log('form data: ', formData)
     console.log("id: ", selectedItem.storageId)
-    axios.put(`http://localhost:8080/storage/${selectedItem.storageId}`, formData)
+    axios.put(`${apiUrl}/storage/${selectedItem.storageId}`, formData)
       .then(response => {
         
         console.log('PUT request successful:', response);
@@ -275,13 +276,13 @@ const handleSearchChange = (event) => {
 };
 
 useEffect(() => {
-  axios.get('http://localhost:8080/storage') 
+  axios.get('${apiUrl}/storage') 
     .then(response => setApiData(response.data))
       .catch(error => console.error(error));
     console.log("apidata = "+JSON.stringify(apiData))
 
    
-      axios.get('http://localhost:8080/item/supplier') // Fetch SKU codes and descriptions from the items table
+      axios.get('${apiUrl}/item/supplier') // Fetch SKU codes and descriptions from the items table
         .then(response => {
           // Extract SKU codes and descriptions from the response data and filter out null or undefined values
           const skuData = response.data
@@ -318,7 +319,7 @@ const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
   // Remove the row from the table
 
-  axios.delete(`http://localhost:8080/storage/${id}`)
+  axios.delete(`${apiUrl}/storage/${id}`)
   .then(response => {
     // Handle success response
     console.log('Row deleted successfully.');
@@ -338,7 +339,7 @@ const handleDelete = (id) => {
 };
 
 const getImg = (skucode) => {
-  axios.get(`http://localhost:8080/item/supplier/search/skucode/${skucode}`)
+  axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
     .then(response => {
       setItemImg(response.data.img);
     })

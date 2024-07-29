@@ -26,6 +26,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 function ItemPortalMapping() {
+    const apiUrl = process.env.REACT_APP_API_URL;
     const [validated, setValidated] = useState(false);
     const [portal, setPortal] = useState("");
     const [supplier, setSeller] = useState(null);
@@ -128,7 +129,7 @@ function ItemPortalMapping() {
         // Fetch item based on supplier and supplier SKU code
         console.log("supplier = " + supplierId + "sellerSKU =" + sellerSkuCode);
 
-        axios.get(`http://localhost:8080/item/supplier/search/${supplierId}/${sellerSkuCode}`)
+        axios.get(`${apiUrl}/item/supplier/search/${supplierId}/${sellerSkuCode}`)
           .then(response => {
             if (response.data) {
               const item = response.data;
@@ -141,7 +142,7 @@ function ItemPortalMapping() {
                 item: item
               };
               console.log('form data: ', formData);
-              axios.post('http://localhost:8080/itemportalmapping', formData)
+              axios.post('${apiUrl}/itemportalmapping', formData)
                 .then(response => {
                   console.log('POST request successful:', response);
                   toast.success('Item Portal Mapping added successfully', {
@@ -234,13 +235,13 @@ function ItemPortalMapping() {
       console.log("in fetch");
   
       // First API call to fetch supplier details
-      return axios.get(`http://localhost:8080/supplier/name/${supplierName}`)
+      return axios.get(`${apiUrl}/supplier/name/${supplierName}`)
           .then(supplierResponse => {
               const supplier = supplierResponse.data;
               console.log('Supplier fetched successfully:', supplier);
   
               // Second API call to fetch item using the retrieved supplier details
-              return axios.get(`http://localhost:8080/item/supplier/search/${supplier.supplierId}/${sellerSkuCode}`)
+              return axios.get(`${apiUrl}/item/supplier/search/${supplier.supplierId}/${sellerSkuCode}`)
                   .then(itemResponse => {
                       const item = itemResponse.data;
                       console.log('Item fetched successfully:', item);
@@ -272,7 +273,7 @@ const handleSupplierChange = (event, name) => {
     console.log("selected supplier = " + JSON.stringify(selectedSupplier));
     if (selectedSupplier) {
       // Fetch the sellerSKUCode based on the selected supplier's name
-      axios.get(`http://localhost:8080/item/supplier/search/seller/${selectedSupplier.supplierName}`)
+      axios.get(`${apiUrl}/item/supplier/search/seller/${selectedSupplier.supplierName}`)
         .then(response => {
           console.log("list = " + response.data);
     // Split the response data into an array of strings, assuming it's comma-separated
@@ -302,7 +303,7 @@ const handleSupplierChange = (event, name) => {
     console.log("Deleting row with id:", id);
     // Remove the row from the table
   
-    axios.delete(`http://localhost:8080/itemportalmapping/${id}`)
+    axios.delete(`${apiUrl}/itemportalmapping/${id}`)
     .then(response => {
       // Handle success response
       console.log('Row deleted successfully.');
@@ -335,7 +336,7 @@ const handleSupplierChange = (event, name) => {
         };
         console.log('form data: ', formData)
         console.log("id: ", selectedItem.id)
-        axios.put(`http://localhost:8080/itemportalmapping/${selectedItem.id}`, formData)
+        axios.put(`${apiUrl}/itemportalmapping/${selectedItem.id}`, formData)
           .then(response => {
             
             console.log('PUT request successful:', response);
@@ -369,7 +370,7 @@ const handleSupplierChange = (event, name) => {
     
  
       useEffect(() => {
-        axios.get('http://localhost:8080/supplier')
+        axios.get('${apiUrl}/supplier')
         .then(response => {
           setSuppliersList(response.data); 
         })
@@ -377,14 +378,14 @@ const handleSupplierChange = (event, name) => {
           console.error('Error fetching supplier data:', error);
         });
 
-        axios.get('http://localhost:8080/itemportalmapping') 
+        axios.get('${apiUrl}/itemportalmapping') 
           .then(response => setApiData(response.data))
           .catch(error => console.error(error));
           console.log(apiData)
       }, []);
   
       const fetchData = () => {
-        axios.get('http://localhost:8080/supplier')
+        axios.get('${apiUrl}/supplier')
           .then(response => {
             setSuppliersList(response.data); 
           })
@@ -394,7 +395,7 @@ const handleSupplierChange = (event, name) => {
       }
     
   const postData = (data) => {
-    axios.post('http://localhost:8080/itemportalmapping', data)
+    axios.post('${apiUrl}/itemportalmapping', data)
       .then(response => {
         // Handle successful response
         console.log('Data posted successfully:', response);

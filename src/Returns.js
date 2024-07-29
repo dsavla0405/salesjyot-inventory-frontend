@@ -26,6 +26,7 @@ import SwapVertIcon from '@mui/icons-material/SwapVert';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 function Return() {
+  const apiUrl = process.env.REACT_APP_API_URL;
   const [validated, setValidated] = useState(false);
   const [date, setDate] = useState();
   const [skucode, setSkucode] = useState();
@@ -142,7 +143,7 @@ const handleSubmit = (event) => {
     event.stopPropagation();
   } else {
     // Fetch item based on supplier and supplier SKU code
-    axios.get(`http://localhost:8080/item/supplier/search/skucode/${skucode}`)
+    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
       .then(response => {
         if (response.data) {
           const item = response.data;
@@ -159,7 +160,7 @@ const handleSubmit = (event) => {
             item: item
           };
           console.log('form data: ', formData);
-          axios.post('http://localhost:8080/return', formData)
+          axios.post('${apiUrl}/return', formData)
             .then(response => {
               console.log('POST request successful:', response);
               toast.success('Return added successfully', {
@@ -211,7 +212,7 @@ const handleRowSubmit = () => {
     };
     console.log('form data: ', formData)
     console.log("id: ", selectedItem.returnId)
-    axios.put(`http://localhost:8080/return/${selectedItem.returnId}`, formData)
+    axios.put(`${apiUrl}/return/${selectedItem.returnId}`, formData)
       .then(response => {
         
         console.log('PUT request successful:', response);
@@ -256,11 +257,11 @@ const handleRowClick = (stock) => {
 
 
 useEffect(() => {
-  axios.get('http://localhost:8080/return') 
+  axios.get('${apiUrl}/return') 
     .then(response => setApiData(response.data))
     .catch(error => console.error(error));
     console.log(apiData)
-    axios.get('http://localhost:8080/item/supplier') // Fetch SKU codes and descriptions from the items table
+    axios.get('${apiUrl}/item/supplier') // Fetch SKU codes and descriptions from the items table
     .then(response => {
       // Extract SKU codes and descriptions from the response data and filter out null or undefined values
       const skuData = response.data
@@ -273,7 +274,7 @@ useEffect(() => {
 }, []);
 
 const postData = (data) => {
-    axios.post('http://localhost:8080/return', data)
+    axios.post('${apiUrl}/return', data)
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -288,7 +289,7 @@ const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
   // Remove the row from the table
 
-  axios.delete(`http://localhost:8080/return/${id}`)
+  axios.delete(`${apiUrl}/return/${id}`)
   .then(response => {
     // Handle success response
     console.log('Row deleted successfully.');

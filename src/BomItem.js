@@ -49,7 +49,7 @@ function Bom() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const rowsPerPageOptions = [10, 20, 50];
-
+  const apiUrl = process.env.REACT_APP_API_URL;
   // Function to handle change in items per page
   const handleItemsPerPageChange = (e) => {
     setItemsPerPage(parseInt(e.target.value));
@@ -77,7 +77,7 @@ function Bom() {
   };
 
   const fetchData = () => {
-    axios.get('http://localhost:8080/boms')
+    axios.get('${apiUrl}/boms')
       .then(response => {
         setBomCodeList(response.data); 
       })
@@ -85,7 +85,7 @@ function Bom() {
         console.error('Error fetching supplier data:', error);
       });
 
-      axios.get('http://localhost:8080/item/supplier')
+      axios.get('${apiUrl}/item/supplier')
       .then(response => {
         setBomItemsList(response.data); 
       })
@@ -129,7 +129,7 @@ function Bom() {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   
   const postData = (data) => {
-    axios.post('http://localhost:8080/bomItems', data)
+    axios.post('${apiUrl}/bomItems', data)
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -154,7 +154,7 @@ const handleFileUpload = (e) => {
     jsonData.forEach(item => {
       const { bomCode, bomItem, qty } = item;
       
-      axios.get(`http://localhost:8080/item/supplier/search/skucode/${bomItem}`)
+      axios.get(`${apiUrl}/item/supplier/search/skucode/${bomItem}`)
         .then(response => {
           if (response.data.length === 0) {
             toast.error('Item not found with SKU code: ' + bomItem);
@@ -163,7 +163,7 @@ const handleFileUpload = (e) => {
 
           const fetchedItem = response.data;
 
-          axios.get(`http://localhost:8080/boms/bom/${bomCode}`)
+          axios.get(`${apiUrl}/boms/bom/${bomCode}`)
             .then((response) => {
               const bom = response.data;
               const bomId = bom.bomId;
@@ -175,7 +175,7 @@ const handleFileUpload = (e) => {
                 item: fetchedItem
               };
 
-              return axios.post(`http://localhost:8080/bomItems/create/${bomId}`, formData);
+              return axios.post(`${apiUrl}/bomItems/create/${bomId}`, formData);
             })
             .then((response) => {
               console.log('POST request successful:', response);
@@ -210,7 +210,7 @@ const handleSubmit = (event) => {
       setValidated(true); 
       return;
     }else{
-        axios.get(`http://localhost:8080/item/supplier/search/skucode/${bomItem}`)
+        axios.get(`${apiUrl}/item/supplier/search/skucode/${bomItem}`)
       .then(response => {
         console.log("item = " + JSON.stringify(response.data));
         // Check if item exists
@@ -222,7 +222,7 @@ const handleSubmit = (event) => {
         // Extract item from response data
         const item = response.data;
 
-    axios.get(`http://localhost:8080/boms/bom/${bomCode}`)
+    axios.get(`${apiUrl}/boms/bom/${bomCode}`)
       .then((response) => {
         const bom = response.data; // Assuming response.data is the bom object
         const bomId = bom.bomId;
@@ -234,7 +234,7 @@ const handleSubmit = (event) => {
             item
         };
   
-        return axios.post(`http://localhost:8080/bomItems/create/${bomId}`, formData);
+        return axios.post(`${apiUrl}/bomItems/create/${bomId}`, formData);
       })
       .then((response) => {
         console.log('POST request successful:', response);
@@ -262,7 +262,7 @@ const handleSubmit = (event) => {
     console.log("Selected Item: ", selectedItem);
   
     if (rowSelected && selectedItem) {
-      axios.get(`http://localhost:8080/boms/bom/${bomCode}`)
+      axios.get(`${apiUrl}/boms/bom/${bomCode}`)
         .then((response) => {
           const bom = response.data; // Assuming response.data is the bom object
           const bomId = bom.bomId;
@@ -276,7 +276,7 @@ const handleSubmit = (event) => {
           console.log('Form data: ', formData);
           console.log("ID: ", selectedItem.supplierId);
   
-          return axios.put(`http://localhost:8080/bomItems/${selectedItem.bomItemId}`, formData);
+          return axios.put(`${apiUrl}/bomItems/${selectedItem.bomItemId}`, formData);
         })
         .then(response => {
           console.log('PUT request successful:', response);
@@ -322,19 +322,19 @@ const handleSubmit = (event) => {
   };
   
   useEffect(() => {
-    axios.get('http://localhost:8080/bomItems') 
+    axios.get('${apiUrl}/bomItems') 
       .then(response => setApiData(response.data))
       .catch(error => console.error(error));
   }, []);
 
   useEffect(() => {
-    axios.get('http://localhost:8080/boms') 
+    axios.get('${apiUrl}/boms') 
       .then(response => setBomCodeList(response.data))
       .catch(error => console.error(error));
   }, []);
 
   useEffect(() => {
-    axios.get('http://localhost:8080/item/supplier') 
+    axios.get('${apiUrl}/item/supplier') 
       .then(response => setBomItemsList(response.data))
       .catch(error => console.error(error));
   }, []);
@@ -362,7 +362,7 @@ const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
   // Remove the row from the table
 
-  axios.delete(`http://localhost:8080/bomItems/${id}`)
+  axios.delete(`${apiUrl}/bomItems/${id}`)
   .then(response => {
     // Handle success response
     console.log('Row deleted successfully.');
@@ -383,7 +383,7 @@ const handleDelete = (id) => {
 };
 
 useEffect(() => {
-    axios.get('http://localhost:8080/boms') 
+    axios.get('${apiUrl}/boms') 
       .then(response => setBomsList(response.data))
       .catch(error => console.error(error));
   }, []);

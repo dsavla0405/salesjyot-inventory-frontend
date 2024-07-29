@@ -9,6 +9,7 @@ import SwapVertIcon from '@mui/icons-material/SwapVert'; // Import the SwapVertI
 Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function StockCount() {
+    const apiUrl = process.env.REACT_APP_API_URL;
     const [apiData, setApiData] = useState([]);
     const [filters, setFilters] = useState({
         skucode: '',
@@ -22,7 +23,7 @@ function StockCount() {
         // Fetch data from the API
         const fetchData = async () => {
             try {
-                const response = await axios.get('http://localhost:8080/stock-counts/all');
+                const response = await axios.get('${apiUrl}/stock-counts/all');
                 setApiData(response.data); // Assuming response.data is an array of items
             } catch (error) {
                 console.error('Error fetching data:', error);

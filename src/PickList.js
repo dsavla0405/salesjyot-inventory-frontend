@@ -20,6 +20,7 @@ import SwapVertIcon from '@mui/icons-material/SwapVert';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 const PicklistComponent = () => {
+  const apiUrl = process.env.REACT_APP_API_URL;
   const [apiData, setApiData] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [picklistData, setPicklistData] = useState([]);
@@ -40,7 +41,7 @@ const PicklistComponent = () => {
   useEffect(() => {
     const fetchBomsForOrder = async (orderNo) => {
       try {
-        const response = await axios.get(`http://localhost:8080/picklists/boms/${orderNo}`);
+        const response = await axios.get(`${apiUrl}/picklists/boms/${orderNo}`);
         console.log("Fetched BOMs for order", orderNo, response.data);
         setBoms(prevBoms => ({
           ...prevBoms,
@@ -48,7 +49,7 @@ const PicklistComponent = () => {
         }));
 
         // Fetch the default BOM code for the orderNo
-        const bomCodeResponse = await axios.get(`http://localhost:8080/picklists/bom/default/bomCode?orderNo=${orderNo}`);
+        const bomCodeResponse = await axios.get(`${apiUrl}/picklists/bom/default/bomCode?orderNo=${orderNo}`);
         console.log("Response = " + bomCodeResponse.data);
         setBomCodes(prevBomCodes => ({
           ...prevBomCodes,
@@ -89,7 +90,7 @@ const PicklistComponent = () => {
   );
 
   useEffect (() => {
-    axios.get('http://localhost:8080/picklists/orderData')
+    axios.get('${apiUrl}/picklists/orderData')
       .then(response => {
         setOrderData(response.data);
         console.log("orderData = " + JSON.stringify(orderData));
@@ -100,7 +101,7 @@ const PicklistComponent = () => {
   }, [])
 
   useEffect(() => {
-    axios.get('http://localhost:8080/picklists/not/generated/orders')
+    axios.get('${apiUrl}/picklists/not/generated/orders')
       .then(response => {
         setOrders(response.data);
       })
@@ -110,7 +111,7 @@ const PicklistComponent = () => {
   }, [])
 
   useEffect(() => {
-    axios.get('http://localhost:8080/picklists/merged/picklist')
+    axios.get('${apiUrl}/picklists/merged/picklist')
       .then(response => {
         setPicklistData(response.data);
       })
@@ -156,7 +157,7 @@ const PicklistComponent = () => {
 
         if (event.target.checked) {
             const promises = orders.map(order => 
-                axios.get(`http://localhost:8080/picklists/getSelectedOrderData?orderNo=${order.orderNo}&bomCode=${bomCodes[order.orderNo]}`)
+                axios.get(`${apiUrl}/picklists/getSelectedOrderData?orderNo=${order.orderNo}&bomCode=${bomCodes[order.orderNo]}`)
                     .then(response => {
                         console.log("selected bomCode = " + bomCodes[order.orderNo]);
                         return response.data; // Return data on success
@@ -188,7 +189,7 @@ const PicklistComponent = () => {
 
         if (event.target.checked) {
             try {
-                const orderDataResponse = await axios.get(`http://localhost:8080/picklists/getSelectedOrderData?orderNo=${orderNo}&bomCode=${bomCode}`);
+                const orderDataResponse = await axios.get(`${apiUrl}/picklists/getSelectedOrderData?orderNo=${orderNo}&bomCode=${bomCode}`);
                 const orderData = orderDataResponse.data;
                 setSelectedOrderData(prevData => [...prevData, ...orderData]);
             } catch (error) {
@@ -204,7 +205,7 @@ const PicklistComponent = () => {
   
   const generatePicklist = () => {
     // Assuming your API endpoint for fetching all picklists is '/picklists'
-    axios.get('http://localhost:8080/picklists')
+    axios.get('${apiUrl}/picklists')
       .then(response => {
         const picklists = response.data;
         if (picklists.length === 0) {
@@ -248,7 +249,7 @@ const generatePicklistWithNumber = async (pickListNumber) => {
             console.log("selected order = " + JSON.stringify(selectedOrder));
 
             try {
-                const response = await axios.post('http://localhost:8080/picklistdata', selectedOrder);
+                const response = await axios.post('${apiUrl}/picklistdata', selectedOrder);
                 console.log('Picklist data generated successfully:', response.data);
             } catch (error) {
                 console.error('Error generating picklist data:', error);
@@ -257,7 +258,7 @@ const generatePicklistWithNumber = async (pickListNumber) => {
         }));
 
         // Then, post to 'picklists' endpoint for all selected orders
-        const response = await axios.post('http://localhost:8080/picklists', {
+        const response = await axios.post('${apiUrl}/picklists', {
             pickListNumber,
             orders: selectedOrders
         });
@@ -270,8 +271,8 @@ const generatePicklistWithNumber = async (pickListNumber) => {
 
         // Fetch updated picklist and orders data
         await Promise.all([
-            axios.get('http://localhost:8080/picklists/merged/picklist'),
-            axios.get('http://localhost:8080/picklists/not/generated/orders')
+            axios.get('${apiUrl}/picklists/merged/picklist'),
+            axios.get('${apiUrl}/picklists/not/generated/orders')
         ]).then(([picklistResponse, ordersResponse]) => {
             setPicklistData(picklistResponse.data);
             setOrders(ordersResponse.data);
@@ -358,7 +359,7 @@ const handleDelete = (pickListNumber) => {
   console.log("Deleting row with picklist number:", pickListNumber);
   // Remove the row from the table
 
-  axios.delete(`http://localhost:8080/picklistdata/picklistnumber/${pickListNumber}`)
+  axios.delete(`${apiUrl}/picklistdata/picklistnumber/${pickListNumber}`)
   .then(response => {
     // Handle success response
     console.log('Row deleted successfully.');
@@ -366,7 +367,7 @@ const handleDelete = (pickListNumber) => {
       autoClose: 2000 // Close after 2 seconds
     });
     setPicklistData(prevData => prevData.filter(row => row.pickListNumber !== pickListNumber));
-    axios.get('http://localhost:8080/picklists/not/generated/orders')
+    axios.get('${apiUrl}/picklists/not/generated/orders')
       .then(response => {
         setOrders(response.data);
       })
@@ -399,7 +400,7 @@ const handleRowClick = (event, orderNo) => {
 
   // If the row was just selected, fetch orderData for the selected orderNo
   if (!isChecked) {
-    axios.get(`http://localhost:8080/picklists/getSelectedOrderData?orderNo=${orderNo}`)
+    axios.get(`${apiUrl}/picklists/getSelectedOrderData?orderNo=${orderNo}`)
       .then(response => {
         // Assuming the API response is an array of orderData
         const orderData = response.data;

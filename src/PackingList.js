@@ -18,6 +18,7 @@ import SwapVertIcon from '@mui/icons-material/SwapVert';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 const PicklistComponent = () => {
+  const apiUrl = process.env.REACT_APP_API_URL;
   const [apiData, setApiData] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [picklistData, setPicklistData] = useState([]);
@@ -49,7 +50,7 @@ const PicklistComponent = () => {
   );
 
   useEffect (() => {
-    axios.get('http://localhost:8080/packinglist/orderData')
+    axios.get('${apiUrl}/packinglist/orderData')
       .then(response => {
         setOrderData(response.data);
         console.log("orderData = " + JSON.stringify(orderData));
@@ -60,7 +61,7 @@ const PicklistComponent = () => {
   }, [])
 
   useEffect(() => {
-    axios.get('http://localhost:8080/packinglist/not/generated/packinglist/orders')
+    axios.get('${apiUrl}/packinglist/not/generated/packinglist/orders')
       .then(response => {
         setOrders(response.data);
       })
@@ -70,7 +71,7 @@ const PicklistComponent = () => {
   }, [])
 
   useEffect(() => {
-    axios.get('http://localhost:8080/packinglist/getData')
+    axios.get('${apiUrl}/packinglist/getData')
       .then(response => {
         const mergedPicklistData = mergeRowsWithSamePicklist(response.data);
         setPicklistData(response.data);
@@ -111,7 +112,7 @@ const PicklistComponent = () => {
       if (event.target.checked) {
         try {
           const promises = allOrderNos.map(orderNo =>
-            axios.get(`http://localhost:8080/packinglist/selected/orderData?orderNo=${orderNo}`)
+            axios.get(`${apiUrl}/packinglist/selected/orderData?orderNo=${orderNo}`)
           );
           const results = await Promise.all(promises);
           const orderData = results.map(response => response.data);
@@ -132,7 +133,7 @@ const PicklistComponent = () => {
   
       if (isChecked) {
         try {
-          const response = await axios.get(`http://localhost:8080/packinglist/selected/orderData?orderNo=${itemId}`);
+          const response = await axios.get(`${apiUrl}/packinglist/selected/orderData?orderNo=${itemId}`);
           const orderData = response.data;
           setSelectedOrderData(prevData => [...prevData, orderData]);
         } catch (error) {
@@ -148,7 +149,7 @@ const PicklistComponent = () => {
   
   const generatePicklist = () => {
     // Assuming your API endpoint for fetching all picklists is '/picklists'
-    axios.get('http://localhost:8080/packinglist')
+    axios.get('${apiUrl}/packinglist')
       .then(response => {
         const picklists = response.data;
         if (picklists.length === 0) {
@@ -190,7 +191,7 @@ const PicklistComponent = () => {
       
       try {
         console.log("selected order = " + JSON.stringify(selectedOrder));
-        const response = await axios.post('http://localhost:8080/packinglistdata', selectedOrder);
+        const response = await axios.post('${apiUrl}/packinglistdata', selectedOrder);
         console.log("after post: " + JSON.stringify(response.data));
       } catch (error) {
         console.error('Error posting order:', error);
@@ -206,14 +207,14 @@ const PicklistComponent = () => {
   
     // Refresh orders and picklist data
     try {
-      const ordersResponse = await axios.get('http://localhost:8080/packinglist/not/generated/packinglist/orders');
+      const ordersResponse = await axios.get('${apiUrl}/packinglist/not/generated/packinglist/orders');
       setOrders(ordersResponse.data);
     } catch (error) {
       console.log("error getting orders: " + error);
     }
   
     try {
-      const picklistResponse = await axios.get('http://localhost:8080/packinglist/getData');
+      const picklistResponse = await axios.get('${apiUrl}/packinglist/getData');
       const mergedPicklistData = mergeRowsWithSamePicklist(picklistResponse.data);
       setPicklistData(mergedPicklistData);
       console.log("picklistData = " + JSON.stringify(picklistData));
@@ -223,7 +224,7 @@ const PicklistComponent = () => {
   
     // Generate picklist
     try {
-      const response = await axios.post('http://localhost:8080/packinglist', { packingListNumber, orders: selectedOrders });
+      const response = await axios.post('${apiUrl}/packinglist', { packingListNumber, orders: selectedOrders });
       console.log('Picklist generated successfully:', response.data);
       toast.success('PickList generated successfully', {
         autoClose: 2000 // Close after 2 seconds
@@ -306,7 +307,7 @@ const handleDelete = (packingListNumber) => {
   console.log("Deleting row with packingListNumber:", packingListNumber);
 
   // Make DELETE request to remove the row from the database
-  axios.delete(`http://localhost:8080/packinglistdata/packinglistData/${packingListNumber}`)
+  axios.delete(`${apiUrl}/packinglistdata/packinglistData/${packingListNumber}`)
     .then(response => {
       // Handle success response
       console.log('Row deleted successfully.');
@@ -316,7 +317,7 @@ const handleDelete = (packingListNumber) => {
 
       // Update the picklistData state to remove the deleted row
       setPicklistData(prevData => prevData.filter(row => row.packingListNumber !== packingListNumber));
-      axios.get('http://localhost:8080/packinglist/getData')
+      axios.get('${apiUrl}/packinglist/getData')
       .then(response => {
         const mergedPicklistData = mergeRowsWithSamePicklist(response.data);
         setPicklistData(response.data);
@@ -326,7 +327,7 @@ const handleDelete = (packingListNumber) => {
         console.error(error);
       });
       // Fetch updated orders
-      return axios.get('http://localhost:8080/packinglist/not/generated/packinglist/orders');
+      return axios.get('${apiUrl}/packinglist/not/generated/packinglist/orders');
     })
     .then(response => {
       // Update the orders state with the new data

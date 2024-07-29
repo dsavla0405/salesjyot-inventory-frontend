@@ -3,7 +3,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import Table from 'react-bootstrap/Table';
 
 const MyTable1 = ({selectedOrderData, handleDelete, handleDownload }) => {
-
+  const apiUrl = process.env.REACT_APP_API_URL;
   return (
     <div>
     <Table striped bordered hover>

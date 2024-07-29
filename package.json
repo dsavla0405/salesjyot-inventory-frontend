@@ -46,6 +46,7 @@
   },
   "scripts": {
     "start": "serve -s build -l ${PORT}",
+    "start:development": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

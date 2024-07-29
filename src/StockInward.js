@@ -27,6 +27,7 @@ import SwapVertIcon from '@mui/icons-material/SwapVert';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 function StockInward() {
+  const apiUrl = process.env.REACT_APP_API_URL;
   const [validated, setValidated] = useState(false);
 
   const [date, setDate] = useState("");
@@ -106,7 +107,7 @@ function StockInward() {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const postData = (data) => {
-    axios.post('http://localhost:8080/stockInward', data)
+    axios.post('${apiUrl}/stockInward', data)
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -141,7 +142,7 @@ const handleFileUpload = (e) => {
             };
 
             // Fetch item details using skucode
-            axios.get(`http://localhost:8080/item/supplier/search/skucode/${item.skucode}`)
+            axios.get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`)
                 .then(response => {
                     // Check if item exists
                     if (!response.data || response.data.length === 0) {
@@ -181,7 +182,7 @@ const handleSubmit = (event) => {
     event.stopPropagation();
   } else {
     // Fetch item based on supplier and supplier SKU code
-    axios.get(`http://localhost:8080/item/supplier/search/skucode/${skucode}`)
+    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
       .then(response => {
         if (response.data) {
           const item = response.data;
@@ -192,7 +193,7 @@ const handleSubmit = (event) => {
             item: item
           };
           console.log('form data: ', formData);
-          axios.post('http://localhost:8080/stockInward', formData)
+          axios.post('${apiUrl}/stockInward', formData)
             .then(response => {
               console.log('POST request successful:', response);
               toast.success('StoockInward added successfully', {
@@ -232,7 +233,7 @@ const handleRowSubmit = () => {
     };
     console.log('form data: ', formData)
     console.log("id: ", selectedItem.stockInwardId)
-    axios.put(`http://localhost:8080/stockInward/${selectedItem.stockInwardId}`, formData)
+    axios.put(`${apiUrl}/stockInward/${selectedItem.stockInwardId}`, formData)
       .then(response => {
         
         console.log('PUT request successful:', response);
@@ -285,11 +286,11 @@ const handleRowClick = (stock) => {
 
 
 useEffect(() => {
-  axios.get('http://localhost:8080/stockInward') 
+  axios.get('${apiUrl}/stockInward') 
     .then(response => setApiData(response.data))
     .catch(error => console.error(error));
     console.log(apiData)
-    axios.get('http://localhost:8080/item/supplier') // Fetch SKU codes and descriptions from the items table
+    axios.get('${apiUrl}/item/supplier') // Fetch SKU codes and descriptions from the items table
     .then(response => {
       // Extract SKU codes and descriptions from the response data and filter out null or undefined values
       const skuData = response.data
@@ -306,7 +307,7 @@ const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
   // Remove the row from the table
 
-  axios.delete(`http://localhost:8080/stockInward/${id}`)
+  axios.delete(`${apiUrl}/stockInward/${id}`)
   .then(response => {
     // Handle success response
     console.log('Row deleted successfully.');
@@ -327,7 +328,7 @@ const handleDelete = (id) => {
 };
 
 const getImg = (skucode) => {
-  axios.get(`http://localhost:8080/item/supplier/search/skucode/${skucode}`)
+  axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
     .then(response => {
       setItemImg(response.data.img || '');
     })

@@ -50,7 +50,7 @@ function Bom() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const rowsPerPageOptions = [10, 20, 50];
-
+  const apiUrl = process.env.REACT_APP_API_URL;
   // Function to handle change in items per page
   const handleItemsPerPageChange = (e) => {
     setItemsPerPage(parseInt(e.target.value));
@@ -123,7 +123,7 @@ function Bom() {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   
   const fetchData = () => {
-    axios.get('http://localhost:8080/item/supplier') // Fetch SKU codes and descriptions from the items table
+    axios.get('${apiUrl}/item/supplier') // Fetch SKU codes and descriptions from the items table
       .then(response => {
         // Extract SKU codes and descriptions from the response data and filter out null or undefined values
         const skuData = response.data
@@ -136,7 +136,7 @@ function Bom() {
   }
 
   useEffect(() => {
-    axios.get('http://localhost:8080/item/supplier') // Fetch SKU codes and descriptions from the items table
+    axios.get('${apiUrl}/item/supplier') // Fetch SKU codes and descriptions from the items table
       .then(response => {
         // Extract SKU codes and descriptions from the response data and filter out null or undefined values
         const skuData = response.data
@@ -149,7 +149,7 @@ function Bom() {
   }, []);
 
   const postData = (data) => {
-    axios.post('http://localhost:8080/boms', data)
+    axios.post('${apiUrl}/boms', data)
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -184,7 +184,7 @@ const handleFileUpload = (e) => {
             };
 
             // Fetch item details using skucode
-            axios.get(`http://localhost:8080/item/supplier/search/skucode/${item.skucode}`)
+            axios.get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`)
                 .then(response => {
                     // Check if item exists
                     if (response.data.length === 0) {
@@ -226,7 +226,7 @@ const handleSubmit = (event) => {
     return;
   } else {
     // Fetch item details using skucode
-    axios.get(`http://localhost:8080/item/supplier/search/skucode/${skucode}`)
+    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
       .then(response => {
         console.log("item = " + JSON.stringify(response.data));
         // Check if item exists
@@ -248,7 +248,7 @@ const handleSubmit = (event) => {
         };
 
         // Send POST request with formData
-        axios.post('http://localhost:8080/boms' , formData)
+        axios.post('${apiUrl}/boms' , formData)
           .then(response => {
             console.log('POST request successful:', response);
             toast.success('BOM added successfully', {
@@ -285,7 +285,7 @@ const handleRowSubmit = () => {
   console.log(selectedItem);
   if (rowSelected && selectedItem) {
     // Fetch item details using skucode
-    axios.get(`http://localhost:8080/item/supplier/search/skucode/${skucode}`)
+    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
       .then(response => {
         // Check if item exists
         if (response.data.length === 0) {
@@ -308,7 +308,7 @@ const handleRowSubmit = () => {
         console.log('form data: ', formData);
         console.log("id: ", selectedItem.bomId);
 
-        axios.put(`http://localhost:8080/boms/${selectedItem.bomId}`, formData)
+        axios.put(`${apiUrl}/boms/${selectedItem.bomId}`, formData)
           .then(response => {
             console.log('PUT request successful:', response);
             toast.success('Bom updated successfully', {
@@ -350,7 +350,7 @@ const handleRowSubmit = () => {
   };
   
   useEffect(() => {
-    axios.get('http://localhost:8080/boms') 
+    axios.get('${apiUrl}/boms') 
       .then(response => setApiData(response.data))
       .catch(error => console.error(error));
     
@@ -379,7 +379,7 @@ const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
   // Remove the row from the table
 
-  axios.delete(`http://localhost:8080/boms/${id}`)
+  axios.delete(`${apiUrl}/boms/${id}`)
   .then(response => {
     // Handle success response
     console.log('Row deleted successfully.');

@@ -17,7 +17,7 @@ const MyTable = ({selectedOrderData, generatePicklist, generatePicklistPDF}) => 
       return acc;
     }, []);
   }, [selectedOrderData]);
-
+  const apiUrl = process.env.REACT_APP_API_URL;
   return (
     <div>
     <Table striped bordered hover>

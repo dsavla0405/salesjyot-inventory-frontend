@@ -10,6 +10,7 @@ import SwapVertIcon from '@mui/icons-material/SwapVert';
 import { Table } from 'react-bootstrap';
 
 const PackScan = () => {
+    const apiUrl = process.env.REACT_APP_API_URL;
     const [barcode, setBarcode] = useState('');
     const [qrCode, setQRCode] = useState('');
     const [orders, setOrders] = useState([]);
@@ -47,7 +48,7 @@ const PackScan = () => {
     // Function to fetch orders from the backend
     const fetchOrders = async () => {
         try {
-            const response = await axios.get('http://localhost:8080/orders/notPacked');
+            const response = await axios.get('${apiUrl}/orders/notPacked');
             setOrders(response.data); // Assuming response.data is an array of orders
             console.log("orders = " + orders);
         } catch (error) {
@@ -60,7 +61,7 @@ const PackScan = () => {
     const callApiWithCode = async (code) => {
         console.log('Calling API with code:', code);
         try {
-            const response = await axios.put(`http://localhost:8080/orders/scan/pack?awb=${code}`);
+            const response = await axios.put(`${apiUrl}/orders/scan/pack?awb=${code}`);
             console.log('API Response:', response.data);
             toast.success('Scan successful, order status changed', {
                 autoClose: 2000
@@ -101,7 +102,7 @@ const PackScan = () => {
             // Iterate through selectedOrders array
             for (const orderId of selectedOrders) {
                 const order = orders.find(o => o.orderId === orderId); // Find the order details
-                const response = await axios.put(`http://localhost:8080/orders/packByAwbNo?orderNo=${order.orderNo}`);
+                const response = await axios.put(`${apiUrl}/orders/packByAwbNo?orderNo=${order.orderNo}`);
                 console.log(`Packed order with AWB No. ${order.orderNo}:`, response.data);
             }
     

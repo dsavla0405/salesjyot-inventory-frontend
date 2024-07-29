@@ -24,6 +24,7 @@ import SwapVertIcon from '@mui/icons-material/SwapVert';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 function Stock() {
+  const apiUrl = process.env.REACT_APP_API_URL;
   const [validated, setValidated] = useState(false);
 
   const [date, setDate] = useState("");
@@ -138,7 +139,7 @@ function Stock() {
             };
 
             // Fetch item details using skucode
-            axios.get(`http://localhost:8080/item/supplier/search/skucode/${item.skucode}`)
+            axios.get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`)
                 .then(response => {
                     // Check if item exists
                     if (response.data.length === 0) {
@@ -176,7 +177,7 @@ const handleSubmit = (event) => {
     event.stopPropagation();
   } else {
     // Fetch item based on supplier and supplier SKU code
-    axios.get(`http://localhost:8080/item/supplier/search/skucode/${skucode}`)
+    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
       .then(response => {
         if (response.data) {
           const item = response.data;
@@ -188,7 +189,7 @@ const handleSubmit = (event) => {
             item: item
           };
           console.log('form data: ', formData);
-          axios.post('http://localhost:8080/stock', formData)
+          axios.post('${apiUrl}/stock', formData)
             .then(response => {
               console.log('POST request successful:', response);
               toast.success('Stock added successfully', {
@@ -229,7 +230,7 @@ const handleRowSubmit = () => {
     };
     console.log('form data: ', formData)
     console.log("id: ", selectedItem.stockId)
-    axios.put(`http://localhost:8080/stock/${selectedItem.stockId}`, formData)
+    axios.put(`${apiUrl}/stock/${selectedItem.stockId}`, formData)
       .then(response => {
         
         console.log('PUT request successful:', response);
@@ -262,11 +263,11 @@ const handleRowClick = (stock) => {
 };
 
 useEffect(() => {
-  axios.get('http://localhost:8080/stock') 
+  axios.get('${apiUrl}/stock') 
     .then(response => setApiData(response.data))
     .catch(error => console.error(error));
     console.log(apiData)
-    axios.get('http://localhost:8080/item/supplier') // Fetch SKU codes and descriptions from the items table
+    axios.get('${apiUrl}/item/supplier') // Fetch SKU codes and descriptions from the items table
     .then(response => {
       // Extract SKU codes and descriptions from the response data and filter out null or undefined values
       const skuData = response.data
@@ -279,7 +280,7 @@ useEffect(() => {
 }, []);
 
 const postData = (data) => {
-    axios.post('http://localhost:8080/stock', data)
+    axios.post('${apiUrl}/stock', data)
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -294,7 +295,7 @@ const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
   // Remove the row from the table
 
-  axios.delete(`http://localhost:8080/stock/${id}`)
+  axios.delete(`${apiUrl}/stock/${id}`)
   .then(response => {
     // Handle success response
     console.log('Row deleted successfully.');
@@ -333,7 +334,7 @@ const downloadTemplate = () => {
 };
 
 const getImg = (skucode) => {
-  axios.get(`http://localhost:8080/item/supplier/search/skucode/${skucode}`)
+  axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
     .then(response => {
       setItemImg(response.data.img || '');
     })
@@ -360,7 +361,7 @@ const exportToExcel = () => {
 };
 
 const updateCount = () => {
-  axios.get('http://localhost:8080/stock/update-counts')
+  axios.get('${apiUrl}/stock/update-counts')
     .then(reponse => {
       console.log("stock count updated successfully");
       toast.success('Stock Count updated successfully', {

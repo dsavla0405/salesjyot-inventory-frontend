@@ -26,6 +26,7 @@ import SwapVertIcon from '@mui/icons-material/SwapVert';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 function ImportOrderForm() {
+  const apiUrl = process.env.REACT_APP_API_URL;
   const [validated, setValidated] = useState(false);
   const [date, setDate] = useState("");
   const [orderNo, setOrderno] = useState("");
@@ -115,7 +116,7 @@ function ImportOrderForm() {
   useEffect(() => {
     const fetchPortalMapping = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/itemportalmapping'); // Replace 'your-api-endpoint' with the actual API endpoint
+        const response = await axios.get('${apiUrl}/itemportalmapping'); // Replace 'your-api-endpoint' with the actual API endpoint
         setPortalMapping(response.data); // Set portal mapping data
         console.log("iitem portal mapping: "+JSON.stringify(portalMapping));
       } catch (error) {
@@ -290,13 +291,13 @@ function ImportOrderForm() {
         console.log('Formatted Data:', formattedData); // Debugging log
   
         // Fetch item based on supplier and supplier SKU code
-        axios.get(`http://localhost:8080/item/supplier/order/search/${item.sellerSKU}/${item.productDescription}`)
+        axios.get(`${apiUrl}/item/supplier/order/search/${item.sellerSKU}/${item.productDescription}`)
           .then(response => {
             if (response.data) {
               const itemsArray = [response.data]; // Store item data in an array
   
               // Fetch item portal mapping details
-              axios.get('http://localhost:8080/itemportalmapping/Portal/PortalSku/SellerSku', {
+              axios.get('${apiUrl}/itemportalmapping/Portal/PortalSku/SellerSku', {
                 params: {
                   portal: item.portal,
                   portalSKU: item.portalSKU,
@@ -316,7 +317,7 @@ function ImportOrderForm() {
                   console.log('Form Data for POST:', formData); // Debugging log
   
                   // Send the POST request
-                  axios.post('http://localhost:8080/orders', formData)
+                  axios.post('${apiUrl}/orders', formData)
                     .then(response => {
                       console.log('POST request successful:', response);
                       toast.success('Order added successfully', {
@@ -367,14 +368,14 @@ const handleSubmit = (event) => {
     return;
   } else {
     // Fetch item based on supplier and supplier SKU code
-    axios.get(`http://localhost:8080/item/supplier/order/search/${sellerSKU}/${productDescription}`)
+    axios.get(`${apiUrl}/item/supplier/order/search/${sellerSKU}/${productDescription}`)
       .then(response => {
         if (response.data) {
           const itemsArray = [response.data]; // Store item data in an array
           console.log("Item fetched successfully");
           console.log("portalSKU = " + portalSKU);
           // Fetch item portal mapping details
-          axios.get('http://localhost:8080/itemportalmapping/Portal/PortalSku/SellerSku', {
+          axios.get('${apiUrl}/itemportalmapping/Portal/PortalSku/SellerSku', {
             params: {
               portal,
               portalSKU,
@@ -408,7 +409,7 @@ const handleSubmit = (event) => {
               console.log('Form data: ', formData);
 
               // Send the POST request
-              axios.post('http://localhost:8080/orders', formData)
+              axios.post('${apiUrl}/orders', formData)
                 .then(response => {
                   console.log('POST request successful:', response);
                   toast.success('Order added successfully', {
@@ -492,7 +493,7 @@ const handleRowSubmit = () => {
     };
     console.log('form data: ', formData)
     console.log("id: ", selectedItem.orderId)
-    axios.put(`http://localhost:8080/orders/${selectedItem.orderId}`, formData)
+    axios.put(`${apiUrl}/orders/${selectedItem.orderId}`, formData)
       .then(response => {
         
         console.log('PUT request successful:', response);
@@ -554,11 +555,11 @@ const handleRowClick = (order) => {
 
 
 useEffect(() => {
-  axios.get('http://localhost:8080/orders') 
+  axios.get('${apiUrl}/orders') 
     .then(response => setApiData(response.data))
       .catch(error => console.error(error));
     console.log(apiData)
-    axios.get('http://localhost:8080/itemportalmapping')
+    axios.get('${apiUrl}/itemportalmapping')
     .then(response => {
       // Extract portal SKUs from the response data
       const portalSKUs = response.data.map(item => item.portalSkuCode);
@@ -574,7 +575,7 @@ useEffect(() => {
     .catch(error => {
       console.error('Error fetching portal SKUs:', error);
     });
-    axios.get('http://localhost:8080/item/supplier')
+    axios.get('${apiUrl}/item/supplier')
     .then(response => {
       // Extract portal SKUs from the response data
       const itemDescription = response.data.map(item => item.description);
@@ -587,7 +588,7 @@ useEffect(() => {
 }, []);
 
 const postData = (data) => {
-    axios.post('http://localhost:8080/orders', data)
+    axios.post('${apiUrl}/orders', data)
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -602,7 +603,7 @@ const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
   // Remove the row from the table
 
-  axios.delete(`http://localhost:8080/orders/${id}`)
+  axios.delete(`${apiUrl}/orders/${id}`)
   .then(response => {
     // Handle success response
     console.log('Row deleted successfully.');
