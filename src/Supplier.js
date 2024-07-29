@@ -38,8 +38,7 @@ function Supplier() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const rowsPerPageOptions = [10, 20, 50];
-  const apiUrl = "https://salesjyot-inventory-backend-production.up.railway.app"
-  ;
+  const apiUrl = "https://salesjyot-inventory-backend-production.up.railway.app";
   // Function to handle change in items per page
   const handleItemsPerPageChange = (e) => {
     setItemsPerPage(parseInt(e.target.value));
@@ -59,8 +58,7 @@ function Supplier() {
     </Form.Group>
   );
   useEffect(() => {
-    console.log('API URL:', process.env.REACT_APP_API_URL);
-    axios.get('${apiUrl}/supplier') 
+    axios.get(`${apiUrl}/supplier`) 
       .then(response => setApiData(response.data))
       .catch(error => console.error(error));
   }, []);
@@ -163,7 +161,7 @@ const handleSubmit = (event) => {
     };
 
     axios
-      .post('${apiUrl}/supplier', formData)
+      .post(`${apiUrl}/supplier`, formData)
       .then((response) => {
         console.log('POST request successful:', response);
         setValidated(false);
@@ -226,7 +224,7 @@ const handleRowClick = (supplier) => {
 };
 
 const postData = (data) => {
-  axios.post('${apiUrl}/supplier', data)
+  axios.post(`${apiUrl}/supplier `, data)
       .then(response => {
           console.log('Data posted successfully:', response);
           setApiData(prevData => [...prevData, response.data]);
