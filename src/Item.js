@@ -159,7 +159,7 @@ function Item() {
 
       console.log(formData)
 
-      axios.post('http://localhost:8080/item/supplier', formData)
+      axios.post('https://salesjyot-inventory-backend-production.up.railway.app/item/supplier', formData)
         .then(response => {
           console.log('POST request successful:', response);
           toast.success('Item added successfully', {
@@ -211,7 +211,7 @@ const handleRefresh = () => {
   }, []);
 
   const fetchData = () => {
-    axios.get('http://localhost:8080/supplier')
+    axios.get('https://salesjyot-inventory-backend-production.up.railway.app/supplier')
       .then(response => {
         setSuppliersList(response.data);
         setParentSKUs(response.data.skucode); 
@@ -220,7 +220,7 @@ const handleRefresh = () => {
         console.error('Error fetching supplier data:', error);
       });
 
-      axios.get('http://localhost:8080/item/supplier')
+      axios.get('https://salesjyot-inventory-backend-production.up.railway.app/item/supplier')
       .then(response => {
         const filteredData = response.data.filter(item => typeof item === 'object');
         setApiData(filteredData); 
@@ -285,7 +285,7 @@ const handleRefresh = () => {
   }, [apiData]);
 
   const handleRowClick = (item) => {
-    axios.get(`http://localhost:8080/item/supplier/${item.itemId}`)
+    axios.get(`https://salesjyot-inventory-backend-production.up.railway.app/item/supplier/${item.itemId}`)
       .then(response => {
         // Check if the response is successful
         if (response.status !== 200) {
@@ -369,7 +369,7 @@ const handleRefresh = () => {
       console.log(formData);
   
       axios
-        .put(`http://localhost:8080/item/supplier/${selectedItem.itemId}`, formData)
+        .put(`https://salesjyot-inventory-backend-production.up.railway.app/item/supplier/${selectedItem.itemId}`, formData)
         .then((response) => {
           console.log("PUT request successful:", response);
           toast.success('Item updated successfully', {
@@ -444,7 +444,7 @@ const handleRefresh = () => {
         };
 
         // Fetch supplier based on supplier name
-        axios.get(`http://localhost:8080/suppliers/search/name/${item.supplierName}`)
+        axios.get(`https://salesjyot-inventory-backend-production.up.railway.app/suppliers/search/name/${item.supplierName}`)
           .then(response => {
             if (response.data.length === 0) {
               toast.error('Supplier not found with name: ' + item.supplierName);
@@ -455,7 +455,7 @@ const handleRefresh = () => {
             formData.suppliers = [response.data];
 
             // Post formData
-            axios.post('http://localhost:8080/item/supplier', formData)
+            axios.post('https://salesjyot-inventory-backend-production.up.railway.app/item/supplier', formData)
               .then(response => {
                 console.log('POST request successful:', response);
                 toast.success('Item added successfully', {
@@ -482,7 +482,7 @@ const handleRefresh = () => {
 
 const fetchSupplier = async (supplierName, phone) => {
     try {
-        const response = await axios.get(`http://localhost:8080/supplier/${supplierName}/${phone}`);
+        const response = await axios.get(`https://salesjyot-inventory-backend-production.up.railway.app/supplier/${supplierName}/${phone}`);
         console.log('Supplier fetched successfully:', response.data);
         return [response.data]; // Return an array with the supplier
     } catch (error) {
@@ -493,7 +493,7 @@ const fetchSupplier = async (supplierName, phone) => {
 
 const postData = async (data) => {
     try {
-        const response = await axios.post('http://localhost:8080/item/supplier', data);
+        const response = await axios.post('https://salesjyot-inventory-backend-production.up.railway.app/item/supplier', data);
         console.log('Data posted successfully:', response);
         setApiData(prevData => [...prevData, response.data]);
         toast.success('Item added successfully');
@@ -531,7 +531,7 @@ const postData = async (data) => {
     console.log("Deleting row with id:", id);
     // Remove the row from the table
   
-    axios.delete(`http://localhost:8080/item/supplier/${id}`)
+    axios.delete(`https://salesjyot-inventory-backend-production.up.railway.app/item/supplier/${id}`)
     .then(response => {
       // Handle success response
       console.log('Row deleted successfully.');
