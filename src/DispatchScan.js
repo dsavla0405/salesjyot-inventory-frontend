@@ -51,7 +51,7 @@ const DispatchScan = () => {
 
     const fetchOrders = async () => {
         try {
-            const response = await axios.get('${apiUrl}/orders/notDispatched');
+            const response = await axios.get(`${apiUrl}/orders/notDispatched`);
             setOrders(response.data); // Assuming response.data is an array of orders
         } catch (error) {
             console.error('Error fetching orders:', error);
