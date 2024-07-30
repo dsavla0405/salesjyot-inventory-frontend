@@ -48,7 +48,7 @@ const PackScan = () => {
     // Function to fetch orders from the backend
     const fetchOrders = async () => {
         try {
-            const response = await axios.get('${apiUrl}/orders/notPacked');
+            const response = await axios.get(`${apiUrl}/orders/notPacked`);
             setOrders(response.data); // Assuming response.data is an array of orders
             console.log("orders = " + orders);
         } catch (error) {

@@ -90,7 +90,7 @@ const PicklistComponent = () => {
   );
 
   useEffect (() => {
-    axios.get('${apiUrl}/picklists/orderData')
+    axios.get(`${apiUrl}/picklists/orderData`)
       .then(response => {
         setOrderData(response.data);
         console.log("orderData = " + JSON.stringify(orderData));
@@ -101,7 +101,7 @@ const PicklistComponent = () => {
   }, [])
 
   useEffect(() => {
-    axios.get('${apiUrl}/picklists/not/generated/orders')
+    axios.get(`${apiUrl}/picklists/not/generated/orders`)
       .then(response => {
         setOrders(response.data);
       })
@@ -111,7 +111,7 @@ const PicklistComponent = () => {
   }, [])
 
   useEffect(() => {
-    axios.get('${apiUrl}/picklists/merged/picklist')
+    axios.get(`${apiUrl}/picklists/merged/picklist`)
       .then(response => {
         setPicklistData(response.data);
       })
@@ -205,7 +205,7 @@ const PicklistComponent = () => {
   
   const generatePicklist = () => {
     // Assuming your API endpoint for fetching all picklists is '/picklists'
-    axios.get('${apiUrl}/picklists')
+    axios.get(`${apiUrl}/picklists`)
       .then(response => {
         const picklists = response.data;
         if (picklists.length === 0) {
@@ -249,7 +249,7 @@ const generatePicklistWithNumber = async (pickListNumber) => {
             console.log("selected order = " + JSON.stringify(selectedOrder));
 
             try {
-                const response = await axios.post('${apiUrl}/picklistdata', selectedOrder);
+                const response = await axios.post(`${apiUrl}/picklistdata`, selectedOrder);
                 console.log('Picklist data generated successfully:', response.data);
             } catch (error) {
                 console.error('Error generating picklist data:', error);
@@ -258,7 +258,7 @@ const generatePicklistWithNumber = async (pickListNumber) => {
         }));
 
         // Then, post to 'picklists' endpoint for all selected orders
-        const response = await axios.post('${apiUrl}/picklists', {
+        const response = await axios.post(`${apiUrl}/picklists`, {
             pickListNumber,
             orders: selectedOrders
         });
@@ -271,8 +271,8 @@ const generatePicklistWithNumber = async (pickListNumber) => {
 
         // Fetch updated picklist and orders data
         await Promise.all([
-            axios.get('${apiUrl}/picklists/merged/picklist'),
-            axios.get('${apiUrl}/picklists/not/generated/orders')
+            axios.get(`${apiUrl}/picklists/merged/picklist`),
+            axios.get(`${apiUrl}/picklists/not/generated/orders`)
         ]).then(([picklistResponse, ordersResponse]) => {
             setPicklistData(picklistResponse.data);
             setOrders(ordersResponse.data);
@@ -367,7 +367,7 @@ const handleDelete = (pickListNumber) => {
       autoClose: 2000 // Close after 2 seconds
     });
     setPicklistData(prevData => prevData.filter(row => row.pickListNumber !== pickListNumber));
-    axios.get('${apiUrl}/picklists/not/generated/orders')
+    axios.get(`${apiUrl}/picklists/not/generated/orders`)
       .then(response => {
         setOrders(response.data);
       })

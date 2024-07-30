@@ -123,7 +123,7 @@ function Bom() {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   
   const fetchData = () => {
-    axios.get('${apiUrl}/item/supplier') // Fetch SKU codes and descriptions from the items table
+    axios.get(`${apiUrl}/item/supplier`) // Fetch SKU codes and descriptions from the items table
       .then(response => {
         // Extract SKU codes and descriptions from the response data and filter out null or undefined values
         const skuData = response.data
@@ -136,7 +136,7 @@ function Bom() {
   }
 
   useEffect(() => {
-    axios.get('${apiUrl}/item/supplier') // Fetch SKU codes and descriptions from the items table
+    axios.get(`${apiUrl}/item/supplier`) // Fetch SKU codes and descriptions from the items table
       .then(response => {
         // Extract SKU codes and descriptions from the response data and filter out null or undefined values
         const skuData = response.data
@@ -149,7 +149,7 @@ function Bom() {
   }, []);
 
   const postData = (data) => {
-    axios.post('${apiUrl}/boms', data)
+    axios.post(`${apiUrl}/boms`, data)
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -248,7 +248,7 @@ const handleSubmit = (event) => {
         };
 
         // Send POST request with formData
-        axios.post('${apiUrl}/boms' , formData)
+        axios.post(`${apiUrl}/boms` , formData)
           .then(response => {
             console.log('POST request successful:', response);
             toast.success('BOM added successfully', {
@@ -350,7 +350,7 @@ const handleRowSubmit = () => {
   };
   
   useEffect(() => {
-    axios.get('${apiUrl}/boms') 
+    axios.get(`${apiUrl}/boms`) 
       .then(response => setApiData(response.data))
       .catch(error => console.error(error));
     

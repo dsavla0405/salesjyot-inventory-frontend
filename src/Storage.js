@@ -99,7 +99,7 @@ function Storage() {
 
 
   const postData = (data) => {
-    axios.post('${apiUrl}/storage', data)
+    axios.post(`${apiUrl}/storage`, data)
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -153,7 +153,7 @@ const handleFileUpload = (e) => {
                   console.log('Form data:', formData);
 
                   // Send data to server
-                  axios.post('${apiUrl}/your-endpoint', formData)
+                  axios.post(`${apiUrl}/your-endpoint`, formData)
                       .then(response => {
                           console.log('POST request successful:', response);
                           toast.success('Data imported successfully', {
@@ -276,13 +276,13 @@ const handleSearchChange = (event) => {
 };
 
 useEffect(() => {
-  axios.get('${apiUrl}/storage') 
+  axios.get(`${apiUrl}/storage`) 
     .then(response => setApiData(response.data))
       .catch(error => console.error(error));
     console.log("apidata = "+JSON.stringify(apiData))
 
    
-      axios.get('${apiUrl}/item/supplier') // Fetch SKU codes and descriptions from the items table
+      axios.get(`${apiUrl}/item/supplier`) // Fetch SKU codes and descriptions from the items table
         .then(response => {
           // Extract SKU codes and descriptions from the response data and filter out null or undefined values
           const skuData = response.data

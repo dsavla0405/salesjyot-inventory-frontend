@@ -160,7 +160,7 @@ const handleSubmit = (event) => {
             item: item
           };
           console.log('form data: ', formData);
-          axios.post('${apiUrl}/return', formData)
+          axios.post(`${apiUrl}/return`, formData)
             .then(response => {
               console.log('POST request successful:', response);
               toast.success('Return added successfully', {
@@ -257,11 +257,11 @@ const handleRowClick = (stock) => {
 
 
 useEffect(() => {
-  axios.get('${apiUrl}/return') 
+  axios.get(`${apiUrl}/return`) 
     .then(response => setApiData(response.data))
     .catch(error => console.error(error));
     console.log(apiData)
-    axios.get('${apiUrl}/item/supplier') // Fetch SKU codes and descriptions from the items table
+    axios.get(`${apiUrl}/item/supplier`) // Fetch SKU codes and descriptions from the items table
     .then(response => {
       // Extract SKU codes and descriptions from the response data and filter out null or undefined values
       const skuData = response.data
@@ -274,7 +274,7 @@ useEffect(() => {
 }, []);
 
 const postData = (data) => {
-    axios.post('${apiUrl}/return', data)
+    axios.post(`${apiUrl}/return`, data)
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);

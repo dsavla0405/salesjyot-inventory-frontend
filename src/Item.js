@@ -159,7 +159,7 @@ function Item() {
 
       console.log(formData)
 
-      axios.post('${apiUrl}/item/supplier', formData)
+      axios.post(`${apiUrl}/item/supplier`, formData)
         .then(response => {
           console.log('POST request successful:', response);
           toast.success('Item added successfully', {
@@ -211,7 +211,7 @@ const handleRefresh = () => {
   }, []);
 
   const fetchData = () => {
-    axios.get('${apiUrl}/supplier')
+    axios.get(`${apiUrl}/supplier`)
       .then(response => {
         setSuppliersList(response.data);
         setParentSKUs(response.data.skucode); 
@@ -220,7 +220,7 @@ const handleRefresh = () => {
         console.error('Error fetching supplier data:', error);
       });
 
-      axios.get('${apiUrl}/item/supplier')
+      axios.get(`${apiUrl}/item/supplier`)
       .then(response => {
         const filteredData = response.data.filter(item => typeof item === 'object');
         setApiData(filteredData); 
@@ -455,7 +455,7 @@ const handleRefresh = () => {
             formData.suppliers = [response.data];
 
             // Post formData
-            axios.post('${apiUrl}/item/supplier', formData)
+            axios.post(`${apiUrl}/item/supplier`, formData)
               .then(response => {
                 console.log('POST request successful:', response);
                 toast.success('Item added successfully', {
@@ -493,7 +493,7 @@ const fetchSupplier = async (supplierName, phone) => {
 
 const postData = async (data) => {
     try {
-        const response = await axios.post('${apiUrl}/item/supplier', data);
+        const response = await axios.post(`${apiUrl}/item/supplier`, data);
         console.log('Data posted successfully:', response);
         setApiData(prevData => [...prevData, response.data]);
         toast.success('Item added successfully');

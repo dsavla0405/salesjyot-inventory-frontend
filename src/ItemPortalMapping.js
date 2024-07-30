@@ -142,7 +142,7 @@ function ItemPortalMapping() {
                 item: item
               };
               console.log('form data: ', formData);
-              axios.post('${apiUrl}/itemportalmapping', formData)
+              axios.post(`${apiUrl}/itemportalmapping`, formData)
                 .then(response => {
                   console.log('POST request successful:', response);
                   toast.success('Item Portal Mapping added successfully', {
@@ -370,7 +370,7 @@ const handleSupplierChange = (event, name) => {
     
  
       useEffect(() => {
-        axios.get('${apiUrl}/supplier')
+        axios.get(`${apiUrl}/supplier`)
         .then(response => {
           setSuppliersList(response.data); 
         })
@@ -378,14 +378,14 @@ const handleSupplierChange = (event, name) => {
           console.error('Error fetching supplier data:', error);
         });
 
-        axios.get('${apiUrl}/itemportalmapping') 
+        axios.get(`${apiUrl}/itemportalmapping`) 
           .then(response => setApiData(response.data))
           .catch(error => console.error(error));
           console.log(apiData)
       }, []);
   
       const fetchData = () => {
-        axios.get('${apiUrl}/supplier')
+        axios.get(`${apiUrl}/supplier`)
           .then(response => {
             setSuppliersList(response.data); 
           })
@@ -395,7 +395,7 @@ const handleSupplierChange = (event, name) => {
       }
     
   const postData = (data) => {
-    axios.post('${apiUrl}/itemportalmapping', data)
+    axios.post(`${apiUrl}/itemportalmapping`, data)
       .then(response => {
         // Handle successful response
         console.log('Data posted successfully:', response);

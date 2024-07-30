@@ -189,7 +189,7 @@ const handleSubmit = (event) => {
             item: item
           };
           console.log('form data: ', formData);
-          axios.post('${apiUrl}/stock', formData)
+          axios.post(`${apiUrl}/stock`, formData)
             .then(response => {
               console.log('POST request successful:', response);
               toast.success('Stock added successfully', {
@@ -263,11 +263,11 @@ const handleRowClick = (stock) => {
 };
 
 useEffect(() => {
-  axios.get('${apiUrl}/stock') 
+  axios.get(`${apiUrl}/stock`) 
     .then(response => setApiData(response.data))
     .catch(error => console.error(error));
     console.log(apiData)
-    axios.get('${apiUrl}/item/supplier') // Fetch SKU codes and descriptions from the items table
+    axios.get(`${apiUrl}/item/supplier`) // Fetch SKU codes and descriptions from the items table
     .then(response => {
       // Extract SKU codes and descriptions from the response data and filter out null or undefined values
       const skuData = response.data
@@ -280,7 +280,7 @@ useEffect(() => {
 }, []);
 
 const postData = (data) => {
-    axios.post('${apiUrl}/stock', data)
+    axios.post(`${apiUrl}/stock`, data)
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -361,7 +361,7 @@ const exportToExcel = () => {
 };
 
 const updateCount = () => {
-  axios.get('${apiUrl}/stock/update-counts')
+  axios.get(`${apiUrl}/stock/update-counts`)
     .then(reponse => {
       console.log("stock count updated successfully");
       toast.success('Stock Count updated successfully', {

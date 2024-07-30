@@ -50,7 +50,7 @@ const PicklistComponent = () => {
   );
 
   useEffect (() => {
-    axios.get('${apiUrl}/packinglist/orderData')
+    axios.get(`${apiUrl}/packinglist/orderData`)
       .then(response => {
         setOrderData(response.data);
         console.log("orderData = " + JSON.stringify(orderData));
@@ -61,7 +61,7 @@ const PicklistComponent = () => {
   }, [])
 
   useEffect(() => {
-    axios.get('${apiUrl}/packinglist/not/generated/packinglist/orders')
+    axios.get(`${apiUrl}/packinglist/not/generated/packinglist/orders`)
       .then(response => {
         setOrders(response.data);
       })
@@ -71,7 +71,7 @@ const PicklistComponent = () => {
   }, [])
 
   useEffect(() => {
-    axios.get('${apiUrl}/packinglist/getData')
+    axios.get(`${apiUrl}/packinglist/getData`)
       .then(response => {
         const mergedPicklistData = mergeRowsWithSamePicklist(response.data);
         setPicklistData(response.data);
@@ -149,7 +149,7 @@ const PicklistComponent = () => {
   
   const generatePicklist = () => {
     // Assuming your API endpoint for fetching all picklists is '/picklists'
-    axios.get('${apiUrl}/packinglist')
+    axios.get(`${apiUrl}/packinglist`)
       .then(response => {
         const picklists = response.data;
         if (picklists.length === 0) {
@@ -191,7 +191,7 @@ const PicklistComponent = () => {
       
       try {
         console.log("selected order = " + JSON.stringify(selectedOrder));
-        const response = await axios.post('${apiUrl}/packinglistdata', selectedOrder);
+        const response = await axios.post(`${apiUrl}/packinglistdata`, selectedOrder);
         console.log("after post: " + JSON.stringify(response.data));
       } catch (error) {
         console.error('Error posting order:', error);
@@ -207,14 +207,14 @@ const PicklistComponent = () => {
   
     // Refresh orders and picklist data
     try {
-      const ordersResponse = await axios.get('${apiUrl}/packinglist/not/generated/packinglist/orders');
+      const ordersResponse = await axios.get(`${apiUrl}/packinglist/not/generated/packinglist/orders`);
       setOrders(ordersResponse.data);
     } catch (error) {
       console.log("error getting orders: " + error);
     }
   
     try {
-      const picklistResponse = await axios.get('${apiUrl}/packinglist/getData');
+      const picklistResponse = await axios.get(`${apiUrl}/packinglist/getData`);
       const mergedPicklistData = mergeRowsWithSamePicklist(picklistResponse.data);
       setPicklistData(mergedPicklistData);
       console.log("picklistData = " + JSON.stringify(picklistData));
@@ -224,7 +224,7 @@ const PicklistComponent = () => {
   
     // Generate picklist
     try {
-      const response = await axios.post('${apiUrl}/packinglist', { packingListNumber, orders: selectedOrders });
+      const response = await axios.post(`${apiUrl}/packinglist`, { packingListNumber, orders: selectedOrders });
       console.log('Picklist generated successfully:', response.data);
       toast.success('PickList generated successfully', {
         autoClose: 2000 // Close after 2 seconds
@@ -317,7 +317,7 @@ const handleDelete = (packingListNumber) => {
 
       // Update the picklistData state to remove the deleted row
       setPicklistData(prevData => prevData.filter(row => row.packingListNumber !== packingListNumber));
-      axios.get('${apiUrl}/packinglist/getData')
+      axios.get(`${apiUrl}/packinglist/getData`)
       .then(response => {
         const mergedPicklistData = mergeRowsWithSamePicklist(response.data);
         setPicklistData(response.data);
@@ -327,7 +327,7 @@ const handleDelete = (packingListNumber) => {
         console.error(error);
       });
       // Fetch updated orders
-      return axios.get('${apiUrl}/packinglist/not/generated/packinglist/orders');
+      return axios.get(`${apiUrl}/packinglist/not/generated/packinglist/orders`);
     })
     .then(response => {
       // Update the orders state with the new data

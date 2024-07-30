@@ -107,7 +107,7 @@ function StockInward() {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const postData = (data) => {
-    axios.post('${apiUrl}/stockInward', data)
+    axios.post(`${apiUrl}/stockInward`, data)
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -193,7 +193,7 @@ const handleSubmit = (event) => {
             item: item
           };
           console.log('form data: ', formData);
-          axios.post('${apiUrl}/stockInward', formData)
+          axios.post(`${apiUrl}/stockInward`, formData)
             .then(response => {
               console.log('POST request successful:', response);
               toast.success('StoockInward added successfully', {
@@ -286,11 +286,11 @@ const handleRowClick = (stock) => {
 
 
 useEffect(() => {
-  axios.get('${apiUrl}/stockInward') 
+  axios.get(`${apiUrl}/stockInward`) 
     .then(response => setApiData(response.data))
     .catch(error => console.error(error));
     console.log(apiData)
-    axios.get('${apiUrl}/item/supplier') // Fetch SKU codes and descriptions from the items table
+    axios.get(`${apiUrl}/item/supplier`) // Fetch SKU codes and descriptions from the items table
     .then(response => {
       // Extract SKU codes and descriptions from the response data and filter out null or undefined values
       const skuData = response.data

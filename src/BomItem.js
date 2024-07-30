@@ -77,7 +77,7 @@ function Bom() {
   };
 
   const fetchData = () => {
-    axios.get('${apiUrl}/boms')
+    axios.get(`${apiUrl}/boms`)
       .then(response => {
         setBomCodeList(response.data); 
       })
@@ -85,7 +85,7 @@ function Bom() {
         console.error('Error fetching supplier data:', error);
       });
 
-      axios.get('${apiUrl}/item/supplier')
+      axios.get(`${apiUrl}/item/supplier`)
       .then(response => {
         setBomItemsList(response.data); 
       })
@@ -129,7 +129,7 @@ function Bom() {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   
   const postData = (data) => {
-    axios.post('${apiUrl}/bomItems', data)
+    axios.post(`${apiUrl}/bomItems`, data)
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -322,19 +322,19 @@ const handleSubmit = (event) => {
   };
   
   useEffect(() => {
-    axios.get('${apiUrl}/bomItems') 
+    axios.get(`${apiUrl}/bomItems`) 
       .then(response => setApiData(response.data))
       .catch(error => console.error(error));
   }, []);
 
   useEffect(() => {
-    axios.get('${apiUrl}/boms') 
+    axios.get(`${apiUrl}/boms`) 
       .then(response => setBomCodeList(response.data))
       .catch(error => console.error(error));
   }, []);
 
   useEffect(() => {
-    axios.get('${apiUrl}/item/supplier') 
+    axios.get(`${apiUrl}/item/supplier`) 
       .then(response => setBomItemsList(response.data))
       .catch(error => console.error(error));
   }, []);
@@ -383,7 +383,7 @@ const handleDelete = (id) => {
 };
 
 useEffect(() => {
-    axios.get('${apiUrl}/boms') 
+    axios.get(`${apiUrl}/boms`) 
       .then(response => setBomsList(response.data))
       .catch(error => console.error(error));
   }, []);

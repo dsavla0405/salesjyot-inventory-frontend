@@ -116,7 +116,7 @@ function ImportOrderForm() {
   useEffect(() => {
     const fetchPortalMapping = async () => {
       try {
-        const response = await axios.get('${apiUrl}/itemportalmapping'); // Replace 'your-api-endpoint' with the actual API endpoint
+        const response = await axios.get(`${apiUrl}/itemportalmapping`); // Replace 'your-api-endpoint' with the actual API endpoint
         setPortalMapping(response.data); // Set portal mapping data
         console.log("iitem portal mapping: "+JSON.stringify(portalMapping));
       } catch (error) {
@@ -297,7 +297,7 @@ function ImportOrderForm() {
               const itemsArray = [response.data]; // Store item data in an array
   
               // Fetch item portal mapping details
-              axios.get('${apiUrl}/itemportalmapping/Portal/PortalSku/SellerSku', {
+              axios.get(`${apiUrl}/itemportalmapping/Portal/PortalSku/SellerSku`, {
                 params: {
                   portal: item.portal,
                   portalSKU: item.portalSKU,
@@ -317,7 +317,7 @@ function ImportOrderForm() {
                   console.log('Form Data for POST:', formData); // Debugging log
   
                   // Send the POST request
-                  axios.post('${apiUrl}/orders', formData)
+                  axios.post(`${apiUrl}/orders`, formData)
                     .then(response => {
                       console.log('POST request successful:', response);
                       toast.success('Order added successfully', {
@@ -375,7 +375,7 @@ const handleSubmit = (event) => {
           console.log("Item fetched successfully");
           console.log("portalSKU = " + portalSKU);
           // Fetch item portal mapping details
-          axios.get('${apiUrl}/itemportalmapping/Portal/PortalSku/SellerSku', {
+          axios.get(`${apiUrl}/itemportalmapping/Portal/PortalSku/SellerSku`, {
             params: {
               portal,
               portalSKU,
@@ -409,7 +409,7 @@ const handleSubmit = (event) => {
               console.log('Form data: ', formData);
 
               // Send the POST request
-              axios.post('${apiUrl}/orders', formData)
+              axios.post(`${apiUrl}/orders`, formData)
                 .then(response => {
                   console.log('POST request successful:', response);
                   toast.success('Order added successfully', {
@@ -555,11 +555,11 @@ const handleRowClick = (order) => {
 
 
 useEffect(() => {
-  axios.get('${apiUrl}/orders') 
+  axios.get(`${apiUrl}/orders`) 
     .then(response => setApiData(response.data))
       .catch(error => console.error(error));
     console.log(apiData)
-    axios.get('${apiUrl}/itemportalmapping')
+    axios.get(`${apiUrl}/itemportalmapping`)
     .then(response => {
       // Extract portal SKUs from the response data
       const portalSKUs = response.data.map(item => item.portalSkuCode);
@@ -575,7 +575,7 @@ useEffect(() => {
     .catch(error => {
       console.error('Error fetching portal SKUs:', error);
     });
-    axios.get('${apiUrl}/item/supplier')
+    axios.get(`${apiUrl}/item/supplier`)
     .then(response => {
       // Extract portal SKUs from the response data
       const itemDescription = response.data.map(item => item.description);
@@ -588,7 +588,7 @@ useEffect(() => {
 }, []);
 
 const postData = (data) => {
-    axios.post('${apiUrl}/orders', data)
+    axios.post(`${apiUrl}/orders`, data)
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
