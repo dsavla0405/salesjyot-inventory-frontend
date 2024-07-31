@@ -444,7 +444,7 @@ const handleRefresh = () => {
         };
 
         // Fetch supplier based on supplier name
-        axios.get(`${apiUrl}/suppliers/search/name/${item.supplierName}`)
+        axios.get(`${apiUrl}/supplier/name/${item.supplierName}`)
           .then(response => {
             if (response.data.length === 0) {
               toast.error('Supplier not found with name: ' + item.supplierName);
