@@ -291,10 +291,6 @@ function ImportOrderForm() {
         console.log('Formatted Data:', formattedData); // Debugging log
   
         // Fetch item based on supplier and supplier SKU code
-        axios.get(`${apiUrl}/item/supplier/order/search/${item.sellerSKU}/${item.productDescription}`)
-          .then(response => {
-            if (response.data) {
-              const itemsArray = [response.data]; // Store item data in an array
   
               // Fetch item portal mapping details
               axios.get(`${apiUrl}/itemportalmapping/Portal/PortalSku/SellerSku`, {
@@ -306,7 +302,7 @@ function ImportOrderForm() {
               })
                 .then(res => {
                   const ipm = res.data;
-  
+                  const itemsArray = [res.data.item];
                   // Form the data to be sent in the POST request
                   const formData = {
                     ...formattedData,
@@ -336,14 +332,8 @@ function ImportOrderForm() {
                   console.error('Error fetching item portal mapping:', error);
                   toast.error('Failed to fetch item portal mapping: ' + error.response?.data?.message || error.message);
                 });
-            } else {
-              console.error('No item found for the specified supplier and supplier SKU code.');
-            }
-          })
-          .catch(error => {
-            console.error('Error fetching item:', error);
-            toast.error('Failed to fetch item: ' + error.response?.data?.message || error.message);
-          });
+            
+          
       });
     };
   

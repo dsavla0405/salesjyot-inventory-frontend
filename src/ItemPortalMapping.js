@@ -399,7 +399,10 @@ const handleSupplierChange = (event, name) => {
       .then(response => {
         // Handle successful response
         console.log('Data posted successfully:', response);
-        setApiData([...apiData, response.data]);
+        toast.success('Item Portal Mapping added successfully', {
+          autoClose: 2000 // Close after 2 seconds
+        });
+        setApiData(prevData => [...prevData, response.data]);
 
       })
       .catch(error => {

@@ -325,6 +325,25 @@ const exportToExcel = () => {
   saveAs(new Blob([s2ab(wbout)], { type: 'application/octet-stream' }), 'ReturnsData.xlsx');
 };
 
+const downloadTemplate = () => {
+  const templateData = [
+      {date: '', skucode: '', portal: '', orderNo: '', returnCode: '', trackingNumber: '', okStock: '', sentForRaisingTicketOn: '', sentForTicketOn: ''} 
+  ];
+  const ws = XLSX.utils.json_to_sheet(templateData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Template');
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+
+  function s2ab(s) {
+      const buf = new ArrayBuffer(s.length);
+      const view = new Uint8Array(buf);
+      for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
+      return buf;
+  }
+
+  saveAs(new Blob([s2ab(wbout)], { type: 'application/octet-stream' }), 'bomTemplate.xlsx');
+};
+
     return (
         <div>
             <ToastContainer position="top-right" />
@@ -475,6 +494,15 @@ const exportToExcel = () => {
       )}
       <span style={{ margin: '0 10px' }}>or</span>
             <input type="file" onChange={handleFileUpload} />
+            <span style={{margin: "auto"}}></span>
+            <Button
+              variant="contained"
+              tabIndex={-1}
+              style={{ height: '33px', backgroundColor: 'orange', color: 'white', fontWeight: 'bolder' }}
+              onClick={downloadTemplate}
+            >
+              {<CloudUploadIcon style={{marginBottom: "5px"}}/>} Download Template
+            </Button>
             </div>
             </Form>
             </AccordionDetails>
