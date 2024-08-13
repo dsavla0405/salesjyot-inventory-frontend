@@ -592,10 +592,10 @@ const handleSupplierChange = (event, name) => {
                   <th>
                   <SwapVertIcon style = {{cursor: 'pointer', marginRight: "2%"}}variant="link" onClick={() => requestSort('sellerSkuCode')}>
                   </SwapVertIcon>
-                    Supplier SKUCode
+                    SKUCode
                   <span style={{ margin: '0 10px' }}><input
                   type="text"
-                  placeholder="Search by SupplierSKU"
+                  placeholder="Search by SKUCode"
                   value={searchTermSkucode}
                   onChange={(e) => setSearchTermSkucode(e.target.value)}
                 /></span>
@@ -622,7 +622,7 @@ const handleSupplierChange = (event, name) => {
                   <td>{ipm.portal ? ipm.portal : ''}</td>
                   <td>{ipm.portalSkuCode ? ipm.portalSkuCode : ''}</td>
                   <td>{ipm.supplier ? ipm.supplier.supplierName : ''}</td>
-                  <td>{ipm.item.sellerSKUCode ? ipm.item.sellerSKUCode : ''}</td>
+                  <td>{ipm.item.skucode ? ipm.item.skucode : ''}</td>
                 </tr>
               ))}
             </tbody>
