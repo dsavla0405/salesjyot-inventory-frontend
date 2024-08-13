@@ -444,13 +444,14 @@ const handleRefresh = () => {
         };
 
         // Fetch supplier based on supplier name
-        axios.get(`${apiUrl}/supplier/name/${item.supplierName}`)
+        axios.get(`${apiUrl}/supplier/name/${item.suppliers}`)
           .then(response => {
+            console.log("response data for supplier = " + response.data);
             if (response.data.length === 0) {
               toast.error('Supplier not found with name: ' + item.supplierName);
               return;
             }
-
+            console.log("response data  = " + response.data);
             // Add suppliers to formData
             formData.suppliers = [response.data];
 
