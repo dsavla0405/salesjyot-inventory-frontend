@@ -30,7 +30,7 @@ function ItemPortalMapping() {
     const [validated, setValidated] = useState(false);
     const [portal, setPortal] = useState("");
     const [supplier, setSeller] = useState(null);
-    const [sellerSkuCode, setSellerSKU] = useState("");
+    const [skucode, setSkucode] = useState("");
     const [portalSkuCode, setPortalSKU] = useState("");
     const [supplierId, setSupplierId] = useState("");
     const [apiData, setApiData] = useState([]); 
@@ -39,10 +39,10 @@ function ItemPortalMapping() {
     const [selectedItem, setSelectedItem] = useState(null);
     const [searchTermPortal, setSearchTermPortal] = useState('');
     const [searchTermSupplier, setSearchTermSupplier] = useState('');
-    const [searchTermSellerSKU, setSearchTermSellerSKU] = useState('');
+    const [searchTermSkucode, setSearchTermSkucode] = useState('');
     const [searchTermPortalSKU, setSearchTermPortalSKU] = useState('');
     const [isRotating, setIsRotating] = useState(false);
-    const [sellerSKUList, setSellerSKUList] = useState([]);
+    const [skucodeList, setSkucodeList] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
@@ -81,7 +81,7 @@ function ItemPortalMapping() {
         (!searchTermPortal || (supplier.portal && supplier.portal.toLowerCase().includes(searchTermPortal.toLowerCase()))) &&
         (!searchTermSupplier || (supplier.supplier && supplier.supplier.supplierName.toLowerCase().includes(searchTermSupplier.toLowerCase()))) &&
         (!searchTermPortalSKU || (supplier.portalSkuCode && supplier.portalSkuCode.toLowerCase().includes(searchTermPortalSKU.toLowerCase()))) &&
-        (!searchTermSellerSKU || (supplier.sellerSkuCode && supplier.sellerSkuCode.toLowerCase().includes(searchTermSellerSKU.toLowerCase())))
+        (!searchTermSkucode || (supplier.skucode && supplier.skucode.toLowerCase().includes(searchTermSkucode.toLowerCase())))
       );
     });
 
@@ -127,9 +127,9 @@ function ItemPortalMapping() {
         event.stopPropagation();
       } else {
         // Fetch item based on supplier and supplier SKU code
-        console.log("supplier = " + supplierId + "sellerSKU =" + sellerSkuCode);
+        console.log("supplier = " + supplierId + "sellerSKU =" + skucode);
 
-        axios.get(`${apiUrl}/item/supplier/search/${supplierId}/${sellerSkuCode}`)
+        axios.get(`${apiUrl}/item/supplier/search/${supplierId}/${skucode}`)
           .then(response => {
             if (response.data) {
               const item = response.data;
@@ -138,7 +138,7 @@ function ItemPortalMapping() {
                 portal: portalUpperCase,
                 supplier,
                 portalSkuCode,
-                sellerSkuCode,
+                skucode,
                 item: item
               };
               console.log('form data: ', formData);
@@ -152,7 +152,7 @@ function ItemPortalMapping() {
                   setApiData([...apiData, response.data]);
                   setPortal(""); 
                   setPortalSKU(""); 
-                  setSellerSKU("");
+                  setSkucode("");
                   setSeller(""); 
                 })
                 .catch(error => {
@@ -173,7 +173,7 @@ function ItemPortalMapping() {
 
     const downloadTemplate = () => {
       const templateData = [
-          {portal: '', supplierName: '', portalSkuCode: '', sellerSkuCode: ''} 
+          {portal: '', supplierName: '', portalSkuCode: '', skucode: ''} 
       ];
       const ws = XLSX.utils.json_to_sheet(templateData);
       const wb = XLSX.utils.book_new();
@@ -202,7 +202,7 @@ function ItemPortalMapping() {
         const jsonData = XLSX.utils.sheet_to_json(sheet);
     
         jsonData.forEach(item => {
-          const { portalSkuCode, portal, sellerSkuCode, supplierName } = item;
+          const { portalSkuCode, portal, skucode, supplierName } = item;
     
           // // Data Validation (optional but recommended)
           // if (!portal || !sellerSkuCode || !supplierName || !phone) {
@@ -211,12 +211,12 @@ function ItemPortalMapping() {
           //   return;
           // }
     
-          fetchSupplierAndItem(supplierName, sellerSkuCode)
+          fetchSupplierAndItem(supplierName, skucode)
             .then(data => {
               console.log(data);
               // Modify data as needed before posting (optional)
               data.portal = portal;
-              data.sellerSkuCode = sellerSkuCode;
+              data.skucode = skucode;
               data.portalSkuCode = portalSkuCode; // Use optional chaining for potential missing item.portalSkuCode
               postData(data);
             })
@@ -231,7 +231,7 @@ function ItemPortalMapping() {
     };
     
   
-  const fetchSupplierAndItem = (supplierName, sellerSkuCode) => {
+  const fetchSupplierAndItem = (supplierName, skucode) => {
       console.log("in fetch");
   
       // First API call to fetch supplier details
@@ -241,14 +241,14 @@ function ItemPortalMapping() {
               console.log('Supplier fetched successfully:', supplier);
   
               // Second API call to fetch item using the retrieved supplier details
-              return axios.get(`${apiUrl}/item/supplier/search/${supplier.supplierId}/${sellerSkuCode}`)
+              return axios.get(`${apiUrl}/item/supplier/search/${supplier.supplierId}/${skucode}`)
                   .then(itemResponse => {
                       const item = itemResponse.data;
                       console.log('Item fetched successfully:', item);
                       const formattedData = {
                           portal: item.portal,
                           supplier: supplier,
-                          sellerSkuCode: sellerSkuCode,
+                          skucode: skucode,
                           portalSkuCode: item.portalSkuCode,
                           item: item
                       };
@@ -279,8 +279,8 @@ const handleSupplierChange = (event, name) => {
     // Split the response data into an array of strings, assuming it's comma-separated
     const sellerSKUs = response.data.split(', ');
     // Update the sellerSKUList state with the fetched values
-    setSellerSKUList(prevSellerSKUs => [...prevSellerSKUs, ...sellerSKUs]);
-    console.log(sellerSKUList);
+    setSkucodeList(prevSellerSKUs => [...prevSellerSKUs, ...sellerSKUs]);
+    console.log(skucodeList);
         })
         .catch(error => {
           console.error('Error fetching sellerSKUCode:', error);
@@ -332,7 +332,7 @@ const handleSupplierChange = (event, name) => {
           portal,
           supplier,
           portalSkuCode,
-          sellerSkuCode
+          skucode
         };
         console.log('form data: ', formData)
         console.log("id: ", selectedItem.id)
@@ -350,7 +350,7 @@ const handleSupplierChange = (event, name) => {
             setPortal("");
             setSeller("");
             setPortalSKU("");
-            setSellerSKU("");
+            setSkucode("");
           })
           .catch(error => {
             console.error('Error sending PUT request:', error);
@@ -363,7 +363,7 @@ const handleSupplierChange = (event, name) => {
       setPortal(ipm.portal);
       setSeller(ipm.supplier);
       setPortalSKU(ipm.portalSkuCode);
-      setSellerSKU(ipm.sellerSkuCode);
+      setSkucode(ipm.skucode);
       setRowSelected(true);
       setSelectedItem(ipm);
     };
@@ -498,14 +498,14 @@ const handleSupplierChange = (event, name) => {
           <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
         </Form.Group>
         <Form.Group as={Col} md="4" controlId="validationCustom02">
-          <Form.Label>Seller/Supplier SKUcode</Form.Label>
+          <Form.Label>SKUcode</Form.Label>
           <Form.Select
               required
-              onChange={(e) => setSellerSKU(e.target.value)}
-              value={sellerSkuCode} // Change 'supplier' to 'Supplier'
+              onChange={(e) => setSkucode(e.target.value)}
+              value={skucode} // Change 'supplier' to 'Supplier'
             >
-            <option value="">Select sellerSKUCode</option>
-            {sellerSKUList.map((supplier) => (
+            <option value="">Select skucode</option>
+            {skucodeList.map((supplier) => (
               <option key={supplier.supplierId} value={supplier}>
                 {supplier}
               </option>
@@ -596,8 +596,8 @@ const handleSupplierChange = (event, name) => {
                   <span style={{ margin: '0 10px' }}><input
                   type="text"
                   placeholder="Search by SupplierSKU"
-                  value={searchTermSellerSKU}
-                  onChange={(e) => setSearchTermSellerSKU(e.target.value)}
+                  value={searchTermSkucode}
+                  onChange={(e) => setSearchTermSkucode(e.target.value)}
                 /></span>
                   </th>
               </tr>
