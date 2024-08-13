@@ -293,11 +293,10 @@ function ImportOrderForm() {
         // Fetch item based on supplier and supplier SKU code
   
               // Fetch item portal mapping details
-              axios.get(`${apiUrl}/itemportalmapping/Portal/PortalSku/SellerSku`, {
+              axios.get(`${apiUrl}/itemportalmapping/Portal/PortalSku`, {
                 params: {
                   portal: item.portal,
                   portalSKU: item.portalSKU,
-                  sellerSKU: item.sellerSKU,
                 },
               })
                 .then(res => {
