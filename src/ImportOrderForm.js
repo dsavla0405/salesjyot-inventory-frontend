@@ -138,7 +138,7 @@ function ImportOrderForm() {
     setFilteredPortalSKUList(filteredPortalSKUs);
   
     // Filter seller SKU list based on selected portal SKU
-    const filteredSellerSKUs = portalMapping.filter(item => item.portal === selectedPortal && item.portalSkuCode === portalSKU).map(item => item.sellerSkuCode);
+    const filteredSellerSKUs = portalMapping.filter(item => item.portal === selectedPortal && item.portalSkuCode === portalSKU).map(item => item.skucode);
     setFilteredSellerSKUList(filteredSellerSKUs);
   
     // Filter item description list based on selected portal SKU
@@ -340,10 +340,6 @@ function ImportOrderForm() {
   };
   
   
-  
-  
-  
-  
 
 const handleSubmit = (event) => {
   console.log("in handle submit");
@@ -364,11 +360,10 @@ const handleSubmit = (event) => {
           console.log("Item fetched successfully");
           console.log("portalSKU = " + portalSKU);
           // Fetch item portal mapping details
-          axios.get(`${apiUrl}/itemportalmapping/Portal/PortalSku/SellerSku`, {
+          axios.get(`${apiUrl}/itemportalmapping/Portal/PortalSku`, {
             params: {
               portal,
-              portalSKU,
-              sellerSKU,
+              portalSKU
             },
           })
             .then(res => {
@@ -1011,7 +1006,7 @@ const exportToExcel = () => {
   <span>
   <SwapVertIcon style = {{cursor: 'pointer', marginRight: "2%"}}variant="link" onClick={() => requestSort('sellerSKU')}>
                   </SwapVertIcon>
-    Seller SKU
+    SKUCode
     <input
       type="text"
       placeholder="Search by seller SKU"

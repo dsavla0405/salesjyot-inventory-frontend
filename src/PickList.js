@@ -534,6 +534,7 @@ const handleDropdownChange = (event, orderNo) => {
       <th>Porta Order No</th>
       <th>Portal</th>
       <th>Seller SKU</th>
+      <th>SKUCode</th>
       <th>Order Qty</th>
       <th>Bom Code</th>
     </tr>
@@ -562,6 +563,7 @@ const handleDropdownChange = (event, orderNo) => {
         <td>{order.portalOrderNo}</td>
         <td>{order.portal}</td>
         <td>{order.items[0].sellerSKUCode}</td>
+        <td>{order.items[0].skucode}</td>
         <td>{order.qty}</td>
         <td>
           <Form.Select
