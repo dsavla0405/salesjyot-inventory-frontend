@@ -444,7 +444,7 @@ const handleRefresh = () => {
         };
 
         // Fetch supplier based on supplier name
-        axios.get(`${apiUrl}/supplier/name/${item.suppliers}`)
+        axios.get(`${apiUrl}/supplier/name/${item.supplierName}`)
           .then(response => {
             console.log("response data for supplier = " + response.data);
             if (response.data.length === 0) {
