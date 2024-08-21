@@ -526,7 +526,7 @@ const handleRowClick = (order) => {
   setCourier(order.courier);
   setDispatched(order.dispatched);
   setQuantity(order.qty);
-  setSellerSKU(order.sellerSKU);
+  setSellerSKU(order.itemPortalMapping.skucode);
   setShipbyDate(order.shipByDate);
   setCancel(order.cancel);
   setAwbNo(order.awbNo);
@@ -752,13 +752,13 @@ const exportToExcel = () => {
 
          <Row className="mb-3">
         <Form.Group as={Col} md="4" controlId="validationCustom01">
-          <Form.Label>Seller SKU</Form.Label>
+          <Form.Label>SKUCode</Form.Label>
           <Form.Select
             required
             value={sellerSKU} // Set the selected value
             onChange={(e) => setSellerSKU(e.target.value)} // Handle value change
           >
-            <option value="">Select Seller SKU</option>
+            <option value="">Select SKUCode</option>
             {/* Map over filteredSellerSKUList and create options */}
             {filteredSellerSKUList.map((sku, index) => (
               <option key={index} value={sku}>{sku}</option>
