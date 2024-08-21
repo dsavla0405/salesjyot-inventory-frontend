@@ -1,126 +1,9 @@
-// import React, { useState, useRef } from 'react';
-// import ReactToPrint from 'react-to-print';
-// import Label from './Label'; // Adjust the path as needed
-
-// const PrintLabel = () => {
-//   const [skuCode, setSkuCode] = useState('');
-//   const [MRP, setMRP] = useState('');
-//   const [description, setDescription] = useState('');
-//   const [quantity, setQuantity] = useState(1);
-//   const [startRow, setStartRow] = useState(1);
-//   const [submitted, setSubmitted] = useState(false);
-//   const labelRef = useRef();
-
-//   const handleInputChange = (e) => {
-//     setSkuCode(e.target.value);
-//   };
-
-//   const handleMRPChange = (e) => {
-//     setMRP(e.target.value);
-//   }
-
-//   const handleDescriptionChange = (e) => {
-//     setDescription(e.target.value);
-//   }
-
-//   const handleQuantityChange = (e) => {
-//     setQuantity(parseInt(e.target.value, 10) || 0);
-//   };
-
-//   const handleStartRowChange = (e) => {
-//     setStartRow(parseInt(e.target.value, 10) || 1);
-//   };
-
-//   const handleSubmit = (e) => {
-//     e.preventDefault();
-//     setSubmitted(true);
-//   };
-
-//   const labelsPerRow = 4; // Number of labels per row
-//   const rowsPerPage = 10; // Number of rows per page
-//   const totalLabels = quantity;
-//   const totalSlots = rowsPerPage * labelsPerRow;
-
-//   // Create an array for labels with empty labels for skipped rows
-//   const labels = [];
-
-//   // Add empty slots for skipped rows
-//   for (let i = 0; i < (startRow - 1) * labelsPerRow; i++) {
-//     labels.push(<div key={`empty-${i}`} style={{ width: '52.5mm', height: '29.7mm', border: '1px solid transparent' }} />);
-//   }
-
-//   // Add labels
-//   for (let i = 0; i < totalLabels; i++) {
-//     labels.push(<Label key={`label-${i}`} skuCode={skuCode} MRP={MRP} description={description} />);
-//   }
-
-//   // Add remaining empty slots to fit the page size
-//   while (labels.length < totalSlots) {
-//     labels.push(<div key={`empty-${labels.length}`} style={{ width: '52.5mm', height: '29.7mm', border: '1px solid transparent' }} />);
-//   }
-
-//   return (
-//     <div>
-//       <form onSubmit={handleSubmit}>
-//         <label>
-//           Enter SKU Code:
-//           <input type="text" value={skuCode} onChange={handleInputChange} required />
-//         </label>
-//         <label>
-//           MRP:
-//           <input type="text" value={MRP} onChange={handleMRPChange} required />
-//         </label>
-//         <label>
-//           Description:
-//           <input type="text" value={description} onChange={handleDescriptionChange} required />
-//         </label>
-//         <label>
-//           Quantity:
-//           <input type="number" value={quantity} onChange={handleQuantityChange} min="1" required />
-//         </label>
-//         <label>
-//           Start Row:
-//           <input type="number" value={startRow} onChange={handleStartRowChange} min="1" required />
-//         </label>
-//         <button type="submit">Generate Label</button>
-//       </form>
-
-//       {submitted && (
-//         <div>
-//           <div
-//             ref={labelRef}
-//             style={{
-//               width: '210mm', // A4 width
-//               height: '297mm', // A4 height
-//               display: 'grid',
-//               gridTemplateColumns: `repeat(${labelsPerRow}, 52.5mm)`,
-//               gridTemplateRows: `repeat(${rowsPerPage}, 29.7mm)`,
-              
-//               margin: '0',
-//               padding: '0',
-//             }}
-//           >
-//             {labels}
-//           </div>
-
-//           <ReactToPrint
-//             trigger={() => <button>Print Label</button>}
-//             content={() => labelRef.current}
-//             pageStyle={`@media print { @page { size: A4; margin: 0; } }`} // Ensure it fits A4 size
-//           />
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default PrintLabel;
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import ReactToPrint from 'react-to-print';
 import Label from './Label'; // Adjust the path as needed
 import axios from 'axios';
+import { Form, Row, Col, Button, Table, InputGroup, FormControl } from 'react-bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const PrintLabel = () => {
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -132,13 +15,14 @@ const PrintLabel = () => {
   const [description, setDescription] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [startRow, setStartRow] = useState(1);
+  const [startColumn, setStartColumn] = useState(1);
+  const [validated, setValidated] = useState(false);
   const labelRef = useRef();
 
   // Fetch items from API
   useEffect(() => {
     axios.get(`${apiUrl}/item/supplier`)  // Replace with your API endpoint
       .then(response => {
-        console.log(response.data);
         setAllItems(response.data);
       })
       .catch(error => {
@@ -166,6 +50,7 @@ const PrintLabel = () => {
   const handleDescriptionChange = (e) => setDescription(e.target.value);
   const handleQuantityChange = (e) => setQuantity(parseInt(e.target.value, 10) || 0);
   const handleStartRowChange = (e) => setStartRow(parseInt(e.target.value, 10) || 1);
+  const handleStartColumnChange = (e) => setStartColumn(parseInt(e.target.value, 10) || 1);
 
   const handleAddItem = () => {
     const newItem = { skuCode, MRP, description, quantity };
@@ -182,10 +67,15 @@ const PrintLabel = () => {
 
   const labels = [];
 
-  for (let i = 0; i < (startRow - 1) * labelsPerRow; i++) {
+  // Calculate the total number of empty slots before starting the labels
+  const emptySlots = (startRow - 1) * labelsPerRow + (startColumn - 1);
+
+  // Add empty slots for the starting position
+  for (let i = 0; i < emptySlots; i++) {
     labels.push(<div key={`empty-${i}`} style={{ width: '52.5mm', height: '29.7mm' }} />);
   }
 
+  // Add the actual labels
   items.forEach((item, itemIndex) => {
     for (let i = 0; i < item.quantity; i++) {
       labels.push(
@@ -199,56 +89,121 @@ const PrintLabel = () => {
     }
   });
 
+  // Fill remaining slots with empty labels to complete the page layout
   while (labels.length < totalSlots) {
     labels.push(<div key={`empty-${labels.length}`} style={{ width: '52.5mm', height: '29.7mm' }} />);
   }
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    if (form.checkValidity() === false) {
+      e.stopPropagation();
+    } else {
+      handleAddItem();
+    }
+    setValidated(true);
+  };
+
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px', padding: '20px' }}>
-      <form style={{ flex: 1, maxWidth: '300px' }}>
+      <Form noValidate validated={validated} onSubmit={handleSubmit} style={{ flex: 1, maxWidth: '300px' }}>
         <h2>Label Details</h2>
-        <label>
-          Enter SKU Code:
-          <input
-            type="text"
-            value={skuCode}
-            onChange={handleInputChange}
-            required
-          />
-          {filteredItems.length > 0 && (
-            <ul style={{ listStyleType: 'none', padding: '0', margin: '0', border: '1px solid #ccc' }}>
-              {filteredItems.map(item => (
-                <li
-                  key={item.skucode}
-                  style={{ padding: '5px', cursor: 'pointer' }}
-                  onClick={() => handleSelectSkuCode(item)}
-                >
-                  {item.skucode}
-                </li>
-              ))}
-            </ul>
-          )}
-        </label>
-        <label>
-          MRP:
-          <input type="text" value={MRP} onChange={handleMRPChange} required />
-        </label>
-        <label>
-          Description:
-          <input type="text" value={description} onChange={handleDescriptionChange} required />
-        </label>
-        <label>
-          Quantity:
-          <input type="number" value={quantity} onChange={handleQuantityChange} min="1" required />
-        </label>
-        <label>
-          Start Row:
-          <input type="number" value={startRow} onChange={handleStartRowChange} min="1" max="10" required />
-        </label>
-        <div>
-          <button type="button" onClick={handleAddItem}>Add Item</button>
-        </div>
-      </form>
+        <Form.Group as={Row} controlId="formSkuCode">
+          <Form.Label column sm="4">SKU Code</Form.Label>
+          <Col sm="8">
+            <Form.Control
+              required
+              type="text"
+              placeholder="Enter SKU Code"
+              value={skuCode}
+              onChange={handleInputChange}
+            />
+            {filteredItems.length > 0 && (
+              <ul className="list-group">
+                {filteredItems.map(item => (
+                  <li
+                    key={item.skucode}
+                    className="list-group-item list-group-item-action"
+                    onClick={() => handleSelectSkuCode(item)}
+                  >
+                    {item.skucode}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Form.Control.Feedback type="invalid">Please provide a valid SKU Code.</Form.Control.Feedback>
+          </Col>
+        </Form.Group>
+        <Form.Group as={Row} controlId="formMRP">
+          <Form.Label column sm="4">MRP</Form.Label>
+          <Col sm="8">
+            <Form.Control
+              required
+              type="text"
+              placeholder="Enter MRP"
+              value={MRP}
+              onChange={handleMRPChange}
+            />
+            <Form.Control.Feedback type="invalid">Please provide MRP.</Form.Control.Feedback>
+          </Col>
+        </Form.Group>
+        <Form.Group as={Row} controlId="formDescription">
+          <Form.Label column sm="4">Description</Form.Label>
+          <Col sm="8">
+            <Form.Control
+              required
+              type="text"
+              placeholder="Enter Description"
+              value={description}
+              onChange={handleDescriptionChange}
+            />
+            <Form.Control.Feedback type="invalid">Please provide a description.</Form.Control.Feedback>
+          </Col>
+        </Form.Group>
+        <Form.Group as={Row} controlId="formQuantity">
+          <Form.Label column sm="4">Quantity</Form.Label>
+          <Col sm="8">
+            <Form.Control
+              required
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={handleQuantityChange}
+            />
+            <Form.Control.Feedback type="invalid">Quantity must be at least 1.</Form.Control.Feedback>
+          </Col>
+        </Form.Group>
+        <Form.Group as={Row} controlId="formStartRow">
+          <Form.Label column sm="4">Start Row</Form.Label>
+          <Col sm="8">
+            <Form.Control
+              required
+              type="number"
+              min="1"
+              max="10"
+              value={startRow}
+              onChange={handleStartRowChange}
+            />
+            <Form.Control.Feedback type="invalid">Start Row should be between 1 and 10.</Form.Control.Feedback>
+          </Col>
+        </Form.Group>
+        <Form.Group as={Row} controlId="formStartColumn">
+          <Form.Label column sm="4">Start Column</Form.Label>
+          <Col sm="8">
+            <Form.Control
+              required
+              type="number"
+              min="1"
+              max="4"
+              value={startColumn}
+              onChange={handleStartColumnChange}
+            />
+            <Form.Control.Feedback type="invalid">Start Column should be between 1 and 4.</Form.Control.Feedback>
+          </Col>
+        </Form.Group>
+        <Button type="submit" variant="primary">Add Item</Button>
+      </Form>
 
       <div style={{ flex: 2, border: '1px solid #ccc', padding: '10px' }}>
         <h2>Label Preview</h2>
@@ -267,7 +222,7 @@ const PrintLabel = () => {
           {labels}
         </div>
         <ReactToPrint
-          trigger={() => <button>Print Label</button>}
+          trigger={() => <Button variant="primary">Print Label</Button>}
           content={() => labelRef.current}
           pageStyle="@media print { @page { size: A4; margin: 0; } body { margin: 0; } }"
         />

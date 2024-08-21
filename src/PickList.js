@@ -227,7 +227,7 @@ const PicklistComponent = () => {
 const generatePicklistWithNumber = async (pickListNumber) => {
     const selectedOrders = orders.filter(order => selectedRows.includes(order.orderNo));
     //const selectedOrderDatas = orderData.filter(orderData => selectedRows.includes(orderData.orderNo));
-  //console.log("selected order datas 101 = " + JSON.stringify(selectedOrderDatas));
+  console.log("selected order datas 101 = " + JSON.stringify(selectedOrderData));
     try {
         // First, post to 'picklistdata' endpoint for each selected order data
         await Promise.all(selectedOrderData.map(async s => {
