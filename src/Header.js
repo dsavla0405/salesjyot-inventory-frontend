@@ -52,18 +52,9 @@ function Header() {
                     </NavDropdown.Item>
                 </NavDropdown>
                 <Nav.Link href="/stockCount">Stock Count</Nav.Link>
-
+                <Nav.Link href="/barcodelabel">Print Labels</Nav.Link>
 
             </Nav>
-            {/* <Form className="d-flex">
-                <Form.Control
-                type="search"
-                placeholder="Search"
-                className="me-2"
-                aria-label="Search"
-                />
-                <Button variant="outline-success">Search</Button>
-            </Form> */}
             </Navbar.Collapse>
         </Container>
     </Navbar>

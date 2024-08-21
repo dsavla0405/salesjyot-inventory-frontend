@@ -2,13 +2,23 @@
     position: sticky;
     top: 0;
     z-index: 100;
+    background-color: #f8f9fa; /* Change this to match your theme */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow for better separation */
 }
 
 .tech {
-    text-decoration:none;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit; /* Inherit color from parent */
 }
 
-.tech img{
+.tech img {
     height: 40px;
     border-radius: 10px;
+    margin-right: 10px; /* Add some spacing between the logo and the brand name */
+}
+
+.navbar-brand {
+    margin: 0; /* Ensure no extra margin is applied */
 }
