@@ -341,24 +341,23 @@ function ImportOrderForm() {
   
   
 
-const handleSubmit = (event) => {
-  console.log("in handle submit");
-  event.preventDefault();
-  const form = event.currentTarget;
-
-  if (form.checkValidity() === false) {
-    event.stopPropagation();
-    console.log("Form validation failed");
-    setValidated(true);
-    return;
-  } else {
-    // Fetch item based on supplier and supplier SKU code
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+  
+    if (form.checkValidity() === false) {
+      event.stopPropagation();
+      console.log("Form validation failed");
+      setValidated(true);
+      return;
+    }
+  
+    // Fetch item based on supplier and seller SKU code
     axios.get(`${apiUrl}/item/supplier/order/search/${sellerSKU}/${productDescription}`)
       .then(response => {
         if (response.data) {
           const itemsArray = [response.data]; // Store item data in an array
-          console.log("Item fetched successfully");
-          console.log("portalSKU = " + portalSKU);
+  
           // Fetch item portal mapping details
           axios.get(`${apiUrl}/itemportalmapping/Portal/PortalSku`, {
             params: {
@@ -368,30 +367,31 @@ const handleSubmit = (event) => {
           })
             .then(res => {
               const ipm = res.data;
-              console.log("Item portal mapping fetched successfully");
-
-              // Form the data to be sent in the POST request
+  
+              // Build the form data object dynamically
               const formData = {
-                date,
                 orderNo,
-                portalOrderNo,
-                portalOrderLineId,
                 portalSKU,
                 productDescription,
-                shipByDate,
-                dispatched,
-                courier,
-                portal,
-                sellerSKU,
-                qty,
-                cancel,
-                awbNo,
                 orderStatus: "Order Received",
                 items: itemsArray,
                 itemPortalMapping: ipm,
+                // Add only fields that have values
+                ...(date && { date }),
+                ...(portalOrderNo && { portalOrderNo }),
+                ...(portalOrderLineId && { portalOrderLineId }),
+                ...(shipByDate && { shipByDate }),
+                ...(dispatched && { dispatched }),
+                ...(courier && { courier }),
+                ...(portal && { portal }),
+                ...(sellerSKU && { sellerSKU }),
+                ...(qty && { qty }),
+                ...(cancel && { cancel }),
+                ...(awbNo && { awbNo }),
               };
+  
               console.log('Form data: ', formData);
-
+  
               // Send the POST request
               axios.post(`${apiUrl}/orders`, formData)
                 .then(response => {
@@ -399,21 +399,21 @@ const handleSubmit = (event) => {
                   toast.success('Order added successfully', {
                     autoClose: 2000 // Close after 2 seconds
                   });
-
+  
                   // Update serial number in localStorage
                   const lastSerialNumber = parseInt(localStorage.getItem('lastSerialNumber')) || 0;
                   const newSerialNumber = lastSerialNumber + 1;
-                  localStorage.setItem('lastSerialNumber', newSerialNumber); // Update serial number in localStorage
-
+                  localStorage.setItem('lastSerialNumber', newSerialNumber);
+  
                   // Update order number
-                  updateOrderNumber(); 
-
+                  updateOrderNumber();
+  
                   // Reset form validation state
                   setValidated(false);
-
+  
                   // Update the state with the new API data
                   setApiData([...apiData, response.data]);
-
+  
                   // Reset form fields
                   setCourier("");
                   setDispatched("");
@@ -447,10 +447,10 @@ const handleSubmit = (event) => {
         console.error('Error fetching item:', error);
         toast.error('Failed to fetch item: ' + error.response?.data?.message || error.message);
       });
-  }
-
-  setValidated(true);
-};
+  
+    setValidated(true);
+  };
+  
 
 
 const handleRowSubmit = () => {
