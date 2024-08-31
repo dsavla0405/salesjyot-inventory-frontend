@@ -7,10 +7,7 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install a compatible version of npm
-RUN npm install -g npm@9
-
-# Install dependencies
+# Install dependencies using the default npm version provided
 RUN npm install
 
 # Copy the rest of the application code
