@@ -1,17 +1,11 @@
 # Use an official Node runtime as a parent image
-FROM node:16-alpine
+FROM node:18-alpine
 
 # Set the working directory
 WORKDIR /app
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
-
-# Optional: Clean npm cache
-RUN npm cache clean --force
-
-# Optional: Update npm to the latest version
-RUN npm install -g npm@latest
 
 # Install dependencies
 RUN npm install
