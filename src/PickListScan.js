@@ -1,32 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios'; // Import axios
-import QrBarCodeScanner from 'react-qr-barcode-scanner'; // Import the new barcode scanner
-import './Item.css';
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import debounce from 'lodash.debounce';
 import BarcodeScanner from './BarcodeScanner.js';
+import { ToastContainer, toast } from 'react-toastify'; // Import ToastContainer and toast
+import 'react-toastify/dist/ReactToastify.css'; // Import the CSS for Toastify
+import './Item.css';
 
 function PickListScan() {
     const apiUrl = process.env.REACT_APP_API_URL;
     const [picklist, setPicklist] = useState([]);
-    const [selectedPicklist, setSelectedPicklist] = useState(''); // State to hold selected picklist
-    const [items, setItems] = useState([]); // State to hold items for the selected picklist
-    const [scannedCode, setScannedCode] = useState(''); // State to hold scanned barcode
-    const [scannerVisible, setScannerVisible] = useState(false); // State to toggle scanner visibility
+    const [selectedPicklist, setSelectedPicklist] = useState('');
+    const [items, setItems] = useState([]);
+    const [scannedCode, setScannedCode] = useState('');
 
     useEffect(() => {
-        // Fetch the picklists when the component mounts
         const fetchPicklists = async () => {
             try {
-                const response = await axios.get(`${apiUrl}/picklists`); // Adjust endpoint if needed
-                setPicklist(response.data); // Store the fetched data in the state
+                const response = await axios.get(`${apiUrl}/picklists`);
+                setPicklist(response.data);
             } catch (error) {
                 console.error('Error fetching picklists:', error);
+                toast.error('Error fetching picklists.');
             }
         };
 
         fetchPicklists();
     }, [apiUrl]);
 
-    // Handle change event for the dropdown
     const handlePicklistChange = async (event) => {
         const picklistNumber = event.target.value;
         setSelectedPicklist(picklistNumber);
@@ -36,32 +36,60 @@ function PickListScan() {
                 const response = await axios.get(`${apiUrl}/picklistdata/picklistdata`, {
                     params: { pickListNumber: picklistNumber }
                 });
-                console.log("data = " + response.data);
-                setItems(response.data); // Store items for the selected picklist
+
+                const groupedItems = response.data.reduce((acc, item) => {
+                    const sku = item.item.skucode;
+                    if (!acc[sku]) {
+                        acc[sku] = { skucode: sku, totalQty: 0 };
+                    }
+                    acc[sku].totalQty += item.pickQty;
+                    return acc;
+                }, {});
+
+                setItems(Object.values(groupedItems));
             } catch (error) {
                 console.error('Error fetching items for picklist:', error);
+                toast.error('Error fetching items for picklist.');
             }
         } else {
-            setItems([]); // Clear items if no picklist is selected
+            setItems([]);
         }
     };
 
-    // Handle barcode scan
-    const handleScan = (data) => {
-        setScannedCode(data);
-        // You can add further logic to handle the scanned code
-        console.log('Scanned Code:', data);
-    };
-
-    // Handle scan error
-    const handleError = (error) => {
-        console.error('Barcode scan error:', error);
-    };
-
-    const handleBarCodeDetected = (code) => {
+    const debouncedHandleBarCodeDetected = useCallback(debounce(async (code) => {
         console.log('Barcode detected:', code);
         setScannedCode(code);
-    };
+
+        if (selectedPicklist) {
+            try {
+                const response = await axios.get(`${apiUrl}/picklists/validate`, {
+                    params: {
+                        picklistNumber: selectedPicklist,
+                        sku: code,
+                        scannedQty: 1
+                    }
+                });
+                console.log(response.data);
+                if (response.data == true) {
+                    toast.success('Scanned item is valid and quantity is correct.');
+                    setItems(prevItems =>
+                        prevItems.map(item =>
+                            item.skucode === code && item.totalQty > 0
+                                ? { ...item, totalQty: item.totalQty - 1 }
+                                : item
+                        )
+                    );
+                } else {
+                    toast.error('Invalid scan or quantity exceeds allowed pick quantity.');
+                }
+            } catch (error) {
+                console.error('Error validating scanned item:', error);
+                toast.error('Error validating scanned item.');
+            }
+        } else {
+            toast.error('Please select a picklist first.');
+        }
+    }, 300), [selectedPicklist, apiUrl]);
 
     return (
         <div className="picklist-scan-container">
@@ -85,9 +113,9 @@ function PickListScan() {
                     <div>
                         <h2>Items for Picklist Number {selectedPicklist}</h2>
                         <ul>
-                            {items.map((item) => (
-                                <li key={item.itemId}>
-                                    SKU Code: {item.item.skucode} - Quantity: {item.pickQty}
+                            {items.map((item, index) => (
+                                <li key={index}>
+                                    SKU Code: {item.skucode} - Total Quantity: {item.totalQty}
                                 </li>
                             ))}
                         </ul>
@@ -96,12 +124,14 @@ function PickListScan() {
             </div>
 
             <div className="barcode-section">
-            <div className="scanner">
-                        <h3>Barcode Scanner</h3>
-                        <BarcodeScanner onDetected={handleBarCodeDetected} />
-                        {scannedCode && <p>Detected Barcode: {scannedCode}</p>}
-                    </div>
+                <div className="scanner">
+                    <h3>Barcode Scanner</h3>
+                    <BarcodeScanner onDetected={debouncedHandleBarCodeDetected} />
+                    {scannedCode && <p>Detected Barcode: {scannedCode}</p>}
+                </div>
             </div>
+
+            <ToastContainer /> {/* Add ToastContainer to render toasts */}
         </div>
     );
 }
