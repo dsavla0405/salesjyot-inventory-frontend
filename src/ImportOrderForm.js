@@ -38,14 +38,14 @@ function ImportOrderForm() {
   const [dispatched, setDispatched] = useState("");
   const [courier, setCourier] = useState("");
   const [portal, setPortal] = useState("");
-  const [sellerSKU, setSellerSKU] = useState("");
+  const [skucode, setSkucode] = useState("");
   const [cancel, setCancel] = useState("");
   const [qty, setQuantity] = useState("");
   const [apiData, setApiData] = useState([]); 
   const [rowSelected, setRowSelected] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [portalSKUList, setPortalSKUList] = useState([]);
-  const [sellerSKUList, setSellerSKUList] = useState([]);
+  const [skucodeList, setSkucodeList] = useState([]);
   const [itemDescriptionList, setItemDescriptionList] = useState([]);
   const [portalNameList, setPortalNameList] = useState([]);
   const [orderStatus, setOrderStatus] = useState("");
@@ -61,14 +61,14 @@ function ImportOrderForm() {
   const [searchTermQuantity, setSearchTermQuantity] = useState('');
   const [searchTermCourier, setSearchTermCourier] = useState('');
   const [searchTermDispatched, setSearchTermDispatched] = useState('');
-  const [searchTermSellerSKU, setSearchTermSellerSKU] = useState('');
+  const [searchTermSkucode, setSearchTermSkucode] = useState('');
   const [searchTermPortalSKU, setSearchTermPortalSKU] = useState('');
   const [searchTermShibByDate, setSearchTermShibByDate] = useState('');
   const [searchTermProductDescription, setSearchTermProductDescription] = useState('');
   const [searchTermPortal, setSearchTermPortal] = useState('');
   const [selectedPortal, setSelectedPortal] = useState(""); // State variable for selected portal
   const [filteredPortalSKUList, setFilteredPortalSKUList] = useState([]); // State variable for filtered portal SKU list
-  const [filteredSellerSKUList, setFilteredSellerSKUList] = useState([]); // State variable for filtered seller SKU list
+  const [filteredSkucodeList, setFilteredSkucodeList] = useState([]); // State variable for filtered seller SKU list
   const [filteredItemDescriptionList, setFilteredItemDescriptionList] = useState([]); // State variable for filtered item description list
   const [portalMapping, setPortalMapping] = useState([]); // State variable to store portal mapping data
   const [currentPage, setCurrentPage] = useState(1);
@@ -138,8 +138,8 @@ function ImportOrderForm() {
     setFilteredPortalSKUList(filteredPortalSKUs);
   
     // Filter seller SKU list based on selected portal SKU
-    const filteredSellerSKUs = portalMapping.filter(item => item.portal === selectedPortal && item.portalSkuCode === portalSKU).map(item => item.skucode);
-    setFilteredSellerSKUList(filteredSellerSKUs);
+    const filteredSkucode = portalMapping.filter(item => item.portal === selectedPortal && item.portalSkuCode === portalSKU).map(item => item.skucode);
+    setFilteredSkucodeList(filteredSkucode);
   
     // Filter item description list based on selected portal SKU
     const filteredItemDescriptions = portalMapping.filter(item => item.portal === selectedPortal && item.portalSkuCode === portalSKU).map(item => item.item.description);
@@ -173,7 +173,7 @@ function ImportOrderForm() {
     (item.qty && item.qty.toString().toLowerCase().includes(searchTermQuantity.toLowerCase())) ||
     (item.courier && item.courier.toString().toLowerCase().includes(searchTermCourier.toLowerCase())) ||
     (item.dispatched && item.dispatched.toString().toLowerCase().includes(searchTermDispatched.toLowerCase())) ||
-    (item.itemPortalMapping.sellerSkuCode && item.itemPortalMapping.sellerSkuCode.toString().toLowerCase().includes(searchTermSellerSKU.toLowerCase())) ||
+    (item.itemPortalMapping.skucode && item.itemPortalMapping.skucode.toString().toLowerCase().includes(searchTermSkucode.toLowerCase())) ||
     (item.itemPortalMapping.portalSkuCode && item.itemPortalMapping.portalSkuCode.toString().toLowerCase().includes(searchTermPortalSKU.toLowerCase())) ||
     (item.itemPortalMapping.item.description && item.itemPortalMapping.item.description.toString().toLowerCase().includes(searchTermProductDescription.toLowerCase())) ||
     (item.itemPortalMapping.portal && item.itemPortalMapping.portal.toString().toLowerCase().includes(searchTermPortal.toLowerCase())) &&
@@ -281,7 +281,7 @@ function ImportOrderForm() {
           dispatched: item.dispatched,
           courier: item.courier,
           portal: item.portal,
-          sellerSKU: item.sellerSKU,
+          skucode: item.skucode,
           qty: item.qty,
           cancel: item.cancel,
           awbNo: item.awbNo,
@@ -353,7 +353,7 @@ function ImportOrderForm() {
     }
   
     // Fetch item based on supplier and seller SKU code
-    axios.get(`${apiUrl}/item/supplier/order/search/${sellerSKU}/${productDescription}`)
+    axios.get(`${apiUrl}/item/supplier/order/search/${skucode}/${productDescription}`)
       .then(response => {
         if (response.data) {
           const itemsArray = [response.data]; // Store item data in an array
@@ -384,7 +384,7 @@ function ImportOrderForm() {
                 ...(dispatched && { dispatched }),
                 ...(courier && { courier }),
                 ...(portal && { portal }),
-                ...(sellerSKU && { sellerSKU }),
+                ...(skucode && { skucode }),
                 ...(qty && { qty }),
                 ...(cancel && { cancel }),
                 ...(awbNo && { awbNo }),
@@ -423,7 +423,7 @@ function ImportOrderForm() {
                   setQuantity("");
                   setShipbyDate("");
                   setProductDescription("");
-                  setSellerSKU("");
+                  setSkucode("");
                   setPortalSKU("");
                   setSelectedPortal("");
                   setCancel("");
@@ -469,7 +469,7 @@ const handleRowSubmit = () => {
       dispatched,
       courier,
       portal,
-      sellerSKU,
+      skucode,
       qty,
       cancel,
       awbNo,
@@ -499,7 +499,7 @@ const handleRowSubmit = () => {
         setCourier("");
         setDispatched("");
         setQuantity("");
-        setSellerSKU("");
+        setSkucode("");
         setShipbyDate("");
         setCancel("");
         setAwbNo("");
@@ -526,7 +526,7 @@ const handleRowClick = (order) => {
   setCourier(order.courier);
   setDispatched(order.dispatched);
   setQuantity(order.qty);
-  setSellerSKU(order.itemPortalMapping.skucode);
+  setSkucode(order.itemPortalMapping.skucode);
   setShipbyDate(order.shipByDate);
   setCancel(order.cancel);
   setAwbNo(order.awbNo);
@@ -547,11 +547,11 @@ useEffect(() => {
     .then(response => {
       // Extract portal SKUs from the response data
       const portalSKUs = response.data.map(item => item.portalSkuCode);
-      const sellerSKUs = response.data.map(seller => seller.sellerSkuCode);
+      const filteredSkucodeList = response.data.map(seller => seller.skucode);
       const portalNames = new Set(response.data.map(item => item.portal));
       // Convert the Set of portal names to an array
       const portalNameList = Array.from(portalNames);
-      setSellerSKUList(sellerSKUs);
+      setSkucodeList(filteredSkucodeList);
       setPortalSKUList(portalSKUs);
       setPortalNameList(portalNameList); // Now it should work without error
 
@@ -607,7 +607,7 @@ const handleDelete = (id) => {
 
 const downloadTemplate = () => {
   const templateData = [
-      { date: '', orderNo: '',  portal: '', portalOrderNo: '', portalOrderLineId: '', portalSKU: '', sellerSKU: '', productDescription: '', qty: '', shipByDate: '', dispatched: '', courier: '', cancel: '', awbNo } // Add more fields if needed
+      { date: '', orderNo: '',  portal: '', portalOrderNo: '', portalOrderLineId: '', portalSKU: '', skucode: '', productDescription: '', qty: '', shipByDate: '', dispatched: '', courier: '', cancel: '', awbNo } // Add more fields if needed
   ];
   const ws = XLSX.utils.json_to_sheet(templateData);
   const wb = XLSX.utils.book_new();
@@ -755,12 +755,12 @@ const exportToExcel = () => {
           <Form.Label>SKUCode</Form.Label>
           <Form.Select
             required
-            value={sellerSKU} // Set the selected value
-            onChange={(e) => setSellerSKU(e.target.value)} // Handle value change
+            value={skucode} // Set the selected value
+            onChange={(e) => setSkucode(e.target.value)} // Handle value change
           >
             <option value="">Select SKUCode</option>
             {/* Map over filteredSellerSKUList and create options */}
-            {filteredSellerSKUList.map((sku, index) => (
+            {filteredSkucodeList.map((sku, index) => (
               <option key={index} value={sku}>{sku}</option>
             ))}
           </Form.Select>
@@ -1004,14 +1004,14 @@ const exportToExcel = () => {
 </th>
 <th>
   <span>
-  <SwapVertIcon style = {{cursor: 'pointer', marginRight: "2%"}}variant="link" onClick={() => requestSort('sellerSKU')}>
+  <SwapVertIcon style = {{cursor: 'pointer', marginRight: "2%"}}variant="link" onClick={() => requestSort('skucode')}>
                   </SwapVertIcon>
     SKUCode
     <input
       type="text"
       placeholder="Search by seller SKU"
-      value={searchTermSellerSKU}
-      onChange={(e) => setSearchTermSellerSKU(e.target.value)}
+      value={searchTermSkucode}
+      onChange={(e) => setSearchTermSkucode(e.target.value)}
     />
   </span>
 </th>
@@ -1154,7 +1154,7 @@ const exportToExcel = () => {
 <td>{order.portalOrderNo ?? ''}</td>
 <td>{order.portalOrderLineId ?? ''}</td>
 <td>{order.itemPortalMapping?.portalSkuCode ?? ''}</td>
-<td>{order.items[0]?.sellerSKUCode ?? ''}</td>
+<td>{order.items[0]?.skucode ?? ''}</td>
 <td>{order.itemPortalMapping?.item?.description ?? ''}</td>
 <td>{order.qty ?? ''}</td>
 <td>
