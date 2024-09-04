@@ -23,6 +23,7 @@ const MyTable = ({selectedOrderData, generatePicklist, generatePicklistPDF}) => 
     <Table striped bordered hover>
       <thead>
         <tr>
+          <th>SKUCode</th>
           <th>Seller SKU</th>
           <th>Order Qty</th>
           <th>Pick Qty</th>
@@ -33,7 +34,8 @@ const MyTable = ({selectedOrderData, generatePicklist, generatePicklistPDF}) => 
       </thead>
       <tbody>
         {groupedData.map((picklist, index) => (
-          <tr key={index}>            
+          <tr key={index}>       
+            <td>{picklist.skucode}</td>     
             <td>{picklist.sellerSKU}</td>
             <td>{picklist.qty}</td>
             <td>{picklist.pickQty}</td>  {/* Display accumulated pickQty */}
