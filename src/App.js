@@ -21,6 +21,7 @@ import PackScan from './PackScan.js';
 import BomItem from './BomItem.js';
 import BarcodeLabel from './BarcodeLabel.js';
 import PickListScan from './PickListScan.js';
+import Location from './Location.js';
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
           <Route path="/bomItem" element={<BomItem/>} />
           <Route path="/barcodelabel" element={<BarcodeLabel/>} />
           <Route path="/picklistscan" element={<PickListScan/>} />
+          <Route path="/location" element={<Location/>} />
         </Routes>
     </Router>
     </div>
