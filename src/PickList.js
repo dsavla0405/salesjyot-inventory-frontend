@@ -47,7 +47,7 @@ const PicklistComponent = () => {
           ...prevBoms,
           [orderNo]: response.data
         }));
-
+  
         // Fetch the default BOM code for the orderNo
         const bomCodeResponse = await axios.get(`${apiUrl}/picklists/bom/default/bomCode?orderNo=${orderNo}`);
         console.log("Response = " + bomCodeResponse.data);
@@ -60,13 +60,20 @@ const PicklistComponent = () => {
         console.error(`Error fetching BOMs for order ${orderNo}:`, error);
       }
     };
-
+  
+    // Use a Set to keep track of processed orderNos and avoid duplicates
+    const processedOrders = new Set();
+  
     if (orders.length > 0) {
       orders.forEach(order => {
-        fetchBomsForOrder(order.orderNo);
+        if (!processedOrders.has(order.orderNo)) {
+          fetchBomsForOrder(order.orderNo);
+          processedOrders.add(order.orderNo); // Mark the orderNo as processed
+        }
       });
     }
   }, [orders]);
+  
 
 
   // Function to handle change in items per page
