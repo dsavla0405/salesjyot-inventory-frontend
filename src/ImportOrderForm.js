@@ -228,25 +228,25 @@ function ImportOrderForm() {
     return new Date(date_info.getFullYear(), date_info.getMonth(), date_info.getDate(), hours, minutes, seconds);
   };
   
-  const formatDateString = (dateString) => {
-    if (typeof dateString === 'number') {
-      const date = excelDateToJSDate(dateString);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    } else if (typeof dateString === 'string') {
-      const [day, month, year] = dateString.split('/');
-      return `${year}-${month}-${day}`;
-    } else if (dateString instanceof Date) {
-      const year = dateString.getFullYear();
-      const month = String(dateString.getMonth() + 1).padStart(2, '0');
-      const day = String(dateString.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    } else {
-      console.error('Invalid date format:', dateString);
-      return null;
+  const parseDate = (dateString) => {
+    if (!dateString) return null;
+  
+    // Check for the format DD-MMM-YYYY
+    const datePattern = /(\d{1,2})-(\w{3})-(\d{4})/;
+    const match = dateString.match(datePattern);
+  
+    if (match) {
+        const day = parseInt(match[1], 10);
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const month = monthNames.indexOf(match[2]); // Get the month index
+        const year = parseInt(match[3], 10);
+  
+        if (month !== -1) {
+            return new Date(year, month, day); // Create date in local time
+        }
     }
+    
+    return null; // Invalid date
   };
   
   const handleFileUpload = (e) => {
@@ -261,23 +261,19 @@ function ImportOrderForm() {
       const jsonData = XLSX.utils.sheet_to_json(sheet);
   
       jsonData.forEach(item => {
-        console.log('Original Date:', item.date); // Debugging log
-        console.log('Original Ship By Date:', item.shipByDate); // Debugging log
-  
-        const formattedDate = formatDateString(item.date);
-        const formattedShipByDate = formatDateString(item.shipByDate);
-  
-        console.log('Formatted Date:', formattedDate); // Debugging log
-        console.log('Formatted Ship By Date:', formattedShipByDate); // Debugging log
-  
+        const orderDate = parseDate(item.date);
+        const shipDate = parseDate(item.shipByDate);
+        console.log('Parsed order Date:', orderDate);
+        console.log('Parsed ship by Date:', shipDate);
+
         const formattedData = {
-          date: formattedDate,
+          date: orderDate ? orderDate.toISOString() : null,
           orderNo: item.orderNo,
           portalOrderNo: item.portalOrderNo,
           portalOrderLineId: item.portalOrderLineId,
           portalSKU: item.portalSKU,
           productDescription: item.productDescription,
-          shipByDate: formattedShipByDate,
+          shipByDate: shipDate ? shipByDate.toISOString() : null,
           dispatched: item.dispatched,
           courier: item.courier,
           portal: item.portal,
@@ -607,19 +603,29 @@ const handleDelete = (id) => {
 
 const downloadTemplate = () => {
   const templateData = [
+    { date: 'dd-mmm-yyyy', orderNo: '',  portal: '', portalOrderNo: '', portalOrderLineId: '', portalSKU: '', skucode: '', productDescription: '', qty: '', shipByDate: 'dd-mmm-yyyy', dispatched: '', courier: '', cancel: '', awbNo },
       { date: '', orderNo: '',  portal: '', portalOrderNo: '', portalOrderLineId: '', portalSKU: '', skucode: '', productDescription: '', qty: '', shipByDate: '', dispatched: '', courier: '', cancel: '', awbNo } // Add more fields if needed
   ];
   const ws = XLSX.utils.json_to_sheet(templateData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Template');
-  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-
-  function s2ab(s) {
-      const buf = new ArrayBuffer(s.length);
-      const view = new Uint8Array(buf);
-      for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
-      return buf;
-  }
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    
+    // Adjust column widths to fit the note
+    ws['!cols'] = [
+      { wch: 15 }, // width for defaultStartDate
+      { wch: 15 }, // width for defaultEndDate
+      { wch: 10 }, // width for bomCode
+      { wch: 10 }  // width for skucode
+    ];
+  
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+  
+    function s2ab(s) {
+        const buf = new ArrayBuffer(s.length);
+        const view = new Uint8Array(buf);
+        for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
+        return buf;
+    }
 
   saveAs(new Blob([s2ab(wbout)], { type: 'application/octet-stream' }), 'OrderTemplate.xlsx');
 };

@@ -37,6 +37,47 @@ const PicklistComponent = () => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const [boms, setBoms] = useState({});
   const [bomCodes, setBomCodes] = useState({});
+  const [filters, setFilters] = useState({
+    date: '',
+    orderNo: '',
+    portalOrderNo: '',
+    portal: '',
+    sellerSKU: '',
+    skuCode: '',
+    orderQty: '',
+    bomCode: ''
+  });
+  const [currentPage1, setCurrentPage1] = useState(1);
+const [itemsPerPage1] = useState(10); // Number of items per page
+
+// Apply filters to orders
+const filteredOrders = orders
+  .filter(order => {
+    return (
+      (filters.date === '' || new Date(order.date).toLocaleDateString().includes(filters.date)) &&
+      (filters.orderNo === '' || order.orderNo.includes(filters.orderNo)) &&
+      (filters.portalOrderNo === '' || order.portalOrderNo.includes(filters.portalOrderNo)) &&
+      (filters.portal === '' || order.portal.includes(filters.portal)) &&
+      (filters.sellerSKU === '' || order.items[0].sellerSKUCode.includes(filters.sellerSKU)) &&
+      (filters.skuCode === '' || order.items[0].skucode.includes(filters.skuCode)) &&
+      (filters.orderQty === '' || order.qty.toString().includes(filters.orderQty)) &&
+      (filters.bomCode === '' || (bomCodes[order.orderNo] || '').includes(filters.bomCode))
+    );
+  });
+
+// Calculate the total number of pages
+const totalPages1 = Math.ceil(filteredOrders.length / itemsPerPage1);
+
+// Calculate the current page's items
+const currentItems1 = filteredOrders.slice(
+  (currentPage1 - 1) * itemsPerPage1,
+  currentPage1 * itemsPerPage1
+);
+
+// Handle page change
+const handlePageChange1 = (pageNumber) => {
+  setCurrentPage1(pageNumber);
+};
 
   useEffect(() => {
     const fetchBomsForOrder = async (orderNo) => {
@@ -525,29 +566,85 @@ const handleDropdownChange = (event, orderNo) => {
         <ToastContainer position="top-right" />
         <div style={{ overflowX: 'auto' }}> 
 
-        <Table striped bordered hover className='custom-table'>
-  <thead>
+        <Table striped bordered hover className='custom-table' style={{ width: '100%' }}>
+  <thead style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
     <tr>
-      <th>
+      <th style={{ width: '5%' }}>
         <input
           type="checkbox"
           id={`checkbox-${uuidv4()}`}
-          checked={selectedRows.length === orders.length} // Check if all rows are selected
+          checked={selectedRows.length === filteredOrders.length}
           onChange={(event) => handleCheckboxChange(event)}
         />
       </th>
-      <th>Date</th>
-      <th>Order No</th>
-      <th>Porta Order No</th>
-      <th>Portal</th>
-      <th>Seller SKU</th>
-      <th>SKUCode</th>
-      <th>Order Qty</th>
-      <th>Bom Code</th>
+      <th style={{ width: '15%' }}>
+        <input
+          type="text"
+          placeholder="Filter Date"
+          value={filters.date}
+          onChange={(e) => setFilters(prevFilters => ({ ...prevFilters, date: e.target.value }))}
+        />
+      </th>
+      <th style={{ width: '10%' }}>
+        <input
+          type="text"
+          placeholder="Filter Order No"
+          value={filters.orderNo}
+          onChange={(e) => setFilters(prevFilters => ({ ...prevFilters, orderNo: e.target.value }))}
+        />
+      </th>
+      <th style={{ width: '10%' }}>
+        <input
+          type="text"
+          placeholder="Filter Porta Order No"
+          value={filters.portalOrderNo}
+          onChange={(e) => setFilters(prevFilters => ({ ...prevFilters, portalOrderNo: e.target.value }))}
+        />
+      </th>
+      <th style={{ width: '10%' }}>
+        <input
+          type="text"
+          placeholder="Filter Portal"
+          value={filters.portal}
+          onChange={(e) => setFilters(prevFilters => ({ ...prevFilters, portal: e.target.value }))}
+        />
+      </th>
+      <th style={{ width: '15%' }}>
+        <input
+          type="text"
+          placeholder="Filter Seller SKU"
+          value={filters.sellerSKU}
+          onChange={(e) => setFilters(prevFilters => ({ ...prevFilters, sellerSKU: e.target.value }))}
+        />
+      </th>
+      <th style={{ width: '10%' }}>
+        <input
+          type="text"
+          placeholder="Filter SKU Code"
+          value={filters.skuCode}
+          onChange={(e) => setFilters(prevFilters => ({ ...prevFilters, skuCode: e.target.value }))}
+        />
+      </th>
+      <th style={{ width: '10%' }}>
+        <input
+          type="text"
+          placeholder="Filter Order Qty"
+          value={filters.orderQty}
+          onChange={(e) => setFilters(prevFilters => ({ ...prevFilters, orderQty: e.target.value }))}
+        />
+      </th>
+      <th style={{ width: '15%' }}>
+        <input
+          type="text"
+          placeholder="Filter Bom Code"
+          value={filters.bomCode}
+          onChange={(e) => setFilters(prevFilters => ({ ...prevFilters, bomCode: e.target.value }))}
+        />
+      </th>
     </tr>
   </thead>
   <tbody>
-    {orders.map(order => (
+    {currentItems1.map(order => (
       <tr key={uuidv4()}>
         <td>
           <input
@@ -557,15 +654,13 @@ const handleDropdownChange = (event, orderNo) => {
             onChange={(event) => handleCheckboxChange(event, order.orderNo, bomCodes[order.orderNo])}
           />
         </td>
-        <td>
-          {(() => {
-            const date = new Date(order.date);
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            return `${day}-${month}-${year}`;
-          })()}
-        </td>
+        <td>{(() => {
+          const date = new Date(order.date);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          return `${day}-${month}-${year}`;
+        })()}</td>
         <td>{order.orderNo}</td>
         <td>{order.portalOrderNo}</td>
         <td>{order.portal}</td>
@@ -596,6 +691,23 @@ const handleDropdownChange = (event, orderNo) => {
     ))}
   </tbody>
 </Table>
+
+<Pagination>
+  <Pagination.First onClick={() => handlePageChange1(1)} disabled={currentPage1 === 1} />
+  <Pagination.Prev onClick={() => handlePageChange1(currentPage1 - 1)} disabled={currentPage1 === 1} />
+  {Array.from({ length: totalPages1 }, (_, idx) => (
+    <Pagination.Item
+      key={idx + 1}
+      active={idx + 1 === currentPage1}
+      onClick={() => handlePageChange1(idx + 1)}
+    >
+      {idx + 1}
+    </Pagination.Item>
+  ))}
+  <Pagination.Next onClick={() => handlePageChange1(currentPage1 + 1)} disabled={currentPage1 === totalPages1} />
+  <Pagination.Last onClick={() => handlePageChange1(totalPages1)} disabled={currentPage1 === totalPages1} />
+</Pagination>
+
 </div>
 
 

@@ -151,69 +151,95 @@ function Bom() {
   const postData = (data) => {
     axios.post(`${apiUrl}/boms`, data)
         .then(response => {
+          toast.success('BOM added successfully', {
+            autoClose: 2000 // Close after 2 seconds
+          });
             // Handle successful response
             console.log('Data posted successfully:', response);
         })
         .catch(error => {
             // Handle error
+            toast.error("Failed to Post BOM");
             console.error('Error posting data:', error);
         });
 };
 
 const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
+  const file = e.target.files[0];
+  const reader = new FileReader();
 
-    reader.onload = (evt) => {
-        const data = evt.target.result;
-        const workbook = XLSX.read(data, { type: 'binary' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(sheet);
+  reader.onload = (evt) => {
+      const data = evt.target.result;
+      const workbook = XLSX.read(data, { type: 'binary' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(sheet, { raw: false });
 
-        //jsonData.shift();
+      jsonData.forEach(item => {
+          const startDate = parseDate(item.defaultStartDate);
+          const endDate = parseDate(item.defaultEndDate);
+          console.log('Parsed Start Date:', startDate);
+          console.log('Parsed End Date:', endDate);
 
-        jsonData.forEach(item => {
-            const formattedData = {
-                // bomItem: item.bomItem,
-                // qty: item.qty,
-                skucode: item.skucode,
-                bomCode: item.bomCode,
-                defaultStartDate: item.defaultStartDate,
-                defaultEndDate: item.defaultEndDate
-            };
+          const formattedData = {
+              skucode: item.skucode,
+              bomCode: item.bomCode,
+              defaultStartDate: startDate ? startDate.toISOString() : null,
+              defaultEndDate: endDate ? endDate.toISOString() : null
+          };
 
-            // Fetch item details using skucode
-            axios.get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`)
-                .then(response => {
-                    // Check if item exists
-                    if (response.data.length === 0) {
-                        console.error('Item not found with SKU code: ' + item.skucode);
-                        return;
-                    }
+          // Fetch item details using skucode
+          axios.get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`)
+              .then(response => {
+                  if (response.data.length === 0) {
+                      console.error('Item not found with SKU code: ' + item.skucode);
+                      return;
+                  }
 
-                    // Extract item from response data
-                    const fetchedItem = response.data;
+                  const fetchedItem = response.data;
 
-                    // Construct formData with fetched item
-                    const formData = {
-                        ...formattedData,
-                        bomItems: [fetchedItem] // Wrap the single item in an array
-                    };
+                  const formData = {
+                      ...formattedData,
+                      bomItems: [fetchedItem]
+                  };
 
-                    console.log('Form data:', formData);
+                  console.log('Form data:', formData);
+                  postData(formData);
+              })
+              .catch(error => {
+                  console.error('Error fetching item:', error);
+              });
+      });
+  };
 
-                    // Send data to server
-                    postData(formData);
-                })
-                .catch(error => {
-                    console.error('Error fetching item:', error);
-                });
-        });
-    };
-
-    reader.readAsBinaryString(file);
+  reader.readAsBinaryString(file);
 };
+
+
+const parseDate = (dateString) => {
+  if (!dateString) return null;
+
+  // Check for the format DD-MMM-YYYY
+  const datePattern = /(\d{1,2})-(\w{3})-(\d{4})/;
+  const match = dateString.match(datePattern);
+
+  if (match) {
+      const day = parseInt(match[1], 10);
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const month = monthNames.indexOf(match[2]); // Get the month index
+      const year = parseInt(match[3], 10);
+
+      if (month !== -1) {
+          return new Date(year, month, day); // Create date in local time
+      }
+  }
+  
+  return null; // Invalid date
+};
+
+
+
+
   
 
 const handleSubmit = (event) => {
@@ -356,24 +382,36 @@ const handleRowSubmit = () => {
     
   }, []);
 
-const downloadTemplate = () => {
-  const templateData = [
-      {defaultStartDate: '', defaultEndDate: '', bomCode: '', skucode: ''} 
-  ];
-  const ws = XLSX.utils.json_to_sheet(templateData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Template');
-  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-
-  function s2ab(s) {
-      const buf = new ArrayBuffer(s.length);
-      const view = new Uint8Array(buf);
-      for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
-      return buf;
-  }
-
-  saveAs(new Blob([s2ab(wbout)], { type: 'application/octet-stream' }), 'bomTemplate.xlsx');
-};
+  const downloadTemplate = () => {
+    const templateData = [
+        {defaultStartDate: 'dd-mmm-yyyy', defaultEndDate: 'dd-mmm-yyyy', bomCode: '', skucode: ''}, 
+        {defaultStartDate: '', defaultEndDate: '', bomCode: '', skucode: ''} 
+    ];
+    
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    
+    // Adjust column widths to fit the note
+    ws['!cols'] = [
+      { wch: 15 }, // width for defaultStartDate
+      { wch: 15 }, // width for defaultEndDate
+      { wch: 10 }, // width for bomCode
+      { wch: 10 }  // width for skucode
+    ];
+  
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+  
+    function s2ab(s) {
+        const buf = new ArrayBuffer(s.length);
+        const view = new Uint8Array(buf);
+        for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
+        return buf;
+    }
+  
+    saveAs(new Blob([s2ab(wbout)], { type: 'application/octet-stream' }), 'bomTemplate.xlsx');
+  };
+  
 
 const handleDelete = (id) => {
   console.log("Deleting row with id:", id);

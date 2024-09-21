@@ -71,7 +71,7 @@ function Item() {
   const [isRotating, setIsRotating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const rowsPerPageOptions = [10, 20, 50];
+  const rowsPerPageOptions = [10, 20, 50, 100];
   const apiUrl = process.env.REACT_APP_API_URL;
   // Function to handle change in items per page
   const handleItemsPerPageChange = (e) => {
@@ -551,19 +551,37 @@ const postData = async (data) => {
   };
 
   const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(filteredData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+    // Create a new workbook
+    const workbook = XLSX.utils.book_new();
+    
+    // Create an array of data for the Excel sheet
+    const data = currentItems.map(item => ({
+      Supplier: item.suppliers.map(supplier => supplier.supplierName).join(', '),
+      SKUCode: item.skucode || '',
+      Description: item.description || '',
+      PackOf: item.packOf || '',
+      ParentSKU: item.parentSKU || '',
+      Group1: item.group1 || '',
+      Group2: item.group2 || '',
+      Group3: item.group3 || '',
+      SizeRange: item.sizeRange || '',
+      Size: item.size || '',
+      Unit: item.unit || '',
+      SellerSKUCode: item.sellerSKUCode || '',
+      Barcode: item.barcode || '',
+      SellingPrice: item.sellingPrice || '',
+      MRP: item.mrp || '',
+      ImageURL: item.img || '',
+    }));
   
-    function s2ab(s) {
-      const buf = new ArrayBuffer(s.length);
-      const view = new Uint8Array(buf);
-      for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
-      return buf;
-    }
+    // Create a worksheet from the data
+    const worksheet = XLSX.utils.json_to_sheet(data);
   
-    saveAs(new Blob([s2ab(wbout)], { type: 'application/octet-stream' }), 'ItemData.xlsx');
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Items');
+  
+    // Export the workbook
+    XLSX.writeFile(workbook, 'items.xlsx');
   };
 
     return (
@@ -1059,10 +1077,19 @@ const postData = async (data) => {
           ))}
         </tbody>
       </Table>
-      
+          
 </div>
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <Button
+              variant="contained"
+              tabIndex={-1}
+              style={{ height: '33px', backgroundColor: '#5463FF', color: 'white', fontWeight: 'bolder' }}
+              onClick={exportToExcel}
+            >
+              {<FileDownloadIcon style={{marginBottom: "5px"}}/>} Export to Excel
+            </Button>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             {rowsPerPageDropdown}
             <Pagination>
               {Array.from({ length: Math.ceil(filteredData.length / itemsPerPage) }).map((_, index) => (
@@ -1071,6 +1098,7 @@ const postData = async (data) => {
                 </Pagination.Item>
               ))}
             </Pagination>
+            </div>
           </div>
           </AccordionDetails>
           </Accordion>

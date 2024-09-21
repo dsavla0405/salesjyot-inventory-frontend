@@ -105,14 +105,24 @@ function Bom() {
 
   const sortedData = filteredData.sort((a, b) => {
     if (sortConfig.key) {
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
+      let aValue = a;
+      let bValue = b;
+  
+      if (sortConfig.key === 'bomCode') {
+        aValue = a.bom ? a.bom.bomCode : '';
+        bValue = b.bom ? b.bom.bomCode : '';
+      } else {
+        aValue = a[sortConfig.key];
+        bValue = b[sortConfig.key];
+      }
+  
       if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
       if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
       return 0;
     }
     return filteredData;
   });
+  
 
   const requestSort = (key) => {
     let direction = 'ascending';
@@ -389,19 +399,17 @@ useEffect(() => {
   }, []);
 
   const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(filteredData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-  
-    function s2ab(s) {
-      const buf = new ArrayBuffer(s.length);
-      const view = new Uint8Array(buf);
-      for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
-      return buf;
-    }
-  
-    saveAs(new Blob([s2ab(wbout)], { type: 'application/octet-stream' }), 'BomItemData.xlsx');
+    const worksheet = XLSX.utils.json_to_sheet(currentItems.map(bomItems => ({
+      'Bom Code': bomItems.bom && bomItems.bom.bomCode ? bomItems.bom.bomCode : '',
+      'Bom Item': bomItems.item && bomItems.item.skucode ? bomItems.item.skucode : '',
+      'Qty': bomItems.qty ? bomItems.qty : '',
+    })));
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'BOM Items');
+
+    // Exporting the workbook to a file
+    XLSX.writeFile(workbook, 'BOM_Items.xlsx');
   };
   
 

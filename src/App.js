@@ -22,6 +22,8 @@ import BomItem from './BomItem.js';
 import BarcodeLabel from './BarcodeLabel.js';
 import PickListScan from './PickListScan.js';
 import Location from './Location.js';
+import StockTransfer from './StockTransfer.js';
+import CreateCombo from './CreateCombo.js';
 
 function App() {
   return (
@@ -49,6 +51,8 @@ function App() {
           <Route path="/barcodelabel" element={<BarcodeLabel/>} />
           <Route path="/picklistscan" element={<PickListScan/>} />
           <Route path="/location" element={<Location/>} />
+          <Route path="/stocktransfer" element={<StockTransfer/>} />
+          <Route path="/create-combo" element={<CreateCombo/>} />
         </Routes>
     </Router>
     </div>

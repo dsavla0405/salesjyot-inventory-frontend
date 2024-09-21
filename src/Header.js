@@ -46,6 +46,9 @@ function Header() {
                 <Nav.Link href="/returns">Returns</Nav.Link>
 
                 <NavDropdown title="Scans" id="basic-nav-dropdown">
+                <NavDropdown.Item href="/picklistScan">
+                    Scan PickList Orders
+                    </NavDropdown.Item>
                     <NavDropdown.Item href="/packScan">Scan Packed Orders</NavDropdown.Item>
                     <NavDropdown.Item href="/dispatchScan">
                     Scan Dispatched Orders
@@ -53,6 +56,7 @@ function Header() {
                 </NavDropdown>
                 <Nav.Link href="/stockCount">Stock Count</Nav.Link>
                 <Nav.Link href="/barcodelabel">Print Labels</Nav.Link>
+                <Nav.Link href="/location">Location</Nav.Link>
 
             </Nav>
             </Navbar.Collapse>
