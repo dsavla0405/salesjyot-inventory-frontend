@@ -2,23 +2,52 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    background-color: #f8f9fa; /* Change this to match your theme */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow for better separation */
+    background-color: #f8f9fa; /* Match your theme */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Shadow for separation */
+    padding: 0.5rem 1rem; /* Add padding for better spacing */
 }
 
 .tech {
     display: flex;
     align-items: center;
     text-decoration: none;
-    color: inherit; /* Inherit color from parent */
+    color: inherit; /* Keep the color consistent */
 }
 
 .tech img {
     height: 40px;
     border-radius: 10px;
-    margin-right: 10px; /* Add some spacing between the logo and the brand name */
+    margin-right: 10px; /* Add spacing between the logo and brand name */
 }
 
 .navbar-brand {
-    margin: 0; /* Ensure no extra margin is applied */
+    margin: 0;
+    font-size: 1.25rem; /* Make the brand name more prominent */
+    font-weight: bold;
+    font-size: x-large;
+}
+
+.navbar-nav {
+    margin-left: auto;
+    font-size: larger;
+}
+
+.nav-link, .nav-item, .navbar-dropdown {
+    padding: 0.5rem 1rem; /* Add padding to make the links more clickable */
+}
+
+.navbar-dropdown {
+    font-size: 1rem;
+}
+
+.dropdown-menu {
+    padding: 0.5rem;
+    border-radius: 8px; /* Soften the dropdown corners */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 992px) {
+    .navbar-collapse {
+        padding: 1rem; /* Add padding for mobile */
+    }
 }

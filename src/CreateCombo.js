@@ -184,33 +184,29 @@ const CreateCombo = () => {
 
   const filteredData = apiData.filter(combo => {
     // Check if comboName.skucode exists and matches the search term
-    const skucodeMatch = combo.comboName.skucode &&
+    const skucodeMatch = combo.comboName?.skucode &&
                          combo.comboName.skucode.toLowerCase().includes(searchTermSkucode.toLowerCase());
   
     // Check if any combo item matches the search term for item.skucode, boms.bomCode, etc.
     const comboItemMatch = combo.comboItems.some(item => {
-      const itemSkucodeMatch = item.item.skucode &&
+      const itemSkucodeMatch = item.item?.skucode &&
                                item.item.skucode.toLowerCase().includes(searchTermItemSkucode.toLowerCase());
   
-      const bomCodeMatch = item.boms.bomCode &&
+      const bomCodeMatch = item.boms?.bomCode &&
                            item.boms.bomCode.toLowerCase().includes(searchTermBomBomCode.toLowerCase());
   
-      const quantityMatch = item.quantity && 
+      const quantityMatch = item.quantity &&
                            item.quantity.toString().toLowerCase().includes(searchTermQuantity.toLowerCase());
   
-      const quantityRequiredMatch = item.quantityRequired && 
+      const quantityRequiredMatch = item.quantityRequired &&
                                    item.quantityRequired.toString().toLowerCase().includes(searchTermQuantityRequired.toLowerCase());
   
       return itemSkucodeMatch || bomCodeMatch || quantityMatch || quantityRequiredMatch;
     });
-  
-    // Check if qtyToMake matches the search term
-    const qtyToMakeMatch = combo.qtyToMake && 
-                           combo.qtyToMake.toString().toLowerCase().includes(searchTermQtyToMake.toLowerCase());
-  
-    // Return true only if all conditions are met
-    return skucodeMatch && comboItemMatch && qtyToMakeMatch;
-  });
+
+    return skucodeMatch || comboItemMatch;
+});
+
   
 
   const sortedData = filteredData.sort((a, b) => {
@@ -561,10 +557,11 @@ const CreateCombo = () => {
                 <td rowSpan={location.comboItems.length}>{location.qtyToMake}</td>
               </>
             )}
-            <td>{item.boms.bomCode}</td>
-            <td>{item.item.skucode}</td>
-            <td>{item.quantity}</td>
-            <td>{item.quantityRequired}</td>
+            <td>{item.boms?.bomCode || ""}</td>
+            <td>{item.item?.skucode || ""}</td>
+            <td>{item.quantity || ""}</td>
+            <td>{item.quantityRequired || ""}</td>
+
           </tr>
         ))}
       </>
