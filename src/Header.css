@@ -22,10 +22,14 @@
 
 .navbar-brand {
     margin: 0;
-    font-size: 1.25rem; /* Make the brand name more prominent */
-    font-weight: bold;
-    font-size: x-large;
+    font-family: 'Poppins', sans-serif; /* Add the Poppins font */
+    font-size: 1.5rem; /* Make the brand name larger */
+    font-weight: 300; /* Make it bold but not too heavy */
+    font-style: italic; /* Add a subtle italic style */
+    color: #2C3E50; /* A deep navy blue for a professional look */
+    letter-spacing: 1px; /* Adds slight spacing between letters for readability */
 }
+
 
 .navbar-nav {
     margin-left: auto;

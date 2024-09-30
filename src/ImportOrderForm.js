@@ -229,8 +229,11 @@ function ImportOrderForm() {
   };
   
   const parseDate = (dateString) => {
-    if (!dateString) return null;
-  
+    if (!dateString || typeof dateString !== 'string') {
+        console.error("Invalid dateString:", dateString);
+        return null; // Return null for invalid or non-string input
+    }
+
     // Check for the format DD-MMM-YYYY
     const datePattern = /(\d{1,2})-(\w{3})-(\d{4})/;
     const match = dateString.match(datePattern);
@@ -246,8 +249,9 @@ function ImportOrderForm() {
         }
     }
     
-    return null; // Invalid date
-  };
+    return null; // Return null if no match is found or invalid date format
+};
+
   
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -261,8 +265,8 @@ function ImportOrderForm() {
       const jsonData = XLSX.utils.sheet_to_json(sheet);
   
       jsonData.forEach(item => {
-        const orderDate = parseDate(item.date);
-        const shipDate = parseDate(item.shipByDate);
+        const orderDate = parseDate(String(item.date));
+        const shipDate = parseDate(String(item.shipByDate));
         console.log('Parsed order Date:', orderDate);
         console.log('Parsed ship by Date:', shipDate);
 

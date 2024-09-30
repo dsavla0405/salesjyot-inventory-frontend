@@ -31,7 +31,6 @@ function Header() {
                 <NavDropdown.Item href="/stockinward">Stock Inward</NavDropdown.Item>
                 <NavDropdown.Item href="/stock">Stock</NavDropdown.Item>
                 <NavDropdown.Item href="/location">Location</NavDropdown.Item>
-                <NavDropdown.Item href="/create-combo">Create Combo</NavDropdown.Item>
               </NavDropdown>
 
               <NavDropdown title="Transactions" id="navbarScrollingDropdown">
@@ -43,6 +42,7 @@ function Header() {
                 <NavDropdown.Item href="/returns">Returns</NavDropdown.Item>
                 <NavDropdown.Item href="/storage">Storage</NavDropdown.Item>
                 <NavDropdown.Item href="/stocktransfer">Stock Transfer</NavDropdown.Item>
+                <NavDropdown.Item href="/create-combo">Create Combo</NavDropdown.Item>
               </NavDropdown>
 
               <NavDropdown title="Scans" id="navbarScrollingDropdown">

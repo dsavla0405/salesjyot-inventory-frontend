@@ -45,6 +45,9 @@ function StockInward() {
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const rowsPerPageOptions = [10, 20, 50];
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  const [locations, setLocations] = useState([]);
+  const [location, setLocation] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState(null);
 
   const handleItemsPerPageChange = (e) => {
     setItemsPerPage(parseInt(e.target.value));
@@ -175,51 +178,71 @@ const handleFileUpload = (e) => {
     reader.readAsBinaryString(file);
 };
 
-const handleSubmit = (event) => {
+const handleSubmit = async (event) => {
   event.preventDefault();
   const form = event.currentTarget;
+  
   if (form.checkValidity() === false) {
     event.stopPropagation();
   } else {
-    // Fetch item based on supplier and supplier SKU code
-    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
-      .then(response => {
-        if (response.data) {
-          const item = response.data;
-          const formData = {
-            date,
-            skucode,
-            qty,
-            item: item
-          };
-          console.log('form data: ', formData);
-          axios.post(`${apiUrl}/stockInward`, formData)
-            .then(response => {
-              console.log('POST request successful:', response);
-              toast.success('StoockInward added successfully', {
-                autoClose: 2000 // Close after 2 seconds
-              });
-              setValidated(false);
-              setApiData([...apiData, response.data]);
-              setQty("");
-              setDate("");
-              setSkucode("");
-            })
-            .catch(error => {
-              console.error('Error sending POST request:', error);
-              toast.error('Failed to add StockInward: ' + error.response.data.message);
-            });
-        } else {
-          console.error('No item found for the specified supplier and supplier SKU code.');
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching item:', error);
-      });
+    try {
+      // First, fetch the location by name
+      const locationResponse = await axios.get(`${apiUrl}/api/locations/name/${location}`);
+      const loc = locationResponse.data;
+
+      // Then, fetch the item based on supplier SKU code
+      const itemResponse = await axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`);
+      const item = itemResponse.data;
+
+      if (item && loc) {
+        console.log("loc = " + JSON.stringify(loc));
+        // Prepare the form data to be submitted
+        const formData = {
+          date,
+          skucode,
+          qty,
+          item: item,    // Add the item object
+          location: loc, // Add the location object
+        };
+
+        // Post the data to the stockInward API
+        const postResponse = await axios.post(`${apiUrl}/stockInward`, formData);
+        
+        console.log('POST request successful:', postResponse);
+        
+        // Show success toast notification
+        toast.success('StockInward added successfully', {
+          autoClose: 2000 // Close after 2 seconds
+        });
+
+        // Reset form values and validation state
+        setValidated(false);
+        setApiData([...apiData, postResponse.data]);
+        setQty("");
+        setDate("");
+        setSkucode("");
+        setLocation("");
+
+      } else {
+        console.error('No item found for the specified supplier and supplier SKU code.');
+        toast.error('Item not found.');
+      }
+
+    } catch (error) {
+      console.error('Error processing form:', error);
+      
+      // Show error toast notification
+      if (error.response && error.response.data && error.response.data.message) {
+        toast.error('Failed to add StockInward: ' + error.response.data.message);
+      } else {
+        toast.error('An unexpected error occurred.');
+      }
+    }
   }
 
   setValidated(true);
 };
+
 
 const handleRowSubmit = () => {
   console.log("handleRowSubmit triggered");
@@ -300,6 +323,12 @@ useEffect(() => {
       setSkuList(skuData);
     })
     .catch(error => console.error(error));
+
+    axios.get(`${apiUrl}/api/locations`)
+    .then(response => {
+      console.log(JSON.stringify(response.data));
+      setLocations(response.data);
+    })
 }, []);
 
 
@@ -424,6 +453,24 @@ const exportToExcel = () => {
           />
           <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
         </Form.Group>
+
+        <Form.Group as={Col} md="4" controlId="validationCustom02">
+          <Form.Label>Location</Form.Label>
+         <Form.Select
+          required
+          onChange={(e) => setLocation(e.target.value)}
+          value={location}
+        >
+          <option value="">Select Location</option>
+          {locations.map((sku) => (
+            <option key={sku.id} value={sku.locationName}>
+              {sku.locationName}
+            </option>
+          ))}
+        </Form.Select>
+          <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
+        </Form.Group>
+
         {itemImg && (
         <img alt = "item image" src = {itemImg} className='rotating1' style={{width: "200px", height: "150px", marginTop: "-50px", marginLeft: "45%"}}></img>
         )}
