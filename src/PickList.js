@@ -18,12 +18,17 @@ import Pagination from 'react-bootstrap/Pagination';
 import Form from 'react-bootstrap/Form';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { useDispatch, useSelector } from 'react-redux';
 
 const PicklistComponent = () => {
+  const user = useSelector((state) => state.user);  // Access user data from Redux store
+
   const apiUrl = process.env.REACT_APP_API_URL;
   const [apiData, setApiData] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [picklistData, setPicklistData] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [location, setLocation] = useState("");
   const [orderData, setOrderData] = useState([]);
   const [orders, setOrders] = useState([]);
   const [mergedOrderData, setMergedOrderData] = useState();
@@ -82,7 +87,7 @@ const handlePageChange1 = (pageNumber) => {
   useEffect(() => {
     const fetchBomsForOrder = async (orderNo) => {
       try {
-        const response = await axios.get(`${apiUrl}/picklists/boms/${orderNo}`);
+        const response = await axios.get(`${apiUrl}/picklists/boms/${orderNo}`, {params: { email: user.email }, withCredentials: true });
         console.log("Fetched BOMs for order", orderNo, response.data);
         setBoms(prevBoms => ({
           ...prevBoms,
@@ -90,7 +95,7 @@ const handlePageChange1 = (pageNumber) => {
         }));
   
         // Fetch the default BOM code for the orderNo
-        const bomCodeResponse = await axios.get(`${apiUrl}/picklists/bom/default/bomCode?orderNo=${orderNo}`);
+        const bomCodeResponse = await axios.get(`${apiUrl}/picklists/bom/default/bomCode?orderNo=${orderNo}`, {params: { email: user.email }, withCredentials: true });
         console.log("Response = " + bomCodeResponse.data);
         setBomCodes(prevBomCodes => ({
           ...prevBomCodes,
@@ -138,7 +143,7 @@ const handlePageChange1 = (pageNumber) => {
   );
 
   useEffect (() => {
-    axios.get(`${apiUrl}/picklists/orderData`)
+    axios.get(`${apiUrl}/picklists/orderData`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
         setOrderData(response.data);
         console.log("orderData = " + JSON.stringify(orderData));
@@ -149,17 +154,17 @@ const handlePageChange1 = (pageNumber) => {
   }, [])
 
   useEffect(() => {
-    axios.get(`${apiUrl}/picklists/not/generated/orders`)
+    axios.get(`${apiUrl}/api/locations/user/email`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
-        setOrders(response.data);
+        setLocations(response.data);
       })
       .catch(error => {
-        console.log("error getting orders: " + error);
+        console.log("error getting locations: " + error);
       })
-  }, [])
+  }, [user])
 
   useEffect(() => {
-    axios.get(`${apiUrl}/picklists/merged/picklist`)
+    axios.get(`${apiUrl}/picklists/merged/picklist`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
         setPicklistData(response.data);
       })
@@ -205,9 +210,10 @@ const handlePageChange1 = (pageNumber) => {
 
         if (event.target.checked) {
             const promises = orders.map(order => 
-                axios.get(`${apiUrl}/picklists/getSelectedOrderData?orderNo=${order.orderNo}&bomCode=${bomCodes[order.orderNo]}`)
+                axios.get(`${apiUrl}/picklists/getSelectedOrderData?orderNo=${order.orderNo}&bomCode=${bomCodes[order.orderNo]}`, {params: { email: user.email }, withCredentials: true })
                     .then(response => {
                         console.log("selected bomCode = " + bomCodes[order.orderNo]);
+                        console.log("from backend = "+ response.data); 
                         return response.data; // Return data on success
                     })
                     .catch(error => {
@@ -237,7 +243,7 @@ const handlePageChange1 = (pageNumber) => {
 
         if (event.target.checked) {
             try {
-                const orderDataResponse = await axios.get(`${apiUrl}/picklists/getSelectedOrderData?orderNo=${orderNo}&bomCode=${bomCode}`);
+                const orderDataResponse = await axios.get(`${apiUrl}/picklists/getSelectedOrderData?orderNo=${orderNo}&bomCode=${bomCode}`,{params: { email: user.email }, withCredentials: true });
                 const orderData = orderDataResponse.data;
                 setSelectedOrderData(prevData => [...prevData, ...orderData]);
             } catch (error) {
@@ -253,7 +259,7 @@ const handlePageChange1 = (pageNumber) => {
   
   const generatePicklist = () => {
     // Assuming your API endpoint for fetching all picklists is '/picklists'
-    axios.get(`${apiUrl}/picklists`)
+    axios.get(`${apiUrl}/picklists/user/email`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
         const picklists = response.data;
         if (picklists.length === 0) {
@@ -291,13 +297,15 @@ const generatePicklistWithNumber = async (pickListNumber) => {
                 description: s.description,
                 binNumber: s.binNumber,
                 rackNumber: s.rackNumber,
-                pickQty: s.pickQty
+                pickQty: s.pickQty,
+                skucode: s.skucode,
+                userEmail: user.email
             };
 
             console.log("selected order = " + JSON.stringify(selectedOrder));
 
             try {
-                const response = await axios.post(`${apiUrl}/picklistdata`, selectedOrder);
+                const response = await axios.post(`${apiUrl}/picklistdata`, selectedOrder, {withCredentials: true });
                 console.log('Picklist data generated successfully:', response.data);
             } catch (error) {
                 console.error('Error generating picklist data:', error);
@@ -308,8 +316,10 @@ const generatePicklistWithNumber = async (pickListNumber) => {
         // Then, post to 'picklists' endpoint for all selected orders
         const response = await axios.post(`${apiUrl}/picklists`, {
             pickListNumber,
-            orders: selectedOrders
-        });
+            orders: selectedOrders,
+            userEmail: user.email,
+        },
+        {withCredentials: true });
 
         console.log('Picklist generated successfully:', response.data);
 
@@ -319,8 +329,8 @@ const generatePicklistWithNumber = async (pickListNumber) => {
 
         // Fetch updated picklist and orders data
         await Promise.all([
-            axios.get(`${apiUrl}/picklists/merged/picklist`),
-            axios.get(`${apiUrl}/picklists/not/generated/orders`)
+            axios.get(`${apiUrl}/picklists/merged/picklist`, {params: { email: user.email }, withCredentials: true }),
+            axios.post(`${apiUrl}/picklists/not/generated/orders`, {withCredentials: true })
         ]).then(([picklistResponse, ordersResponse]) => {
             setPicklistData(picklistResponse.data);
             setOrders(ordersResponse.data);
@@ -405,17 +415,15 @@ const generatePicklistPDF1 = async () => {
 
 const handleDelete = (pickListNumber) => {
   console.log("Deleting row with picklist number:", pickListNumber);
-  // Remove the row from the table
 
-  axios.delete(`${apiUrl}/picklistdata/picklistnumber/${pickListNumber}`)
+  axios.delete(`${apiUrl}/picklistdata/picklistnumber/${pickListNumber}`, {params: { email: user.email }, withCredentials: true })
   .then(response => {
-    // Handle success response
     console.log('Row deleted successfully.');
     toast.success('PickList deleted successfully', {
-      autoClose: 2000 // Close after 2 seconds
+      autoClose: 2000
     });
     setPicklistData(prevData => prevData.filter(row => row.pickListNumber !== pickListNumber));
-    axios.get(`${apiUrl}/picklists/not/generated/orders`)
+    axios.post(`${apiUrl}/picklists/not/generated/orders`, { withCredentials: true })
       .then(response => {
         setOrders(response.data);
       })
@@ -424,7 +432,6 @@ const handleDelete = (pickListNumber) => {
       })
   })
   .catch(error => {
-    // Handle error
     console.error('Error deleting row:', error);
     toast.error('Failed to delete picklist: ' + error.message);
   });
@@ -448,7 +455,7 @@ const handleRowClick = (event, orderNo) => {
 
   // If the row was just selected, fetch orderData for the selected orderNo
   if (!isChecked) {
-    axios.get(`${apiUrl}/picklists/getSelectedOrderData?orderNo=${orderNo}`)
+    axios.get(`${apiUrl}/picklists/getSelectedOrderData?orderNo=${orderNo}`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
         // Assuming the API response is an array of orderData
         const orderData = response.data;
@@ -547,6 +554,19 @@ const handleDropdownChange = (event, orderNo) => {
   console.log(`Selected ${event.target.value} for order ${orderNo}`);
 };
 
+const handleLocationChange = (selectedLocation) => {
+  console.log(`Selected Location: ${selectedLocation.locationName}`);
+  
+  // Send selectedLocation in the POST request
+  axios.post(`${apiUrl}/picklists/not/generated/orders`, selectedLocation, {params: { email: user.email }, withCredentials: true })
+    .then(response => {
+      setOrders(response.data);
+      console.log("Orders fetched successfully", response.data);
+    })
+    .catch(error => {
+      console.log("Error getting orders: " + error);
+    });
+};
 
   return (
     <div>
@@ -565,6 +585,30 @@ const handleDropdownChange = (event, orderNo) => {
         <AccordionDetails>
         <ToastContainer position="top-right" />
         <div style={{ overflowX: 'auto' }}> 
+
+        <div className="locationSelect">
+  <Form.Select
+    required
+    value={location ? location.locationId : ""} // Use a default value when location is undefined
+    onChange={(e) => {
+      const selectedLocationId = e.target.value;
+      const selectedLocation = locations.find(loc => loc.locationId === parseInt(selectedLocationId));
+
+      // Ensure selectedLocation exists before proceeding
+      if (selectedLocation) {
+        setLocation(selectedLocation); // Update the state with the selected location
+        handleLocationChange(selectedLocation); // Pass the entire location object to the handler
+      }
+    }}
+  >
+    <option value="">Select Location</option>
+    {locations && locations.map((loc) => ( // Ensure locations is defined
+      <option key={loc.locationId} value={loc.locationId}>
+        {loc.locationName}
+      </option>
+    ))}
+  </Form.Select>
+</div>
 
         <Table striped bordered hover className='custom-table' style={{ width: '100%' }}>
   <thead style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>

@@ -24,8 +24,13 @@ import 'react-toastify/dist/ReactToastify.css';
 import Pagination from 'react-bootstrap/Pagination';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { useDispatch, useSelector } from 'react-redux';
 
 function Item() {
+  const user = useSelector((state) => state.user);
+
+  console.log("user email in item = " + user.email)
+
   const [validated, setValidated] = useState(false);
   const [Supplier, setSupplier] = useState("");
   const [skucode, setSKUCode] = useState("");
@@ -147,6 +152,7 @@ function Item() {
         mrp,
         sellerSKUCode,
         img,
+        userEmail: user.email
       };
 
       // Include suppliers only if the suppliers array is not empty
@@ -159,7 +165,7 @@ function Item() {
 
       console.log(formData)
 
-      axios.post(`${apiUrl}/item/supplier`, formData)
+      axios.post(`${apiUrl}/item/supplier`, formData, { withCredentials: true })
         .then(response => {
           console.log('POST request successful:', response);
           toast.success('Item added successfully', {
@@ -208,11 +214,14 @@ const handleRefresh = () => {
   useEffect(() => {
     // Fetch initial data
     fetchData();
-  }, []);
+  }, [user]);
 
   const fetchData = () => {
-    axios.get(`${apiUrl}/supplier`)
-      .then(response => {
+    axios.get(`${apiUrl}/supplier/user/email`, {
+      params: { email: user.email },  
+      withCredentials: true,  
+    })      
+    .then(response => {
         setSuppliersList(response.data);
         setParentSKUs(response.data.skucode); 
       })
@@ -220,11 +229,13 @@ const handleRefresh = () => {
         console.error('Error fetching supplier data:', error);
       });
 
-      axios.get(`${apiUrl}/item/supplier`)
+      axios.get(`${apiUrl}/item/supplier/user/email`, {
+        params: { email: user.email }, // Pass the email as a query parameter
+        withCredentials: true, // Include credentials if needed
+      })      
       .then(response => {
         const filteredData = response.data.filter(item => typeof item === 'object');
         setApiData(filteredData); 
-        
       })
       .catch(error => {
         console.error('Error fetching data:', error);
@@ -258,9 +269,6 @@ const handleRefresh = () => {
       setSuppliers([]); // Reset suppliers to an empty array if no value is selected
     }
   };
-  
-  
-  
 
   const handleSKUCodeChange = (event, value1) => {
     if (value1) {
@@ -285,7 +293,7 @@ const handleRefresh = () => {
   }, [apiData]);
 
   const handleRowClick = (item) => {
-    axios.get(`${apiUrl}/item/supplier/${item.itemId}`)
+    axios.get(`${apiUrl}/item/supplier/${item.itemId}` , { withCredentials: true })
       .then(response => {
         // Check if the response is successful
         if (response.status !== 200) {
@@ -369,7 +377,7 @@ const handleRefresh = () => {
       console.log(formData);
   
       axios
-        .put(`${apiUrl}/item/supplier/${selectedItem.itemId}`, formData)
+        .put(`${apiUrl}/item/supplier/${selectedItem.itemId}`, formData, { withCredentials: true })
         .then((response) => {
           console.log("PUT request successful:", response);
           toast.success('Item updated successfully', {
@@ -441,10 +449,11 @@ const handleRefresh = () => {
           mrp: item.mrp,
           sellerSKUCode: item.sellerSKUCode,
           img: item.img,
+          userEmail: user.email
         };
 
         // Fetch supplier based on supplier name
-        axios.get(`${apiUrl}/supplier/name/${item.supplierName}`)
+        axios.get(`${apiUrl}/supplier/name/${item.supplierName}` , { withCredentials: true })
           .then(response => {
             console.log("response data for supplier = " + response.data);
             if (response.data.length === 0) {
@@ -456,7 +465,7 @@ const handleRefresh = () => {
             formData.suppliers = [response.data];
 
             // Post formData
-            axios.post(`${apiUrl}/item/supplier`, formData)
+            axios.post(`${apiUrl}/item/supplier`, formData, { withCredentials: true })
               .then(response => {
                 console.log('POST request successful:', response);
                 toast.success('Item added successfully', {
@@ -483,7 +492,7 @@ const handleRefresh = () => {
 
 const fetchSupplier = async (supplierName, phone) => {
     try {
-        const response = await axios.get(`${apiUrl}/supplier/${supplierName}/${phone}`);
+        const response = await axios.get(`${apiUrl}/supplier/${supplierName}/${phone}` , { withCredentials: true });
         console.log('Supplier fetched successfully:', response.data);
         return [response.data]; // Return an array with the supplier
     } catch (error) {
@@ -494,7 +503,7 @@ const fetchSupplier = async (supplierName, phone) => {
 
 const postData = async (data) => {
     try {
-        const response = await axios.post(`${apiUrl}/item/supplier`, data);
+        const response = await axios.post(`${apiUrl}/item/supplier`, data, { withCredentials: true });
         console.log('Data posted successfully:', response);
         setApiData(prevData => [...prevData, response.data]);
         toast.success('Item added successfully');
@@ -532,7 +541,7 @@ const postData = async (data) => {
     console.log("Deleting row with id:", id);
     // Remove the row from the table
   
-    axios.delete(`${apiUrl}/item/supplier/${id}`)
+    axios.delete(`${apiUrl}/item/supplier/${id}`, { withCredentials: true })
     .then(response => {
       // Handle success response
       console.log('Row deleted successfully.');

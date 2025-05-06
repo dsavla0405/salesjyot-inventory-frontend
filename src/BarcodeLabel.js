@@ -19,6 +19,7 @@ const PrintLabel = () => {
   const [validated, setValidated] = useState(false);
   const labelRef = useRef();
 
+
   // Fetch items from API
   useEffect(() => {
     axios.get(`${apiUrl}/item/supplier`)  // Replace with your API endpoint
@@ -67,15 +68,12 @@ const PrintLabel = () => {
 
   const labels = [];
 
-  // Calculate the total number of empty slots before starting the labels
   const emptySlots = (startRow - 1) * labelsPerRow + (startColumn - 1);
 
-  // Add empty slots for the starting position
   for (let i = 0; i < emptySlots; i++) {
     labels.push(<div key={`empty-${i}`} style={{ width: '52.5mm', height: '29.7mm' }} />);
   }
 
-  // Add the actual labels
   items.forEach((item, itemIndex) => {
     for (let i = 0; i < item.quantity; i++) {
       labels.push(
@@ -89,21 +87,21 @@ const PrintLabel = () => {
     }
   });
 
-  // Fill remaining slots with empty labels to complete the page layout
   while (labels.length < totalSlots) {
     labels.push(<div key={`empty-${labels.length}`} style={{ width: '52.5mm', height: '29.7mm' }} />);
   }
 
+  
   const handleSubmit = (e) => {
     e.preventDefault();
-    const form = e.currentTarget;
-    if (form.checkValidity() === false) {
-      e.stopPropagation();
-    } else {
-      handleAddItem();
+    if (!skuCode || !MRP || !description || quantity < 1 || startRow < 1 || startRow > 10 || startColumn < 1 || startColumn > 4) {
+      alert("Please fill all fields correctly.");
+      return;
     }
-    setValidated(true);
+    handleAddItem();
   };
+  
+  
 
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px', padding: '20px' }}>

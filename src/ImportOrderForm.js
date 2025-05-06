@@ -24,8 +24,11 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { saveAs } from 'file-saver';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { useDispatch, useSelector } from 'react-redux';
 
 function ImportOrderForm() {
+  const user = useSelector((state) => state.user);  // Access user data from Redux store
+
   const apiUrl = process.env.REACT_APP_API_URL;
   const [validated, setValidated] = useState(false);
   const [date, setDate] = useState("");
@@ -50,6 +53,9 @@ function ImportOrderForm() {
   const [portalNameList, setPortalNameList] = useState([]);
   const [orderStatus, setOrderStatus] = useState("");
   const [awbNo, setAwbNo] = useState("");
+  const [locations, setLocations] = useState([]);
+  const [location, setLocation] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState(null); // Selected location
 
   const [searchTermAwbNo, setSearchTermAwbNo] = useState('')
   const [searchTermOrderStatus, setSearchTermOrderStatus] = useState('');
@@ -75,6 +81,7 @@ function ImportOrderForm() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const rowsPerPageOptions = [10, 20, 50];
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  const [searchTermLocation, setSearchTermLocation] = useState("");
 
   // Function to handle change in items per page
   const handleItemsPerPageChange = (e) => {
@@ -116,7 +123,7 @@ function ImportOrderForm() {
   useEffect(() => {
     const fetchPortalMapping = async () => {
       try {
-        const response = await axios.get(`${apiUrl}/itemportalmapping`); // Replace 'your-api-endpoint' with the actual API endpoint
+        const response = await axios.get(`${apiUrl}/itemportalmapping/user/email`, {params: { email: user.email }, withCredentials: true }); // Replace 'your-api-endpoint' with the actual API endpoint
         setPortalMapping(response.data); // Set portal mapping data
         console.log("iitem portal mapping: "+JSON.stringify(portalMapping));
       } catch (error) {
@@ -125,15 +132,22 @@ function ImportOrderForm() {
     };
 
     fetchPortalMapping(); // Call the fetchPortalMapping function
-  }, []);
+  }, [user]);
 
-
-  //useEffect to update filtered lists when selectedPortal changes
   useEffect(() => {
-    // Check if portalMapping is empty or not
+    axios.get(`${apiUrl}/api/locations/user/email`, {params: { email: user.email }, withCredentials: true }) // Update with your API endpoint
+      .then(response => {
+        setLocations(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching locations:', error);
+      });
+  }, [user]);
+
+
+  useEffect(() => {
      if (Object.keys(portalMapping).length === 0) return;
 
-    // Filter portal SKU list based on selected portal
     const filteredPortalSKUs = portalMapping.filter(item => item.portal === selectedPortal).map(item => item.portalSkuCode);
     setFilteredPortalSKUList(filteredPortalSKUs);
   
@@ -179,7 +193,8 @@ function ImportOrderForm() {
     (item.itemPortalMapping.portal && item.itemPortalMapping.portal.toString().toLowerCase().includes(searchTermPortal.toLowerCase())) &&
     (searchTermCancel === null || searchTermCancel === '' || (item.cancel && item.cancel.toString().toLowerCase().includes(searchTermCancel.toLowerCase()))) &&
     (searchTermOrderStatus === null || searchTermOrderStatus === '' || (item.orderStatus && item.orderStatus.toString().toLowerCase().includes(searchTermOrderStatus.toLowerCase()))) &&
-    (searchTermAwbNo === null || searchTermAwbNo === '' || (item.awbNo && item.awbNo.toString().toLowerCase().includes(searchTermAwbNo.toLowerCase())))
+    (searchTermAwbNo === null || searchTermAwbNo === '' || (item.awbNo && item.awbNo.toString().toLowerCase().includes(searchTermAwbNo.toLowerCase()))) &&
+    (!searchTermLocation || (item.location && item.location.locationName.toLowerCase().includes(searchTermLocation.toLowerCase())))
   );
 
   const sortedData = filteredData.sort((a, b) => {
@@ -285,19 +300,23 @@ function ImportOrderForm() {
           qty: item.qty,
           cancel: item.cancel,
           awbNo: item.awbNo,
-          orderStatus: item.orderStatus || "Order Received"
+          orderStatus: item.orderStatus || "Order Received",
         };
   
         console.log('Formatted Data:', formattedData); // Debugging log
   
         // Fetch item based on supplier and supplier SKU code
-  
+        const locationResponse = axios.get(`${apiUrl}/api/locations/name/${item.location}`, {params: { email: user.email }, withCredentials: true });
+        const loc = locationResponse.data;
+        formattedData.location = loc
               // Fetch item portal mapping details
               axios.get(`${apiUrl}/itemportalmapping/Portal/PortalSku`, {
                 params: {
                   portal: item.portal,
                   portalSKU: item.portalSKU,
+                  email: user.email,
                 },
+                withCredentials: true,  // Moved outside params object
               })
                 .then(res => {
                   const ipm = res.data;
@@ -307,12 +326,13 @@ function ImportOrderForm() {
                     ...formattedData,
                     items: itemsArray,
                     itemPortalMapping: ipm,
+                    userEmail: user.email,
                   };
   
                   console.log('Form Data for POST:', formData); // Debugging log
   
                   // Send the POST request
-                  axios.post(`${apiUrl}/orders`, formData)
+                  axios.post(`${apiUrl}/orders`, formData, { withCredentials: true })
                     .then(response => {
                       console.log('POST request successful:', response);
                       toast.success('Order added successfully', {
@@ -341,7 +361,7 @@ function ImportOrderForm() {
   
   
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => { // Add 'async' here
     event.preventDefault();
     const form = event.currentTarget;
   
@@ -351,105 +371,96 @@ function ImportOrderForm() {
       setValidated(true);
       return;
     }
-  
-    // Fetch item based on supplier and seller SKU code
-    axios.get(`${apiUrl}/item/supplier/order/search/${skucode}/${productDescription}`)
-      .then(response => {
-        if (response.data) {
-          const itemsArray = [response.data]; // Store item data in an array
-  
-          // Fetch item portal mapping details
-          axios.get(`${apiUrl}/itemportalmapping/Portal/PortalSku`, {
-            params: {
-              portal,
-              portalSKU
-            },
-          })
-            .then(res => {
-              const ipm = res.data;
-  
-              // Build the form data object dynamically
-              const formData = {
-                orderNo,
-                portalSKU,
-                productDescription,
-                orderStatus: "Order Received",
-                items: itemsArray,
-                itemPortalMapping: ipm,
-                // Add only fields that have values
-                ...(date && { date }),
-                ...(portalOrderNo && { portalOrderNo }),
-                ...(portalOrderLineId && { portalOrderLineId }),
-                ...(shipByDate && { shipByDate }),
-                ...(dispatched && { dispatched }),
-                ...(courier && { courier }),
-                ...(portal && { portal }),
-                ...(skucode && { skucode }),
-                ...(qty && { qty }),
-                ...(cancel && { cancel }),
-                ...(awbNo && { awbNo }),
-              };
-  
-              console.log('Form data: ', formData);
-  
-              // Send the POST request
-              axios.post(`${apiUrl}/orders`, formData)
-                .then(response => {
-                  console.log('POST request successful:', response);
-                  toast.success('Order added successfully', {
-                    autoClose: 2000 // Close after 2 seconds
-                  });
-  
-                  // Update serial number in localStorage
-                  const lastSerialNumber = parseInt(localStorage.getItem('lastSerialNumber')) || 0;
-                  const newSerialNumber = lastSerialNumber + 1;
-                  localStorage.setItem('lastSerialNumber', newSerialNumber);
-  
-                  // Update order number
-                  updateOrderNumber();
-  
-                  // Reset form validation state
-                  setValidated(false);
-  
-                  // Update the state with the new API data
-                  setApiData([...apiData, response.data]);
-  
-                  // Reset form fields
-                  setCourier("");
-                  setDispatched("");
-                  setPortal("");
-                  setPortalOrderno("");
-                  setPortalOrderLineid("");
-                  setQuantity("");
-                  setShipbyDate("");
-                  setProductDescription("");
-                  setSkucode("");
-                  setPortalSKU("");
-                  setSelectedPortal("");
-                  setCancel("");
-                  setAwbNo("");
-                  setOrderStatus("");
-                })
-                .catch(error => {
-                  console.error('Error sending POST request:', error);
-                  toast.error('Failed to add Order: ' + error.response?.data?.message || error.message);
-                });
-            })
-            .catch(error => {
-              console.error('Error fetching item portal mapping:', error);
-              toast.error('Failed to fetch item portal mapping: ' + error.response?.data?.message || error.message);
-            });
-        } else {
-          console.error('No item found for the specified supplier and supplier SKU code.');
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching item:', error);
-        toast.error('Failed to fetch item: ' + error.response?.data?.message || error.message);
-      });
-  
-    setValidated(true);
-  };
+
+    try {
+      // Make the location API call
+      const locationResponse = await axios.get(`${apiUrl}/api/locations/name/${location}`, {params: { email: user.email }, withCredentials: true });
+      const loc = locationResponse.data;
+
+      // Fetch item based on supplier and seller SKU code
+      const itemResponse = await axios.get(`${apiUrl}/item/supplier/order/search/${skucode}/${productDescription}`, {params: { email: user.email }, withCredentials: true });
+      
+      if (itemResponse.data) {
+        const itemsArray = [itemResponse.data]; // Store item data in an array
+        
+        // Fetch item portal mapping details
+        const ipmResponse = await axios.get(`${apiUrl}/itemportalmapping/Portal/PortalSku`, {
+          params: {
+            portal,
+            portalSKU,
+            email: user.email,
+          },
+          withCredentials: true,
+        });
+        
+        const ipm = ipmResponse.data;
+
+        // Build the form data object dynamically
+        const formData = {
+          orderNo,
+          portalSKU,
+          productDescription,
+          orderStatus: "Order Received",
+          items: itemsArray,
+          itemPortalMapping: ipm,
+          location: loc,
+          userEmail: user.email,
+          ...(date && { date }),
+          ...(portalOrderNo && { portalOrderNo }),
+          ...(portalOrderLineId && { portalOrderLineId }),
+          ...(shipByDate && { shipByDate }),
+          ...(dispatched && { dispatched }),
+          ...(courier && { courier }),
+          ...(portal && { portal }),
+          ...(skucode && { skucode }),
+          ...(qty && { qty }),
+          ...(cancel && { cancel }),
+          ...(awbNo && { awbNo }),
+        };
+
+        console.log('Form data: ', formData);
+
+        // Send the POST request
+        const postResponse = await axios.post(`${apiUrl}/orders`, formData, { withCredentials: true });
+        console.log('POST request successful:', postResponse);
+
+        toast.success('Order added successfully', { autoClose: 2000 });
+
+        const lastSerialNumber = parseInt(localStorage.getItem('lastSerialNumber')) || 0;
+        const newSerialNumber = lastSerialNumber + 1;
+        localStorage.setItem('lastSerialNumber', newSerialNumber);
+
+        updateOrderNumber();
+        setValidated(false);
+        setApiData([...apiData, postResponse.data]);
+
+        setCourier("");
+        setDispatched("");
+        setPortal("");
+        setPortalOrderno("");
+        setPortalOrderLineid("");
+        setQuantity("");
+        setShipbyDate("");
+        setProductDescription("");
+        setSkucode("");
+        setPortalSKU("");
+        setSelectedPortal("");
+        setCancel("");
+        setAwbNo("");
+        setOrderStatus("");
+        setLocation("");
+
+      } else {
+        console.error('No item found for the specified supplier and supplier SKU code.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to process the order: ' + error.response?.data?.message || error.message);
+    }
+    
+    setValidated(false);
+};
+
   
 
 
@@ -473,11 +484,12 @@ const handleRowSubmit = () => {
       qty,
       cancel,
       awbNo,
-      orderStatus
+      orderStatus,
+      location
     };
     console.log('form data: ', formData)
     console.log("id: ", selectedItem.orderId)
-    axios.put(`${apiUrl}/orders/${selectedItem.orderId}`, formData)
+    axios.put(`${apiUrl}/orders/${selectedItem.orderId}`, formData, { withCredentials: true })
       .then(response => {
         
         console.log('PUT request successful:', response);
@@ -504,6 +516,7 @@ const handleRowSubmit = () => {
         setCancel("");
         setAwbNo("");
         setOrderStatus("");
+        setLocation("")
       })
       .catch(error => {
         console.error('Error sending PUT request:', error);
@@ -531,19 +544,19 @@ const handleRowClick = (order) => {
   setCancel(order.cancel);
   setAwbNo(order.awbNo);
   setOrderStatus(order.orderStatus);
+  setLocation(order.locaton.locationName);
   setRowSelected(true);
   setSelectedItem(order);
   
 };
 
 
-
 useEffect(() => {
-  axios.get(`${apiUrl}/orders`) 
+  axios.get(`${apiUrl}/orders/user/email`, {params: { email: user.email }, withCredentials: true }) 
     .then(response => setApiData(response.data))
       .catch(error => console.error(error));
     console.log(apiData)
-    axios.get(`${apiUrl}/itemportalmapping`)
+    axios.get(`${apiUrl}/itemportalmapping/user/email`, {params: { email: user.email }, withCredentials: true })
     .then(response => {
       // Extract portal SKUs from the response data
       const portalSKUs = response.data.map(item => item.portalSkuCode);
@@ -559,7 +572,7 @@ useEffect(() => {
     .catch(error => {
       console.error('Error fetching portal SKUs:', error);
     });
-    axios.get(`${apiUrl}/item/supplier`)
+    axios.get(`${apiUrl}/item/supplier/user/email`, {params: { email: user.email }, withCredentials: true })
     .then(response => {
       // Extract portal SKUs from the response data
       const itemDescription = response.data.map(item => item.description);
@@ -569,10 +582,10 @@ useEffect(() => {
     .catch(error => {
       console.error('Error fetching portal SKUs:', error);
     });
-}, []);
+}, [user]);
 
 const postData = (data) => {
-    axios.post(`${apiUrl}/orders`, data)
+    axios.post(`${apiUrl}/orders`, data, { withCredentials: true })
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -587,7 +600,7 @@ const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
   // Remove the row from the table
 
-  axios.delete(`${apiUrl}/orders/${id}`)
+  axios.delete(`${apiUrl}/orders/${id}`, {withCredentials: true })
   .then(response => {
     // Handle success response
     console.log('Row deleted successfully.');
@@ -607,8 +620,8 @@ const handleDelete = (id) => {
 
 const downloadTemplate = () => {
   const templateData = [
-    { date: 'dd-mmm-yyyy', orderNo: '',  portal: '', portalOrderNo: '', portalOrderLineId: '', portalSKU: '', skucode: '', productDescription: '', qty: '', shipByDate: 'dd-mmm-yyyy', dispatched: '', courier: '', cancel: '', awbNo },
-      { date: '', orderNo: '',  portal: '', portalOrderNo: '', portalOrderLineId: '', portalSKU: '', skucode: '', productDescription: '', qty: '', shipByDate: '', dispatched: '', courier: '', cancel: '', awbNo } // Add more fields if needed
+    { date: 'dd-mmm-yyyy', orderNo: '',  portal: '', portalOrderNo: '', portalOrderLineId: '', portalSKU: '', skucode: '', productDescription: '', qty: '', shipByDate: 'dd-mmm-yyyy', dispatched: '', courier: '', cancel: '', awbNo: '', location: '' },
+      { date: '', orderNo: '',  portal: '', portalOrderNo: '', portalOrderLineId: '', portalSKU: '', skucode: '', productDescription: '', qty: '', shipByDate: '', dispatched: '', courier: '', cancel: '', awbNo: '', location: '' } // Add more fields if needed
   ];
   const ws = XLSX.utils.json_to_sheet(templateData);
     const wb = XLSX.utils.book_new();
@@ -891,6 +904,22 @@ const exportToExcel = () => {
           <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
         </Form.Group>
 
+        <Form.Group as={Col} md="4" controlId="validationCustom02">
+          <Form.Label>Location</Form.Label>
+         <Form.Select
+          required
+          onChange={(e) => setLocation(e.target.value)}
+          value={location}
+        >
+          <option value="">Select Location</option>
+          {locations.map((sku) => (
+            <option key={sku.id} value={sku.locationName}>
+              {sku.locationName}
+            </option>
+          ))}
+        </Form.Select>
+          <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
+        </Form.Group>
     </Row>
                     
     
@@ -1130,6 +1159,18 @@ const exportToExcel = () => {
   </span>
 </th>
 
+<th>
+                  <SwapVertIcon style = {{cursor: 'pointer', marginRight: "2%"}}variant="link" onClick={() => requestSort('location')}>
+                  </SwapVertIcon>
+                    Location
+                  <span style={{ margin: '0 10px' }}><input
+                  type="text"
+                  placeholder="Search by location"
+                  value={searchTermLocation}
+                  onChange={(e) => setSearchTermLocation(e.target.value)}
+                /></span>
+                  </th>
+
 
               </tr>
             </thead>
@@ -1181,6 +1222,8 @@ const exportToExcel = () => {
 <td>{order.cancel ?? ''}</td>
 <td>{order.awbNo ?? ''}</td>
 <td>{order.orderStatus ?? ''}</td>
+<td>{order.location ? order.location.locationName : ''}</td>
+
 </tr>
 
               ))}

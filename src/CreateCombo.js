@@ -15,8 +15,12 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useDispatch, useSelector } from 'react-redux';
 
 const CreateCombo = () => {
+  const user = useSelector((state) => state.user);  // Access user data from Redux store
+
   const [validated, setValidated] = useState(false);
   const [rowSelected, setRowSelected] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -67,20 +71,20 @@ const CreateCombo = () => {
   
 
   useEffect(() => {
-    axios.get(`${apiUrl}/item/supplier`)
+    axios.get(`${apiUrl}/item/supplier/user/email`, {params: { email: user.email }, withCredentials: true })
       .then(response => setItems(response.data))
       .catch(error => console.error(error));
 
-    axios.get(`${apiUrl}/boms`)
+    axios.get(`${apiUrl}/boms/user/email`, {params: { email: user.email }, withCredentials: true })
       .then(response => setBoms(response.data))
       .catch(error => console.error(error));
 
-    axios.get(`${apiUrl}/api/combos`)
+    axios.get(`${apiUrl}/api/combos/user/email`, {params: { email: user.email }, withCredentials: true })
       .then(response => {setApiData(response.data)
         console.log(response.data);
   })
       .catch(error => console.error(error));
-  }, [apiUrl]);
+  }, [user]);
 
   const handleItemSelect = (item, isSelected) => {
     if (isSelected) {
@@ -101,24 +105,26 @@ const CreateCombo = () => {
 
   const handleComboSave = (event) => {
     event.preventDefault();
-    setValidated(true);
 
     const combo = {
       comboName: selectedItem,
       qtyToMake,
+      userEmail: user.email,
       comboItems: selectedItems.map(item => ({
         item,
         boms: selectedBom,
         quantity: item.quantity,
-        quantityRequired: item.quantityRequired
+        quantityRequired: item.quantityRequired,
+        userEmail:user.email,
       }))
     };
 
-    axios.post(`${apiUrl}/api/combos`, combo)
+    axios.post(`${apiUrl}/api/combos`, combo, { withCredentials: true })
       .then(response => {
         console.log(response.data);
-        alert('Combo created successfully!');
-        // Reset the form
+        toast.success('Combo created successfully', {
+          autoClose: 2000
+        });
       setComboName('');
       setSelectedItem(null);
       setSelectedItems([]);
@@ -131,7 +137,7 @@ const CreateCombo = () => {
       })
       .catch(error => {
         console.error(error);
-        alert('Failed to create combo.');
+        toast.error('Failed to create combo.', error.response.data.message);
       });
   };
 
@@ -235,7 +241,7 @@ const CreateCombo = () => {
   };
 
   const handleDelete = (id) => {
-    axios.delete(`${apiUrl}/api/combos/${id}`)
+    axios.delete(`${apiUrl}/api/combos/${id}`, { withCredentials: true })
       .then(() => {
         toast.success('Combo deleted successfully');
         setApiData(prevData => prevData.filter(location => location.comboId !== id));
@@ -415,7 +421,7 @@ const CreateCombo = () => {
         id="panel-header"
         sx={{ backgroundColor: '#E5E7E9' }} 
       >
-        <h4>List View of Stock Transfer</h4>
+        <h4>List View of Combos</h4>
       </AccordionSummary>
         <AccordionDetails>
           <Form.Control

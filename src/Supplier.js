@@ -22,8 +22,13 @@ import Pagination from 'react-bootstrap/Pagination';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import apiClient from './apiClient';
+import { useDispatch, useSelector } from 'react-redux';
 
 function Supplier() {
+  const user = useSelector((state) => state.user);  // Access user data from Redux store
+
+  console.log("User from Redux in Supplier:", user); 
   const [validated, setValidated] = useState(false);
   const [phonel, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -57,11 +62,16 @@ function Supplier() {
       </Form.Select>
     </Form.Group>
   );
+
   useEffect(() => {
-    axios.get(`${apiUrl}/supplier`) 
-      .then(response => setApiData(response.data))
-      .catch(error => console.error(error));
-  }, []);
+    axios.get(`${apiUrl}/supplier/user/email`, {
+        params: { email: user.email }, // Pass the email as a query parameter
+        withCredentials: true, // Include credentials if needed
+      })
+      .then((response) => setApiData(response.data))
+      .catch((error) => console.error("Error fetching suppliers:", error));
+  }, [user]);
+
   console.log('API URL:', process.env.REACT_APP_API_URL);
   const filteredData = apiData.filter(supplier => {
     return (
@@ -111,7 +121,8 @@ function Supplier() {
             const formattedData = {
                 address: item.address,
                 phonel: item.phone,
-                supplierName: item.supplier_name
+                supplierName: item.supplier_name,
+                userEmail: user.email
             };
             console.log(formattedData);
             postData(formattedData);
@@ -144,6 +155,7 @@ const downloadTemplate = () => {
 const handleSubmit = (event) => {
   event.preventDefault();
   const form = event.currentTarget;
+  console.log("Submitting with email:", user?.email);
 
   if (form.checkValidity() === false || !phonel || !supplierName) {
     event.stopPropagation();
@@ -158,10 +170,11 @@ const handleSubmit = (event) => {
       phonel,
       address,
       supplierName,
+      userEmail: user.email, 
     };
 
     axios
-      .post(`${apiUrl}/supplier`, formData)
+      .post(`${apiUrl}/supplier`, formData ,{ withCredentials: true })
       .then((response) => {
         console.log('POST request successful:', response);
         setValidated(false);
@@ -193,7 +206,7 @@ const handleRowSubmit = () => {
     };
     console.log('form data: ', formData)
     console.log("id: ", selectedItem.supplierId)
-    axios.put(`${apiUrl}/supplier/${selectedItem.supplierId}`, formData)
+    axios.put(`${apiUrl}/supplier/${selectedItem.supplierId}`, formData , { withCredentials: true })
       .then(response => {
         
         console.log('PUT request successful:', response);
@@ -224,7 +237,7 @@ const handleRowClick = (supplier) => {
 };
 
 const postData = (data) => {
-  axios.post(`${apiUrl}/supplier `, data)
+  axios.post(`${apiUrl}/supplier `, data , { withCredentials: true })
       .then(response => {
           console.log('Data posted successfully:', response);
           setApiData(prevData => [...prevData, response.data]);
@@ -236,7 +249,7 @@ const postData = (data) => {
 
 const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
-  axios.delete(`${apiUrl}/supplier/${id}`)
+  axios.delete(`${apiUrl}/supplier/${id}` , { withCredentials: true })
     .then(response => {
       console.log('Row deleted successfully.');
       toast.success('Supplier deleted successfully', {

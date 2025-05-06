@@ -4,10 +4,13 @@ import { Container, Row, Col, Card } from "react-bootstrap";
 import { Bar } from 'react-chartjs-2';
 import { Chart, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
+import { useDispatch, useSelector } from 'react-redux';
 
 Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function StockCount() {
+    const user = useSelector((state) => state.user);
+
     const apiUrl = process.env.REACT_APP_API_URL;
     const [itemData, setItemData] = useState([]);
     const [comboData, setComboData] = useState([]);
@@ -24,7 +27,7 @@ function StockCount() {
         // Fetch item data
         const fetchItemData = async () => {
             try {
-                const response = await axios.get(`${apiUrl}/stock-counts/items`);
+                const response = await axios.get(`${apiUrl}/stock-counts/items`, {params: { email: user.email }, withCredentials: true });
                 setItemData(response.data);
             } catch (error) {
                 console.error('Error fetching item data:', error);
@@ -34,7 +37,7 @@ function StockCount() {
         // Fetch combo data
         const fetchComboData = async () => {
             try {
-                const response = await axios.get(`${apiUrl}/stock-counts/combos`);
+                const response = await axios.get(`${apiUrl}/stock-counts/combos`, {params: { email: user.email }, withCredentials: true });
                 setComboData(response.data);
             } catch (error) {
                 console.error('Error fetching combo data:', error);
@@ -43,7 +46,7 @@ function StockCount() {
 
         fetchItemData();
         fetchComboData();
-    }, []);
+    }, [user]);
 
     const handleFilterChange = (key, value) => {
         setFilters({ ...filters, [key]: value });

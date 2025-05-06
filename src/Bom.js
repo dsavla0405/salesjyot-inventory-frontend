@@ -27,8 +27,11 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { useDispatch, useSelector } from 'react-redux';
 
 function Bom() {
+  const user = useSelector((state) => state.user);  // Access user data from Redux store
+
   const [validated, setValidated] = useState(false);
   const [skucode, setSku] = useState("");
   const [bomItem, setBomItem] = useState("");
@@ -123,7 +126,7 @@ function Bom() {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   
   const fetchData = () => {
-    axios.get(`${apiUrl}/item/supplier`) // Fetch SKU codes and descriptions from the items table
+    axios.get(`${apiUrl}/item/supplier/user/email`, {params: { email: user.email }, withCredentials: true }) // Fetch SKU codes and descriptions from the items table
       .then(response => {
         // Extract SKU codes and descriptions from the response data and filter out null or undefined values
         const skuData = response.data
@@ -136,7 +139,7 @@ function Bom() {
   }
 
   useEffect(() => {
-    axios.get(`${apiUrl}/item/supplier`) // Fetch SKU codes and descriptions from the items table
+    axios.get(`${apiUrl}/item/supplier/user/email`, { params: { email: user.email }, withCredentials: true }) // Fetch SKU codes and descriptions from the items table
       .then(response => {
         // Extract SKU codes and descriptions from the response data and filter out null or undefined values
         const skuData = response.data
@@ -146,10 +149,10 @@ function Bom() {
         setSkuList(skuData);
       })
       .catch(error => console.error(error));
-  }, []);
+  }, [user]);
 
   const postData = (data) => {
-    axios.post(`${apiUrl}/boms`, data)
+    axios.post(`${apiUrl}/boms`, data, { withCredentials: true })
         .then(response => {
           toast.success('BOM added successfully', {
             autoClose: 2000 // Close after 2 seconds
@@ -185,11 +188,12 @@ const handleFileUpload = (e) => {
               skucode: item.skucode,
               bomCode: item.bomCode,
               defaultStartDate: startDate ? startDate.toISOString() : null,
-              defaultEndDate: endDate ? endDate.toISOString() : null
+              defaultEndDate: endDate ? endDate.toISOString() : null,
+              userEmail: user.email
           };
 
           // Fetch item details using skucode
-          axios.get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`)
+          axios.get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`, {params: { email: user.email }, withCredentials: true })
               .then(response => {
                   if (response.data.length === 0) {
                       console.error('Item not found with SKU code: ' + item.skucode);
@@ -252,7 +256,7 @@ const handleSubmit = (event) => {
     return;
   } else {
     // Fetch item details using skucode
-    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
+    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
         console.log("item = " + JSON.stringify(response.data));
         // Check if item exists
@@ -271,10 +275,11 @@ const handleSubmit = (event) => {
           bomCode,
           defaultEndDate,
           bomItems : [item], // Wrap the single item in an array
+          userEmail : user.email,
         };
 
         // Send POST request with formData
-        axios.post(`${apiUrl}/boms` , formData)
+        axios.post(`${apiUrl}/boms` , formData, { withCredentials: true })
           .then(response => {
             console.log('POST request successful:', response);
             toast.success('BOM added successfully', {
@@ -311,7 +316,7 @@ const handleRowSubmit = () => {
   console.log(selectedItem);
   if (rowSelected && selectedItem) {
     // Fetch item details using skucode
-    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
+    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
         // Check if item exists
         if (response.data.length === 0) {
@@ -334,7 +339,7 @@ const handleRowSubmit = () => {
         console.log('form data: ', formData);
         console.log("id: ", selectedItem.bomId);
 
-        axios.put(`${apiUrl}/boms/${selectedItem.bomId}`, formData)
+        axios.put(`${apiUrl}/boms/${selectedItem.bomId}`, formData, { withCredentials: true })
           .then(response => {
             console.log('PUT request successful:', response);
             toast.success('Bom updated successfully', {
@@ -376,11 +381,11 @@ const handleRowSubmit = () => {
   };
   
   useEffect(() => {
-    axios.get(`${apiUrl}/boms`) 
+    axios.get(`${apiUrl}/boms/user/email`, { params: { email: user.email }, withCredentials: true }) 
       .then(response => setApiData(response.data))
       .catch(error => console.error(error));
     
-  }, []);
+  }, [user]);
 
   const downloadTemplate = () => {
     const templateData = [
@@ -417,7 +422,7 @@ const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
   // Remove the row from the table
 
-  axios.delete(`${apiUrl}/boms/${id}`)
+  axios.delete(`${apiUrl}/boms/${id}`, { withCredentials: true })
   .then(response => {
     // Handle success response
     console.log('Row deleted successfully.');

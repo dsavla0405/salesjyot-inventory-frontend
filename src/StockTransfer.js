@@ -18,8 +18,11 @@ import Pagination from 'react-bootstrap/Pagination';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { useDispatch, useSelector } from 'react-redux';
 
 function LocationForm() {
+  const user = useSelector((state) => state.user);  // Access user data from Redux store
+
   const [validated, setValidated] = useState(false);
   const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
@@ -63,12 +66,12 @@ function LocationForm() {
   });
 
   useEffect(() => {
-    axios.get(`${apiUrl}/item/supplier`) // Replace with your items API endpoint
+    axios.get(`${apiUrl}/item/supplier/user/email`, {params: { email: user.email }, withCredentials: true }) // Replace with your items API endpoint
       .then(response => {
         setItems(response.data);
       })
       .catch(error => console.error('Error fetching items:', error));
-  }, [apiUrl]);
+  }, [user]);
 
   const handleItemSelect = (item, isSelected) => {
     if (isSelected) {
@@ -137,10 +140,10 @@ function LocationForm() {
   };
   
   useEffect(() => {
-    axios.get(`${apiUrl}/api/stocktransfer/all`)
+    axios.get(`${apiUrl}/api/stocktransfer/user/email`, {params: { email: user.email }, withCredentials: true })
       .then(response => setApiData(response.data))
       .catch(error => console.error(error));
-  }, [apiUrl]);
+  }, [user]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -164,10 +167,11 @@ function LocationForm() {
             qty: item.quantity, // Post the quantity
             fromLocation, // Post the fromLocation object
             toLocation, // Post the toLocation object
+            userEmail: user.email,
           };
   
           // Make the API call to post the data
-          await axios.post(`${apiUrl}/api/stocktransfer/create`, formData)
+          await axios.post(`${apiUrl}/api/stocktransfer/create`, formData, { withCredentials: true })
             .then(response => {
                 setApiData([...apiData, response.data]);
             })
@@ -202,7 +206,7 @@ function LocationForm() {
       };
       console.log('form data: ', formData)
       console.log("id: ", selectedItem.locationId)
-      axios.put(`${apiUrl}/api/stocktransfer/${selectedItem.stockTransferId}`, formData)
+      axios.put(`${apiUrl}/api/stocktransfer/${selectedItem.stockTransferId}`, formData, { withCredentials: true })
         .then(response => {
           
           console.log('PUT request successful:', response);
@@ -231,7 +235,7 @@ function LocationForm() {
   };
 
   const handleDelete = (id) => {
-    axios.delete(`${apiUrl}/api/stocktransfer/delete/${id}`)
+    axios.delete(`${apiUrl}/api/stocktransfer/delete/${id}`, { withCredentials: true })
       .then(() => {
         toast.success('Stock Transfer deleted successfully');
         setApiData(prevData => prevData.filter(location => location.stockTransferId !== id));
@@ -271,7 +275,8 @@ function LocationForm() {
         jsonData.forEach(item => {
             const formattedData = {
                 toLocation: item.toLocation,
-                fromLocation: item.fromLocation
+                fromLocation: item.fromLocation, 
+                userEmail: user.email,
             };
             console.log(formattedData);
             postData(formattedData);
@@ -282,7 +287,7 @@ function LocationForm() {
 };
 
 const postData = (data) => {
-    axios.post(`${apiUrl}/api/stocktransfer/create`, data)
+    axios.post(`${apiUrl}/api/stocktransfer/create`, data, { withCredentials: true })
         .then(response => {
             console.log('Data posted successfully:', response);
             setApiData(prevData => [...prevData, response.data]);
@@ -293,7 +298,7 @@ const postData = (data) => {
   };
 
   useEffect(() => {
-    axios.get(`${apiUrl}/api/locations`) 
+    axios.get(`${apiUrl}/api/locations/user/email`, {params: { email: user.email }, withCredentials: true }) 
     .then(response => {
       console.log("API response for locations: ", response.data);  // Check if data is coming in correctly
       // Ensure locationName field exists and filter non-null values
@@ -304,7 +309,7 @@ const postData = (data) => {
       setSkuList(skuData);  // Set the dropdown data
     })
     .catch(error => console.error('Error fetching locations:', error));
- }, []);
+ }, [user]);
 
  const handleToLocationChange = (e) => {
     const locationName = e.target.value;

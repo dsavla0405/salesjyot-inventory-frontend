@@ -27,8 +27,11 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { useDispatch, useSelector } from 'react-redux';
 
 function Bom() {
+  const user = useSelector((state) => state.user);  // Access user data from Redux store
+
   const [validated, setValidated] = useState(false);
   const [bomItem, setBomItem] = useState("");
   const [qty, setQty] = useState("");
@@ -77,7 +80,7 @@ function Bom() {
   };
 
   const fetchData = () => {
-    axios.get(`${apiUrl}/boms`)
+    axios.get(`${apiUrl}/boms/user/email`, { params: { email: user.email }, withCredentials: true })
       .then(response => {
         setBomCodeList(response.data); 
       })
@@ -85,7 +88,7 @@ function Bom() {
         console.error('Error fetching supplier data:', error);
       });
 
-      axios.get(`${apiUrl}/item/supplier`)
+      axios.get(`${apiUrl}/item/supplier/user/email` , { params: { email: user.email }, withCredentials: true })
       .then(response => {
         setBomItemsList(response.data); 
       })
@@ -139,7 +142,7 @@ function Bom() {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   
   const postData = (data) => {
-    axios.post(`${apiUrl}/bomItems`, data)
+    axios.post(`${apiUrl}/bomItems`, data, {withCredentials: true })
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -164,7 +167,7 @@ const handleFileUpload = (e) => {
     jsonData.forEach(item => {
       const { bomCode, bomItem, qty } = item;
       
-      axios.get(`${apiUrl}/item/supplier/search/skucode/${bomItem}`)
+      axios.get(`${apiUrl}/item/supplier/search/skucode/${bomItem}` , { params: { email: user.email }, withCredentials: true })
         .then(response => {
           if (response.data.length === 0) {
             toast.error('Item not found with SKU code: ' + bomItem);
@@ -173,7 +176,7 @@ const handleFileUpload = (e) => {
 
           const fetchedItem = response.data;
 
-          axios.get(`${apiUrl}/boms/bom/${bomCode}`)
+          axios.get(`${apiUrl}/boms/bom/${bomCode}`, { params: { email: user.email }, withCredentials: true })
             .then((response) => {
               const bom = response.data;
               const bomId = bom.bomId;
@@ -182,10 +185,11 @@ const handleFileUpload = (e) => {
                 bomItem,
                 qty,
                 bom,
-                item: fetchedItem
+                item: fetchedItem,
+                userEmail : user.email,
               };
 
-              return axios.post(`${apiUrl}/bomItems/create/${bomId}`, formData);
+              return axios.post(`${apiUrl}/bomItems/create/${bomId}`, formData, {withCredentials: true });
             })
             .then((response) => {
               console.log('POST request successful:', response);
@@ -220,7 +224,7 @@ const handleSubmit = (event) => {
       setValidated(true); 
       return;
     }else{
-        axios.get(`${apiUrl}/item/supplier/search/skucode/${bomItem}`)
+        axios.get(`${apiUrl}/item/supplier/search/skucode/${bomItem}`, { params: { email: user.email }, withCredentials: true } )
       .then(response => {
         console.log("item = " + JSON.stringify(response.data));
         // Check if item exists
@@ -232,7 +236,7 @@ const handleSubmit = (event) => {
         // Extract item from response data
         const item = response.data;
 
-    axios.get(`${apiUrl}/boms/bom/${bomCode}`)
+    axios.get(`${apiUrl}/boms/bom/${bomCode}`, { params: { email: user.email }, withCredentials: true })
       .then((response) => {
         const bom = response.data; // Assuming response.data is the bom object
         const bomId = bom.bomId;
@@ -241,10 +245,11 @@ const handleSubmit = (event) => {
           bomItem,
           qty,
           bom,// Include the bom object directly in formData
-            item
+            item,
+            userEmail: user.email,
         };
   
-        return axios.post(`${apiUrl}/bomItems/create/${bomId}`, formData);
+        return axios.post(`${apiUrl}/bomItems/create/${bomId}`, formData, {withCredentials: true });
       })
       .then((response) => {
         console.log('POST request successful:', response);
@@ -272,7 +277,7 @@ const handleSubmit = (event) => {
     console.log("Selected Item: ", selectedItem);
   
     if (rowSelected && selectedItem) {
-      axios.get(`${apiUrl}/boms/bom/${bomCode}`)
+      axios.get(`${apiUrl}/boms/bom/${bomCode}`, { params: { email: user.email }, withCredentials: true })
         .then((response) => {
           const bom = response.data; // Assuming response.data is the bom object
           const bomId = bom.bomId;
@@ -286,7 +291,7 @@ const handleSubmit = (event) => {
           console.log('Form data: ', formData);
           console.log("ID: ", selectedItem.supplierId);
   
-          return axios.put(`${apiUrl}/bomItems/${selectedItem.bomItemId}`, formData);
+          return axios.put(`${apiUrl}/bomItems/${selectedItem.bomItemId}`, formData, {withCredentials: true });
         })
         .then(response => {
           console.log('PUT request successful:', response);
@@ -332,22 +337,22 @@ const handleSubmit = (event) => {
   };
   
   useEffect(() => {
-    axios.get(`${apiUrl}/bomItems`) 
+    axios.get(`${apiUrl}/bomItems/user/email`, { params: { email: user.email }, withCredentials: true }) 
       .then(response => setApiData(response.data))
       .catch(error => console.error(error));
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    axios.get(`${apiUrl}/boms`) 
+    axios.get(`${apiUrl}/boms/user/email`, { params: { email: user.email }, withCredentials: true }) 
       .then(response => setBomCodeList(response.data))
       .catch(error => console.error(error));
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    axios.get(`${apiUrl}/item/supplier`) 
+    axios.get(`${apiUrl}/item/supplier/user/email`, { params: { email: user.email }, withCredentials: true }) // Fetch SKU codes and descriptions from the items table
       .then(response => setBomItemsList(response.data))
       .catch(error => console.error(error));
-  }, []);
+  }, [user]);
 
 const downloadTemplate = () => {
   const templateData = [
@@ -372,7 +377,7 @@ const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
   // Remove the row from the table
 
-  axios.delete(`${apiUrl}/bomItems/${id}`)
+  axios.delete(`${apiUrl}/bomItems/${id}`,{withCredentials: true })
   .then(response => {
     // Handle success response
     console.log('Row deleted successfully.');
@@ -393,10 +398,10 @@ const handleDelete = (id) => {
 };
 
 useEffect(() => {
-    axios.get(`${apiUrl}/boms`) 
+    axios.get(`${apiUrl}/boms/user/email`, { params: { email: user.email }, withCredentials: true }) 
       .then(response => setBomsList(response.data))
       .catch(error => console.error(error));
-  }, []);
+  }, [user]);
 
   const exportToExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(currentItems.map(bomItems => ({

@@ -18,8 +18,11 @@ import Pagination from 'react-bootstrap/Pagination';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { useDispatch, useSelector } from 'react-redux';
 
 function LocationForm() {
+  const user = useSelector((state) => state.user);  // Access user data from Redux store
+
   const [validated, setValidated] = useState(false);
   const [locationName, setLocationName] = useState("");
   const [apiData, setApiData] = useState([]);
@@ -83,10 +86,10 @@ function LocationForm() {
   };
   
   useEffect(() => {
-    axios.get(`${apiUrl}/api/locations`)
+    axios.get(`${apiUrl}/api/locations/user/email`, { params: { email: user.email }, withCredentials: true })
       .then(response => setApiData(response.data))
       .catch(error => console.error(error));
-  }, [apiUrl]);
+  }, [user]);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -98,10 +101,10 @@ function LocationForm() {
       return;
     }
 
-    const formData = { locationName };
+    const formData = { locationName, userEmail: user.email };
 
     if (rowSelected && selectedItem) {
-      axios.put(`${apiUrl}/api/locations/${selectedItem.locationId}`, formData)
+      axios.put(`${apiUrl}/api/locations/${selectedItem.locationId}`, formData, { withCredentials: true })
         .then((response) => {
           toast.success('Location updated successfully');
           setApiData(prevData => prevData.map(item => item.locationId === selectedItem.locationId ? response.data : item));
@@ -109,7 +112,7 @@ function LocationForm() {
         })
         .catch((error) => toast.error(`Failed to update location: ${error.message}`));
     } else {
-      axios.post(`${apiUrl}/api/locations`, formData)
+      axios.post(`${apiUrl}/api/locations`, formData, { withCredentials: true })
         .then((response) => {
           toast.success('Location added successfully');
           setApiData([...apiData, response.data]);
@@ -135,7 +138,7 @@ function LocationForm() {
       };
       console.log('form data: ', formData)
       console.log("id: ", selectedItem.locationId)
-      axios.put(`${apiUrl}/api/locations/${selectedItem.locationId}`, formData)
+      axios.put(`${apiUrl}/api/locations/${selectedItem.locationId}`, formData, { withCredentials: true })
         .then(response => {
           
           console.log('PUT request successful:', response);
@@ -162,7 +165,7 @@ function LocationForm() {
   };
 
   const handleDelete = (id) => {
-    axios.delete(`${apiUrl}/api/locations/${id}`)
+    axios.delete(`${apiUrl}/api/locations/${id}`, { withCredentials: true })
       .then(() => {
         toast.success('Location deleted successfully');
         setApiData(prevData => prevData.filter(location => location.locationId !== id));
@@ -202,6 +205,7 @@ function LocationForm() {
         jsonData.forEach(item => {
             const formattedData = {
                 locationName: item.locationName,
+                userEmail: user.email,
             };
             console.log(formattedData);
             postData(formattedData);
@@ -212,7 +216,7 @@ function LocationForm() {
 };
 
 const postData = (data) => {
-    axios.post(`${apiUrl}/api/locations`, data)
+    axios.post(`${apiUrl}/api/locations`, data, { withCredentials: true })
         .then(response => {
             console.log('Data posted successfully:', response);
             setApiData(prevData => [...prevData, response.data]);

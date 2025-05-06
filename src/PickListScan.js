@@ -5,8 +5,11 @@ import BarcodeScanner from './BarcodeScanner.js';
 import { ToastContainer, toast } from 'react-toastify'; // Import ToastContainer and toast
 import 'react-toastify/dist/ReactToastify.css'; // Import the CSS for Toastify
 import './Item.css';
+import { useDispatch, useSelector } from 'react-redux';
 
 function PickListScan() {
+    const user = useSelector((state) => state.user);  // Access user data from Redux store
+
     const apiUrl = process.env.REACT_APP_API_URL;
     const [picklist, setPicklist] = useState([]);
     const [selectedPicklist, setSelectedPicklist] = useState('');
@@ -16,7 +19,7 @@ function PickListScan() {
     useEffect(() => {
         const fetchPicklists = async () => {
             try {
-                const response = await axios.get(`${apiUrl}/picklists`);
+                const response = await axios.get(`${apiUrl}/picklists`, { withCredentials: true });
                 setPicklist(response.data);
             } catch (error) {
                 console.error('Error fetching picklists:', error);
@@ -34,7 +37,7 @@ function PickListScan() {
         if (picklistNumber) {
             try {
                 const response = await axios.get(`${apiUrl}/picklistdata/picklistdata`, {
-                    params: { pickListNumber: picklistNumber }
+                    params: { pickListNumber: picklistNumber, email: user.email  }, withCredentials: true 
                 });
 
                 const groupedItems = response.data.reduce((acc, item) => {
@@ -66,8 +69,10 @@ function PickListScan() {
                     params: {
                         picklistNumber: selectedPicklist,
                         sku: code,
-                        scannedQty: 1
-                    }
+                        scannedQty: 1,
+                        email: user.email
+                    },
+                    withCredentials: true
                 });
                 console.log(response.data);
                 if (response.data == true) {

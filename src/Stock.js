@@ -22,8 +22,11 @@ import Pagination from 'react-bootstrap/Pagination';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { useDispatch, useSelector } from 'react-redux';
 
 function Stock() {
+  const user = useSelector((state) => state.user);  // Access user data from Redux store
+
   const apiUrl = process.env.REACT_APP_API_URL;
   const [validated, setValidated] = useState(false);
 
@@ -135,11 +138,12 @@ function Stock() {
                 date: item.date,
                 addQty: item.addQty,
                 subQty: item.subQty,
-                skucode: item.skucode
+                skucode: item.skucode,
+                userEmail: user.email,
             };
 
             // Fetch item details using skucode
-            axios.get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`)
+            axios.get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`, {params: { email: user.email }, withCredentials: true })
                 .then(response => {
                     // Check if item exists
                     if (response.data.length === 0) {
@@ -177,7 +181,7 @@ const handleSubmit = (event) => {
     event.stopPropagation();
   } else {
     // Fetch item based on supplier and supplier SKU code
-    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
+    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
         if (response.data) {
           const item = response.data;
@@ -186,10 +190,11 @@ const handleSubmit = (event) => {
             skucode,
             addQty,
             subQty,
-            item: item
+            item: item,
+            userEmail: user.email,
           };
           console.log('form data: ', formData);
-          axios.post(`${apiUrl}/stock`, formData)
+          axios.post(`${apiUrl}/stock`, formData, { withCredentials: true })
             .then(response => {
               console.log('POST request successful:', response);
               toast.success('Stock added successfully', {
@@ -230,7 +235,7 @@ const handleRowSubmit = () => {
     };
     console.log('form data: ', formData)
     console.log("id: ", selectedItem.stockId)
-    axios.put(`${apiUrl}/stock/${selectedItem.stockId}`, formData)
+    axios.put(`${apiUrl}/stock/${selectedItem.stockId}`, formData, {params: { email: user.email }, withCredentials: true })
       .then(response => {
         
         console.log('PUT request successful:', response);
@@ -263,11 +268,11 @@ const handleRowClick = (stock) => {
 };
 
 useEffect(() => {
-  axios.get(`${apiUrl}/stock`) 
+  axios.get(`${apiUrl}/stock/user/email`, {params: { email: user.email }, withCredentials: true }) 
     .then(response => setApiData(response.data))
     .catch(error => console.error(error));
     console.log(apiData)
-    axios.get(`${apiUrl}/item/supplier`) // Fetch SKU codes and descriptions from the items table
+    axios.get(`${apiUrl}/item/supplier/user/email`, {params: { email: user.email }, withCredentials: true }) // Fetch SKU codes and descriptions from the items table
     .then(response => {
       // Extract SKU codes and descriptions from the response data and filter out null or undefined values
       const skuData = response.data
@@ -280,7 +285,7 @@ useEffect(() => {
 }, []);
 
 const postData = (data) => {
-    axios.post(`${apiUrl}/stock`, data)
+    axios.post(`${apiUrl}/stock`, data, { withCredentials: true })
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -295,7 +300,7 @@ const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
   // Remove the row from the table
 
-  axios.delete(`${apiUrl}/stock/${id}`)
+  axios.delete(`${apiUrl}/stock/${id}`, { withCredentials: true })
   .then(response => {
     // Handle success response
     console.log('Row deleted successfully.');
@@ -334,7 +339,7 @@ const downloadTemplate = () => {
 };
 
 const getImg = (skucode) => {
-  axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
+  axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`, {params: { email: user.email }, withCredentials: true })
     .then(response => {
       setItemImg(response.data.img || '');
     })
@@ -379,7 +384,7 @@ const updateCount = () => {
             <div className='title'>
                     <h1>Stock</h1>
             </div>
-            <Accordion defaultExpanded>
+            {/* <Accordion defaultExpanded>
         <AccordionSummary className='acc-summary'
           expandIcon={<ExpandMoreIcon />}
           aria-controls="panel3-content"
@@ -478,9 +483,9 @@ const updateCount = () => {
             </div>
             </Form>
             </AccordionDetails>
-        </Accordion>
+        </Accordion> */}
 
-            <Accordion>
+            <Accordion defaultExpanded>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="panel3-content"

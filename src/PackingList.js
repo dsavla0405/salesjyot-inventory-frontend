@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Table from 'react-bootstrap/Table';
-import { v4 as uuidv4 } from 'uuid'; // Import UUID generator
+import { v4 as uuidv4 } from 'uuid';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -16,8 +16,11 @@ import Form from 'react-bootstrap/Form';
 import Pagination from 'react-bootstrap/Pagination';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { useDispatch, useSelector } from 'react-redux';
 
 const PicklistComponent = () => {
+  const user = useSelector((state) => state.user);  // Access user data from Redux store
+
   const apiUrl = process.env.REACT_APP_API_URL;
   const [apiData, setApiData] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
@@ -30,13 +33,11 @@ const PicklistComponent = () => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const [selectedOrderData, setSelectedOrderData] = useState([]);
 
-  // Function to handle change in items per page
   const handleItemsPerPageChange = (e) => {
     setItemsPerPage(parseInt(e.target.value));
     setCurrentPage(1); // Reset to first page when changing items per page
   };
   
-  // JSX for the dropdown menu to select rows per page
   const rowsPerPageDropdown = (
     <Form.Group controlId="itemsPerPageSelect">
       <Form.Select style={{marginLeft: "5px", width : "70px"}} value={itemsPerPage} onChange={handleItemsPerPageChange}>
@@ -50,7 +51,7 @@ const PicklistComponent = () => {
   );
 
   useEffect (() => {
-    axios.get(`${apiUrl}/packinglist/orderData`)
+    axios.get(`${apiUrl}/packinglist/orderData`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
         setOrderData(response.data);
         console.log("orderData = " + JSON.stringify(orderData));
@@ -58,20 +59,20 @@ const PicklistComponent = () => {
       .catch(error => {
         console.error('Error getting order data:', error);
       });
-  }, [])
+  }, [user])
 
   useEffect(() => {
-    axios.get(`${apiUrl}/packinglist/not/generated/packinglist/orders`)
+    axios.get(`${apiUrl}/packinglist/not/generated/packinglist/orders`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
         setOrders(response.data);
       })
       .catch(error => {
         console.log("error getting orders: " + error);
       })
-  }, [])
+  }, [user])
 
   useEffect(() => {
-    axios.get(`${apiUrl}/packinglist/getData`)
+    axios.get(`${apiUrl}/packinglist/getData`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
         const mergedPicklistData = mergeRowsWithSamePicklist(response.data);
         setPicklistData(response.data);
@@ -80,7 +81,7 @@ const PicklistComponent = () => {
       .catch(error => {
         console.error(error);
       });
-  }, []);
+  }, [user]);
 
   const sortedData = picklistData.sort((a, b) => {
     if (sortConfig.key) {
@@ -112,7 +113,7 @@ const PicklistComponent = () => {
       if (event.target.checked) {
         try {
           const promises = allOrderNos.map(orderNo =>
-            axios.get(`${apiUrl}/packinglist/selected/orderData?orderNo=${orderNo}`)
+            axios.get(`${apiUrl}/packinglist/selected/orderData?orderNo=${orderNo}`, {params: { email: user.email }, withCredentials: true })
           );
           const results = await Promise.all(promises);
           const orderData = results.map(response => response.data);
@@ -133,7 +134,7 @@ const PicklistComponent = () => {
   
       if (isChecked) {
         try {
-          const response = await axios.get(`${apiUrl}/packinglist/selected/orderData?orderNo=${itemId}`);
+          const response = await axios.get(`${apiUrl}/packinglist/selected/orderData?orderNo=${itemId}`, {params: { email: user.email }, withCredentials: true });
           const orderData = response.data;
           setSelectedOrderData(prevData => [...prevData, orderData]);
         } catch (error) {
@@ -149,7 +150,7 @@ const PicklistComponent = () => {
   
   const generatePicklist = () => {
     // Assuming your API endpoint for fetching all picklists is '/picklists'
-    axios.get(`${apiUrl}/packinglist`)
+    axios.get(`${apiUrl}/packinglist`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
         const picklists = response.data;
         if (picklists.length === 0) {
@@ -186,7 +187,9 @@ const PicklistComponent = () => {
         sellerSKU: o.sellerSKU,
         qty: o.qty,
         description: o.description,
-        packQty: o.pickQty
+        packQty: o.pickQty,
+        skucode: o.skucode,
+        email: user.email
       };
       
       try {
@@ -207,14 +210,14 @@ const PicklistComponent = () => {
   
     // Refresh orders and picklist data
     try {
-      const ordersResponse = await axios.get(`${apiUrl}/packinglist/not/generated/packinglist/orders`);
+      const ordersResponse = await axios.get(`${apiUrl}/packinglist/not/generated/packinglist/orders`, {params: { email: user.email }, withCredentials: true });
       setOrders(ordersResponse.data);
     } catch (error) {
       console.log("error getting orders: " + error);
     }
   
     try {
-      const picklistResponse = await axios.get(`${apiUrl}/packinglist/getData`);
+      const picklistResponse = await axios.get(`${apiUrl}/packinglist/getData`, {params: { email: user.email }, withCredentials: true });
       const mergedPicklistData = mergeRowsWithSamePicklist(picklistResponse.data);
       setPicklistData(mergedPicklistData);
       console.log("picklistData = " + JSON.stringify(picklistData));
@@ -224,7 +227,7 @@ const PicklistComponent = () => {
   
     // Generate picklist
     try {
-      const response = await axios.post(`${apiUrl}/packinglist`, { packingListNumber, orders: selectedOrders });
+      const response = await axios.post(`${apiUrl}/packinglist`, { packingListNumber, orders: selectedOrders }, {params: { email: user.email }, withCredentials: true });
       console.log('Picklist generated successfully:', response.data);
       toast.success('PickList generated successfully', {
         autoClose: 2000 // Close after 2 seconds
@@ -307,7 +310,7 @@ const handleDelete = (packingListNumber) => {
   console.log("Deleting row with packingListNumber:", packingListNumber);
 
   // Make DELETE request to remove the row from the database
-  axios.delete(`${apiUrl}/packinglistdata/packinglistData/${packingListNumber}`)
+  axios.delete(`${apiUrl}/packinglistdata/packinglistData/${packingListNumber}`, { withCredentials: true })
     .then(response => {
       // Handle success response
       console.log('Row deleted successfully.');
@@ -317,7 +320,7 @@ const handleDelete = (packingListNumber) => {
 
       // Update the picklistData state to remove the deleted row
       setPicklistData(prevData => prevData.filter(row => row.packingListNumber !== packingListNumber));
-      axios.get(`${apiUrl}/packinglist/getData`)
+      axios.get(`${apiUrl}/packinglist/getData`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
         const mergedPicklistData = mergeRowsWithSamePicklist(response.data);
         setPicklistData(response.data);
@@ -327,7 +330,7 @@ const handleDelete = (packingListNumber) => {
         console.error(error);
       });
       // Fetch updated orders
-      return axios.get(`${apiUrl}/packinglist/not/generated/packinglist/orders`);
+      return axios.get(`${apiUrl}/packinglist/not/generated/packinglist/orders`, {params: { email: user.email }, withCredentials: true });
     })
     .then(response => {
       // Update the orders state with the new data

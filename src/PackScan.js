@@ -8,8 +8,11 @@ import successSound from './store-scanner-beep-90395.mp3';
 import "./Scan.css"; // Import your custom CSS file
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import { Table } from 'react-bootstrap';
+import { useDispatch, useSelector } from 'react-redux';
 
 const PackScan = () => {
+    const user = useSelector((state) => state.user);  // Access user data from Redux store
+
     const apiUrl = process.env.REACT_APP_API_URL;
     const [barcode, setBarcode] = useState('');
     const [qrCode, setQRCode] = useState('');
@@ -48,7 +51,7 @@ const PackScan = () => {
     // Function to fetch orders from the backend
     const fetchOrders = async () => {
         try {
-            const response = await axios.get(`${apiUrl}/orders/notPacked`);
+            const response = await axios.get(`${apiUrl}/orders/notPacked`, {params: { email: user.email }, withCredentials: true });
             setOrders(response.data); // Assuming response.data is an array of orders
             console.log("orders = " + orders);
         } catch (error) {

@@ -25,8 +25,11 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Pagination from 'react-bootstrap/Pagination';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { useDispatch, useSelector } from 'react-redux';
 
 function StockInward() {
+  const user = useSelector((state) => state.user);  // Access user data from Redux store
+  
   const apiUrl = process.env.REACT_APP_API_URL;
   const [validated, setValidated] = useState(false);
 
@@ -40,6 +43,7 @@ function StockInward() {
   const [searchTermSKU, setSearchTermSKU] = useState("");
   const [searchTermDate, setSearchTermDate] = useState("");
   const [searchTermQty, setSearchTermQty] = useState("");
+  const [searchTermLocation, setSearchTermLocation] = useState("");
   const [itemImg, setItemImg] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
@@ -78,11 +82,13 @@ function StockInward() {
 
   const filteredData = Array.isArray(apiData) ? apiData.filter(supplier => {
     return (
-      (supplier.date && supplier.date.toLowerCase().includes(searchTermDate.toLowerCase())) &&
-      (supplier.skucode && supplier.skucode.toLowerCase().includes(searchTermSKU.toLowerCase())) &&
-      (supplier.qty && supplier.qty.toLowerCase().includes(searchTermQty.toLowerCase()))
+      (!searchTermDate || (supplier.date && String(supplier.date).toLowerCase().includes(searchTermDate.toLowerCase()))) &&
+      (!searchTermSKU || (supplier.skucode && supplier.skucode.toLowerCase().includes(searchTermSKU.toLowerCase()))) &&
+      (!searchTermQty || (supplier.qty && String(supplier.qty).toLowerCase().includes(searchTermQty.toLowerCase()))) &&
+      (!searchTermLocation || (supplier.location && supplier.location.locationName.toLowerCase().includes(searchTermLocation.toLowerCase())))
     );
   }) : [];
+  
 
   const sortedData = filteredData.sort((a, b) => {
     if (sortConfig.key) {
@@ -110,7 +116,7 @@ function StockInward() {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const postData = (data) => {
-    axios.post(`${apiUrl}/stockInward`, data)
+    axios.post(`${apiUrl}/stockInward`, data, { withCredentials: true })
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -141,11 +147,15 @@ const handleFileUpload = (e) => {
             const formattedData = {
                 date: formatDateString(item.date),
                 qty: item.qty,
-                skucode: item.skucode
+                skucode: item.skucode,
+                userEmail: user.email,
             };
 
+            const locationResponse = axios.get(`${apiUrl}/api/locations/name/${item.location}`, {params: { email: user.email }, withCredentials: true });
+            const loc = locationResponse.data;
+            formattedData.location = loc
             // Fetch item details using skucode
-            axios.get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`)
+            axios.get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`, {params: { email: user.email }, withCredentials: true })
                 .then(response => {
                     // Check if item exists
                     if (!response.data || response.data.length === 0) {
@@ -187,11 +197,11 @@ const handleSubmit = async (event) => {
   } else {
     try {
       // First, fetch the location by name
-      const locationResponse = await axios.get(`${apiUrl}/api/locations/name/${location}`);
+      const locationResponse = await axios.get(`${apiUrl}/api/locations/name/${location}`, {params: { email: user.email }, withCredentials: true });
       const loc = locationResponse.data;
 
       // Then, fetch the item based on supplier SKU code
-      const itemResponse = await axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`);
+      const itemResponse = await axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`, {params: { email: user.email }, withCredentials: true });
       const item = itemResponse.data;
 
       if (item && loc) {
@@ -201,12 +211,13 @@ const handleSubmit = async (event) => {
           date,
           skucode,
           qty,
-          item: item,    // Add the item object
-          location: loc, // Add the location object
+          item: item,    
+          location: loc,
+          userEmail: user.email,
         };
 
         // Post the data to the stockInward API
-        const postResponse = await axios.post(`${apiUrl}/stockInward`, formData);
+        const postResponse = await axios.post(`${apiUrl}/stockInward`, formData, { withCredentials: true });
         
         console.log('POST request successful:', postResponse);
         
@@ -222,6 +233,7 @@ const handleSubmit = async (event) => {
         setDate("");
         setSkucode("");
         setLocation("");
+        setItemImg("");
 
       } else {
         console.error('No item found for the specified supplier and supplier SKU code.');
@@ -240,7 +252,7 @@ const handleSubmit = async (event) => {
     }
   }
 
-  setValidated(true);
+  setValidated(false);
 };
 
 
@@ -256,7 +268,7 @@ const handleRowSubmit = () => {
     };
     console.log('form data: ', formData)
     console.log("id: ", selectedItem.stockInwardId)
-    axios.put(`${apiUrl}/stockInward/${selectedItem.stockInwardId}`, formData)
+    axios.put(`${apiUrl}/stockInward/${selectedItem.stockInwardId}`, formData, { withCredentials: true })
       .then(response => {
         
         console.log('PUT request successful:', response);
@@ -302,6 +314,7 @@ const handleRowClick = (stock) => {
   setDate(stock.date);
   setSkucode(stock.skucode);
   setQty(stock.qty);
+  setLocation(stock.location.locationName);
   setRowSelected(true);
   setSelectedItem(stock);
 };
@@ -309,11 +322,11 @@ const handleRowClick = (stock) => {
 
 
 useEffect(() => {
-  axios.get(`${apiUrl}/stockInward`) 
+  axios.get(`${apiUrl}/stockInward/user/email`, {params: { email: user.email }, withCredentials: true }) 
     .then(response => setApiData(response.data))
     .catch(error => console.error(error));
     console.log(apiData)
-    axios.get(`${apiUrl}/item/supplier`) // Fetch SKU codes and descriptions from the items table
+    axios.get(`${apiUrl}/item/supplier/user/email`, {params: { email: user.email }, withCredentials: true }) // Fetch SKU codes and descriptions from the items table
     .then(response => {
       // Extract SKU codes and descriptions from the response data and filter out null or undefined values
       const skuData = response.data
@@ -324,19 +337,19 @@ useEffect(() => {
     })
     .catch(error => console.error(error));
 
-    axios.get(`${apiUrl}/api/locations`)
+    axios.get(`${apiUrl}/api/locations/user/email`, {params: { email: user.email }, withCredentials: true })
     .then(response => {
       console.log(JSON.stringify(response.data));
       setLocations(response.data);
     })
-}, []);
+}, [user]);
 
 
 const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
   // Remove the row from the table
 
-  axios.delete(`${apiUrl}/stockInward/${id}`)
+  axios.delete(`${apiUrl}/stockInward/${id}`, { withCredentials: true })
   .then(response => {
     // Handle success response
     console.log('Row deleted successfully.');
@@ -357,7 +370,7 @@ const handleDelete = (id) => {
 };
 
 const getImg = (skucode) => {
-  axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
+  axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`,{params: { email: user.email }, withCredentials: true })
     .then(response => {
       setItemImg(response.data.img || '');
     })
@@ -471,10 +484,12 @@ const exportToExcel = () => {
           <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
         </Form.Group>
 
-        {itemImg && (
-        <img alt = "item image" src = {itemImg} className='rotating1' style={{width: "200px", height: "150px", marginTop: "-50px", marginLeft: "45%"}}></img>
-        )}
+        
         </Row>
+
+        {itemImg && (
+        <img alt = "item image" src = {itemImg} className='rotating1' style={{width: "200px", height: "150px", marginTop: "-15%", marginLeft: "75%"}}></img>
+        )}
                     
         <div className='buttons'>
       {rowSelected ? (
@@ -546,6 +561,20 @@ const exportToExcel = () => {
                   onChange={(e) => setSearchTermQty(e.target.value)}
                 /></span>
                   </th>
+
+                  <th>
+                  <SwapVertIcon style = {{cursor: 'pointer', marginRight: "2%"}}variant="link" onClick={() => requestSort('location')}>
+                  </SwapVertIcon>
+                    Location
+                  <span style={{ margin: '0 10px' }}><input
+                  type="text"
+                  placeholder="Search by location"
+                  value={searchTermLocation}
+                  onChange={(e) => setSearchTermLocation(e.target.value)}
+                /></span>
+                  </th>
+
+
               </tr>
             </thead>
             <tbody>
@@ -575,6 +604,7 @@ const exportToExcel = () => {
                     </td>
                   <td>{stock.item ? stock.item.skucode : ''}</td>
                   <td>{stock.qty}</td>
+                  <td>{stock.location ? stock.location.locationName : ''}</td>
                 </tr>
               ))}
             </tbody>

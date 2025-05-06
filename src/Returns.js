@@ -24,8 +24,11 @@ import Pagination from 'react-bootstrap/Pagination';
 import { saveAs } from 'file-saver';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { useDispatch, useSelector } from 'react-redux';
 
 function Return() {
+  const user = useSelector((state) => state.user);  // Access user data from Redux store
+
   const apiUrl = process.env.REACT_APP_API_URL;
   const [validated, setValidated] = useState(false);
   const [date, setDate] = useState();
@@ -126,7 +129,8 @@ function Return() {
                 trackingNumber: item.trackingNumber,
                 okStock: item.okStock,
                 sentForRaisingTicketOn: item.sentForRaisingTicketOn,
-                sentForTicketOn: item.sentForTicketOn
+                sentForTicketOn: item.sentForTicketOn,
+                userEmail: user.email,
             };
           console.log(formattedData)
             postData(formattedData);
@@ -143,7 +147,7 @@ const handleSubmit = (event) => {
     event.stopPropagation();
   } else {
     // Fetch item based on supplier and supplier SKU code
-    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`)
+    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
         if (response.data) {
           const item = response.data;
@@ -157,10 +161,11 @@ const handleSubmit = (event) => {
             okStock,
             sentForRaisingTicketOn,
             sentForTicketOn,
-            item: item
+            item: item,
+            userEmail: user.email,
           };
           console.log('form data: ', formData);
-          axios.post(`${apiUrl}/return`, formData)
+          axios.post(`${apiUrl}/return`, formData, { withCredentials: true })
             .then(response => {
               console.log('POST request successful:', response);
               toast.success('Return added successfully', {
@@ -209,10 +214,11 @@ const handleRowSubmit = () => {
             okStock,
             sentForRaisingTicketOn,
             sentForTicketOn,
+            userEmail: user.email,
     };
     console.log('form data: ', formData)
     console.log("id: ", selectedItem.returnId)
-    axios.put(`${apiUrl}/return/${selectedItem.returnId}`, formData)
+    axios.put(`${apiUrl}/return/${selectedItem.returnId}`, formData, { withCredentials: true })
       .then(response => {
         
         console.log('PUT request successful:', response);
@@ -257,11 +263,11 @@ const handleRowClick = (stock) => {
 
 
 useEffect(() => {
-  axios.get(`${apiUrl}/return`) 
+  axios.get(`${apiUrl}/return/user/email`, {params: { email: user.email }, withCredentials: true }) 
     .then(response => setApiData(response.data))
     .catch(error => console.error(error));
     console.log(apiData)
-    axios.get(`${apiUrl}/item/supplier`) // Fetch SKU codes and descriptions from the items table
+    axios.get(`${apiUrl}/item/supplier/user/email`, {params: { email: user.email }, withCredentials: true }) // Fetch SKU codes and descriptions from the items table
     .then(response => {
       // Extract SKU codes and descriptions from the response data and filter out null or undefined values
       const skuData = response.data
@@ -274,7 +280,7 @@ useEffect(() => {
 }, []);
 
 const postData = (data) => {
-    axios.post(`${apiUrl}/return`, data)
+    axios.post(`${apiUrl}/return`, data, { withCredentials: true })
         .then(response => {
             // Handle successful response
             console.log('Data posted successfully:', response);
@@ -289,7 +295,7 @@ const handleDelete = (id) => {
   console.log("Deleting row with id:", id);
   // Remove the row from the table
 
-  axios.delete(`${apiUrl}/return/${id}`)
+  axios.delete(`${apiUrl}/return/${id}`, { withCredentials: true })
   .then(response => {
     // Handle success response
     console.log('Row deleted successfully.');

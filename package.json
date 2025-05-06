@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@emotion/react": "^11.11.4",
-    "@emotion/styled": "^11.11.0",
-    "@mui/icons-material": "^5.15.11",
-    "@mui/material": "^5.15.11",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^5.17.1",
+    "@mui/material": "^5.17.1",
     "@mui/styled-engine-sc": "^6.0.0-alpha.17",
     "@react-pdf/renderer": "^3.4.0",
+    "@reduxjs/toolkit": "^2.5.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -38,6 +39,7 @@
     "react-pivottable": "^0.11.0",
     "react-qr-barcode-scanner": "^1.0.6",
     "react-qr-scanner": "^1.0.0-alpha.11",
+    "react-redux": "^9.2.0",
     "react-router-dom": "^6.22.1",
     "react-scripts": "5.0.1",
     "react-select": "^5.8.0",
@@ -45,6 +47,7 @@
     "react-to-print": "^2.15.1",
     "react-toastify": "^10.0.5",
     "react-zxing": "^2.0.0",
+    "recharts": "^2.15.2",
     "serve": "^14.2.3",
     "styled-components": "^6.1.8",
     "web-vitals": "^2.1.4",
@@ -74,5 +77,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "eslint-config-react-app": "^7.0.1",
+    "eslint-plugin-jest": "^28.9.0"
   }
 }

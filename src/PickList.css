@@ -15,7 +15,13 @@
     transition: transform 0.1s; /* Add transition for zoom effect */
 }
 
+.locationSelect {
+  margin-bottom: 1%;
+}
 
+.locationSelect Select {
+  border-width: 2px;
+}
   
   .order-card:hover {
     transform: scale(1.02); /* Zoom in on hover */

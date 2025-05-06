@@ -1,20 +1,20 @@
 import './App.css';
-import Login from "./Login.js"
-import Home from "./Home.js"
-import Item from "./Item.js"
-import ItemPortalMapping from "./ItemPortalMapping"
-import ImportOrderForm from "./ImportOrderForm.js"
-import PickList from "./PickList.js"
-import PackingList from "./PackingList.js"
-import StockInward from "./StockInward.js"
+import Login from "./Login.js";
+import Home from "./Home.js";
+import Item from "./Item.js";
+import ItemPortalMapping from "./ItemPortalMapping";
+import ImportOrderForm from "./ImportOrderForm.js";
+import PickList from "./PickList.js";
+import PackingList from "./PackingList.js";
+import StockInward from "./StockInward.js";
 import Stock from './Stock.js';
 import Supplier from './Supplier.js';
-import Returns from './Returns.js'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; // Import Router and Routes from react-router-dom
+import Returns from './Returns.js';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Bom from './Bom';
 import Header from './Header.js';
 import Dispatch from './Dispatch.js';
-import Storage from './Storage.js'
+import Storage from './Storage.js';
 import StockCount from './StockCount.js';
 import DispatchScan from './DispatchScan.js';
 import PackScan from './PackScan.js';
@@ -24,39 +24,51 @@ import PickListScan from './PickListScan.js';
 import Location from './Location.js';
 import StockTransfer from './StockTransfer.js';
 import CreateCombo from './CreateCombo.js';
+import ProtectedRoute from './ProtectedRoute.js';
 
 function App() {
+  const location = useLocation(); // Get the current route location
+
   return (
     <div className="App">
-      <Router>
-      <Header />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/supplier" element={<Supplier />} />
-          <Route path="/bom" element={<Bom />} />
-          <Route path="/item" element={<Item />} />
-          <Route path="/importorderform" element={<ImportOrderForm />} />
-          <Route path="/itemportalmapping" element={<ItemPortalMapping />} />
-          <Route path="/packinglist" element={<PackingList />} />
-          <Route path="/picklist" element={<PickList />} />
-          <Route path="/returns" element={<Returns />} />
-          <Route path="/stock" element={<Stock />} />
-          <Route path="/stockinward" element={<StockInward />} />
-          <Route path="/dispatch" element={<Dispatch />} />
-          <Route path="/storage" element={<Storage/>} />
-          <Route path="/stockCount" element={<StockCount/>} />
-          <Route path="/dispatchScan" element={<DispatchScan/>} />
-          <Route path="/packScan" element={<PackScan/>} />
-          <Route path="/bomItem" element={<BomItem/>} />
-          <Route path="/barcodelabel" element={<BarcodeLabel/>} />
-          <Route path="/picklistscan" element={<PickListScan/>} />
-          <Route path="/location" element={<Location/>} />
-          <Route path="/stocktransfer" element={<StockTransfer/>} />
-          <Route path="/create-combo" element={<CreateCombo/>} />
-        </Routes>
-    </Router>
+      {/* Conditionally render the Header based on the current route */}
+      {location.pathname !== '/' && <Header />} {/* Don't render Header on login page */}
+        
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+        <Route path="/supplier" element={<ProtectedRoute><Supplier /></ProtectedRoute>} />
+        <Route path="/bom" element={<ProtectedRoute><Bom /></ProtectedRoute>} />
+        <Route path="/item" element={<ProtectedRoute><Item /></ProtectedRoute>} />
+        <Route path="/importorderform" element={<ProtectedRoute><ImportOrderForm /></ProtectedRoute>} />
+        <Route path="/itemportalmapping" element={<ProtectedRoute><ItemPortalMapping /></ProtectedRoute>} />
+        <Route path="/packinglist" element={<ProtectedRoute><PackingList /></ProtectedRoute>} />
+        <Route path="/picklist" element={<ProtectedRoute><PickList /></ProtectedRoute>} />
+        <Route path="/returns" element={<ProtectedRoute><Returns /></ProtectedRoute>} />
+        <Route path="/stock" element={<ProtectedRoute><Stock /></ProtectedRoute>} />
+        <Route path="/stockinward" element={<ProtectedRoute><StockInward /></ProtectedRoute>} />
+        <Route path="/dispatch" element={<ProtectedRoute><Dispatch /></ProtectedRoute>} />
+        <Route path="/storage" element={<ProtectedRoute><Storage/></ProtectedRoute>} />
+        <Route path="/stockCount" element={<ProtectedRoute><StockCount/></ProtectedRoute>} />
+        <Route path="/dispatchScan" element={<ProtectedRoute><DispatchScan/></ProtectedRoute>} />
+        <Route path="/packScan" element={<ProtectedRoute><PackScan/></ProtectedRoute>} />
+        <Route path="/bomItem" element={<ProtectedRoute><BomItem/></ProtectedRoute>} />
+        <Route path="/barcodelabel" element={<ProtectedRoute><BarcodeLabel/></ProtectedRoute>} />
+        <Route path="/picklistscan" element={<ProtectedRoute><PickListScan/></ProtectedRoute>} />
+        <Route path="/location" element={<ProtectedRoute><Location/></ProtectedRoute>} />
+        <Route path="/stocktransfer" element={<ProtectedRoute><StockTransfer/></ProtectedRoute>} />
+        <Route path="/create-combo" element={<ProtectedRoute><CreateCombo/></ProtectedRoute>} />
+      </Routes>
     </div>
   );
 }
 
-export default App;
+function AppWrapper() {
+  return (
+    <Router>
+      <App />
+    </Router>
+  );
+}
+
+export default AppWrapper;
