@@ -25,15 +25,18 @@ import Location from './Location.js';
 import StockTransfer from './StockTransfer.js';
 import CreateCombo from './CreateCombo.js';
 import ProtectedRoute from './ProtectedRoute.js';
-
+import { useSelector } from "react-redux";
+import AccountDetails from "./AccountDetails.js";
 function App() {
   const location = useLocation(); // Get the current route location
+  const auth1 = useSelector((state) => state.user.isAuthenticated);
+  // console.log("auth in app. js ::" + auth1);
 
   return (
     <div className="App">
       {/* Conditionally render the Header based on the current route */}
-      {location.pathname !== '/' && <Header />} {/* Don't render Header on login page */}
-        
+      {location.pathname !== "/" && auth1 && <Header />}
+      {/* Don't render Header on login page */}
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
@@ -58,6 +61,14 @@ function App() {
         <Route path="/location" element={<ProtectedRoute><Location/></ProtectedRoute>} />
         <Route path="/stocktransfer" element={<ProtectedRoute><StockTransfer/></ProtectedRoute>} />
         <Route path="/create-combo" element={<ProtectedRoute><CreateCombo/></ProtectedRoute>} />
+        <Route
+          path="/AccountDetails"
+          element={
+            <ProtectedRoute>
+              <AccountDetails />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </div>
   );

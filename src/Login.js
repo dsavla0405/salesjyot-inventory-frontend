@@ -1,7 +1,10 @@
-import React from 'react';
-import './Login.css';  // Import your CSS file
+import React from "react";
+import "./Login.css"; // Import your CSS file
+import { useSelector } from "react-redux";
 
 function Login() {
+  const user = useSelector((state) => state.user);
+  // console.log("login page user::::" + user);
   const loginWithGitHub = () => {
     // Redirect to GitHub OAuth2 login
     window.location.href = "http://localhost:8080/oauth2/authorization/github";

@@ -1,33 +1,22 @@
-import axios from 'axios';
-import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import React from "react";
+import { useSelector } from "react-redux";
+import { Navigate } from "react-router-dom";
+import Login from "./Login.js";
 
 const ProtectedRoute = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true); // New loading state
+  const isAuthenticated = useSelector((state) => state.user.isAuthenticated);
+  const user = useSelector((state) => state.user);
+  // console.log("User from Redux in Protectedddddd Route:", user);
 
-  useEffect(() => {
-    axios
-      .get("http://localhost:8080/loginSuccess", { withCredentials: true })
-      .then((response) => {
-        const accessToken = response.data.accessToken;
-        console.log("response =", response.data);
-        console.log("access token =", accessToken);
-        localStorage.setItem("access_token", accessToken);
-        setIsAuthenticated(true);
-        console.log("is authenticated is true");
-      })
-      .catch(() => {
-        setIsAuthenticated(false);
-        console.log("is authenticated is false");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+  // console.log("in protected route !!isAuthenticated::", !isAuthenticated);
+  // console.log("in protected route !!!user.name::", isLoading);
 
-  if (loading) {
-    return <div>Loading...</div>;
+  // Optional: wait for auth check to complete if needed (e.g., show loader if no user name/email and not authenticated)
+  if (!user.name && !isAuthenticated) {
+    if (!user.isLoading) {
+      return <Navigate to="/" />;
+    }
+    return <div>Loading......</div>; // Avoid flicker or premature redirect
   }
 
   if (!isAuthenticated) {

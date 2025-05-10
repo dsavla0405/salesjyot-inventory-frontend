@@ -6,7 +6,11 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Shadow for separation */
     padding: 0.5rem 1rem; /* Add padding for better spacing */
 }
-
+/* Prevent full-page horizontal scrolling */
+body,
+html {
+  overflow-x: hidden;
+}
 .tech {
     display: flex;
     align-items: center;
@@ -32,8 +36,9 @@
 
 
 .navbar-nav {
-    margin-left: auto;
-    font-size: larger;
+  margin-left: auto;
+  margin-right: 23px;
+  font-size: larger;
 }
 
 .nav-link, .nav-item, .navbar-dropdown {
@@ -45,11 +50,31 @@
 }
 
 .dropdown-menu {
-    padding: 0.5rem;
-    border-radius: 8px; /* Soften the dropdown corners */
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+  border-radius: 8px; /* Soften the dropdown corners */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 280px; /* Adjust as needed */
+  overflow-x: auto;
+  white-space: nowrap; /* Prevent text wrap causing horizontal scroll */
+}
+/* Ensure dropdown items don't cause overflow */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
+/* Keep icons from stretching layout */
+.dropdown-item svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+#navbarProfileDropdown .dropdown-menu {
+  left: auto;
+  right: 0;
+}
 @media (max-width: 992px) {
     .navbar-collapse {
         padding: 1rem; /* Add padding for mobile */

@@ -12,24 +12,43 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './Header.css';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { clearUser } from "./redux/userSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 function Header() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const handleLogout = () => {
-    axios.get('http://localhost:8080/logout')
-      .then(response => {
-        console.log(response.data);
-        localStorage.removeItem('authToken');
-        sessionStorage.clear(); 
-        navigate('/'); 
-      })
-      .catch(error => {
-        console.error('Logout failed:', error);
-        alert('Logout failed. Please try again.');
+  // const user = useSelector((state) => state.user);
+  const handleLogout = async () => {
+    try {
+      await axios.post("http://localhost:8080/api/auth/logout", null, {
+        withCredentials: true,
       });
+
+      dispatch(clearUser());
+      localStorage.removeItem("access_token");
+      navigate("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      alert("Logout failed. Please try again.");
+    }
   };
-  
+
+  // await axios.post("http://localhost:8080/logout", null, {
+  //   withCredentials: true,
+  // }).then(response => {
+  //   console.log(response.data);
+  //   localStorage.removeItem('authToken');
+  //   sessionStorage.clear();
+  //   navigate('/');
+  // })
+  // .catch(error => {
+  //   console.error('Logout failed:', error);
+  //   alert('Logout failed. Please try again.');
+  // });
+  // };
+
   return (
     <div className='header'>
       <Navbar expand="lg" className="bg-body-tertiary">
@@ -77,12 +96,17 @@ function Header() {
                 <NavDropdown.Item href="/dispatchScan"><MdOutlineLocalShipping /> Scan Dispatched Orders</NavDropdown.Item>
               </NavDropdown>
 
-              {/* Logout Button */}
-              <Nav.Item>
-                <Button variant="outline-danger" className="ms-3" onClick={handleLogout}>
-                  Logout
-                </Button>
-              </Nav.Item>
+              {/* Profile Dropdown */}
+              <NavDropdown title="More" id="navbarProfileDropdown">
+                <NavDropdown.Item href="/AccountDetails">
+                  <FaUserCircle style={{ marginRight: "8px" }} />
+                  Profile
+                </NavDropdown.Item>
+                <NavDropdown.Item onClick={handleLogout}>
+                  <FaSignOutAlt style={{ marginRight: "8px" }} />
+                  Log Out
+                </NavDropdown.Item>
+              </NavDropdown>
             </Nav>
           </Navbar.Collapse>
         </Container>
