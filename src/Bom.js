@@ -714,4 +714,24 @@ const exportToExcel = () => {
               {<FileDownloadIcon style={{marginBottom: "5px"}}/>} Export to Excel
             </Button>
 
-        
+            
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            {rowsPerPageDropdown}
+            
+            <Pagination>
+              {Array.from({ length: Math.ceil(filteredData.length / itemsPerPage) }).map((_, index) => (
+                <Pagination.Item key={index} active={index + 1 === currentPage} onClick={() => paginate(index + 1)}>
+                  {index + 1}
+                </Pagination.Item>
+              ))}
+            </Pagination>
+          </div>
+       
+          </div>
+        </AccordionDetails>
+      </Accordion>
+    </div>
+  );
+}
+
+export default Bom;

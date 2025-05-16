@@ -1125,4 +1125,41 @@ const postData = async (data) => {
               <td>{item.barcode ? item.barcode : ''}</td>
               <td>{item.sellingPrice ? item.sellingPrice : ''}</td>
               <td>{item.mrp ? item.mrp : ''}</td>
-              <td>{item.img ? item.im
+              <td>{item.img ? item.img : ''}</td>
+
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+          
+</div>
+      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <Button
+              variant="contained"
+              tabIndex={-1}
+              style={{ height: '33px', backgroundColor: '#5463FF', color: 'white', fontWeight: 'bolder' }}
+              onClick={exportToExcel}
+            >
+              {<FileDownloadIcon style={{marginBottom: "5px"}}/>} Export to Excel
+            </Button>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            {rowsPerPageDropdown}
+            <Pagination>
+              {Array.from({ length: Math.ceil(filteredData.length / itemsPerPage) }).map((_, index) => (
+                <Pagination.Item key={index} active={index + 1 === currentPage} onClick={() => paginate(index + 1)}>
+                  {index + 1}
+                </Pagination.Item>
+              ))}
+            </Pagination>
+            </div>
+          </div>
+          </AccordionDetails>
+          </Accordion>
+
+            </div>
+          
+  );
+}
+
+export default Item;

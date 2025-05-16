@@ -366,4 +366,18 @@ const postData = (data) => {
             
             <Pagination>
               {Array.from({ length: Math.ceil(filteredData.length / itemsPerPage) }).map((_, index) => (
-                <Pagination.Item key={index} active={index + 1 === currentPage} onClick=
+                <Pagination.Item key={index} active={index + 1 === currentPage} onClick={() => paginate(index + 1)}>
+                  {index + 1}
+                </Pagination.Item>
+              ))}
+            </Pagination>
+          </div>
+          </div>
+
+        </AccordionDetails>
+      </Accordion>
+    </div>
+  );
+}
+
+export default LocationForm;
