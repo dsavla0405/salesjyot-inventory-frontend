@@ -95,7 +95,14 @@ function LocationForm() {
     event.preventDefault();
     const form = event.currentTarget;
 
-    if (form.checkValidity() === false || !locationName) {
+    if (!locationName) {
+      toast.error('Location name is required');
+      event.stopPropagation();
+      setValidated(true);
+      return;
+    }
+
+    if (form.checkValidity() === false) {
       event.stopPropagation();
       setValidated(true);
       return;
@@ -132,6 +139,10 @@ function LocationForm() {
   const handleRowSubmit = () => {
     console.log("handleRowSubmit triggered");
     console.log(selectedItem)
+    if (!locationName) {
+      toast.error('Location name is required');
+      return;
+    }
     if (rowSelected && selectedItem) {
       const formData = {
         locationName
@@ -230,7 +241,7 @@ const postData = (data) => {
     <div>
       <ToastContainer position="top-right" />
       <div className='title'>
-        <h1>Location</h1>
+        <h1>Location </h1>
       </div>
 
       <Accordion defaultExpanded>
@@ -246,7 +257,7 @@ const postData = (data) => {
           <Form noValidate validated={validated} onSubmit={handleSubmit}>
             <Row className="mb-3">
               <Form.Group as={Col} md="4" controlId="validationCustom01">
-                <Form.Label>Location Name</Form.Label>
+                <Form.Label>Location Name <span style={{ color: 'red' }}>*</span></Form.Label>
                 <Form.Control
                   required
                   type="text"
@@ -355,18 +366,4 @@ const postData = (data) => {
             
             <Pagination>
               {Array.from({ length: Math.ceil(filteredData.length / itemsPerPage) }).map((_, index) => (
-                <Pagination.Item key={index} active={index + 1 === currentPage} onClick={() => paginate(index + 1)}>
-                  {index + 1}
-                </Pagination.Item>
-              ))}
-            </Pagination>
-          </div>
-          </div>
-
-        </AccordionDetails>
-      </Accordion>
-    </div>
-  );
-}
-
-export default LocationForm;
+                <Pagination.Item key={index} active={index + 1 === currentPage} onClick=

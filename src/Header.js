@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaBoxOpen, FaTruck, FaClipboardList, FaCogs, FaBarcode, FaExchangeAlt, FaShoppingCart, FaUndo, FaWarehouse, FaTools, FaThList, FaBoxes, FaMapMarkerAlt, FaFileInvoice, FaShippingFast } from 'react-icons/fa';
+import { FaBoxOpen, FaTruck, FaClipboardList, FaCogs, FaBarcode, FaExchangeAlt, FaShoppingCart, FaUndo, FaWarehouse, FaTools, FaThList, FaBoxes, FaMapMarkerAlt, FaFileInvoice, FaShippingFast, FaUserCircle, FaSignOutAlt } from 'react-icons/fa';
 import { MdOutlineStorage, MdOutlineCategory, MdOutlineLocalShipping } from 'react-icons/md';
 import { RiScales3Fill } from 'react-icons/ri';
 import { BsFillBox2Fill, BsBoxSeam } from 'react-icons/bs';

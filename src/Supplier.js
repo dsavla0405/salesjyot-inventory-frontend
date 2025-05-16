@@ -157,7 +157,14 @@ const handleSubmit = (event) => {
   const form = event.currentTarget;
   console.log("Submitting with email:", user?.email);
 
-  if (form.checkValidity() === false || !phonel || !supplierName) {
+  if (!supplierName) {
+    toast.error('Supplier Name is required');
+    event.stopPropagation();
+    setValidated(true);
+    return;
+  }
+
+  if (form.checkValidity() === false || !phonel) {
     event.stopPropagation();
     setValidated(true); 
     return;
@@ -198,6 +205,12 @@ const handleSubmit = (event) => {
 const handleRowSubmit = () => {
   console.log("handleRowSubmit triggered");
   console.log(selectedItem)
+  
+  if (!supplierName) {
+    toast.error('Supplier Name is required');
+    return;
+  }
+  
   if (rowSelected && selectedItem) {
     const formData = {
       phonel,
@@ -304,8 +317,8 @@ return (
           <Row className="mb-3">
 
             <Form.Group as={Col} md="4" controlId="validationCustom01">
-              <Form.Label>Name</Form.Label>
-              <Form.Control
+            <Form.Label>Name <span style={{ color: 'red' }}>*</span></Form.Label>
+            <Form.Control
                 required
                 type="text"
                 placeholder="Supplier Name"
@@ -458,18 +471,4 @@ return (
             
             <Pagination>
               {Array.from({ length: Math.ceil(filteredData.length / itemsPerPage) }).map((_, index) => (
-                <Pagination.Item key={index} active={index + 1 === currentPage} onClick={() => paginate(index + 1)}>
-                  {index + 1}
-                </Pagination.Item>
-              ))}
-            </Pagination>
-          </div>
-          </div>
-        </div>
-      </AccordionDetails>
-    </Accordion>
-  </div>
-);
-}
-
-export default Supplier;
+                <Pagination.Item key={index} active={index + 1 === currentPage} onClick={() => paginate(index

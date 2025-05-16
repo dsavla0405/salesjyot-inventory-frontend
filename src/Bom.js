@@ -250,11 +250,27 @@ const handleSubmit = (event) => {
   event.preventDefault();
   const form = event.currentTarget;
 
-  if (form.checkValidity() === false || !skucode || !bomCode) {
+  // Check for required fields individually with specific error messages
+  if (!skucode) {
+    toast.error('SKU Code is required');
     event.stopPropagation();
-    setValidated(true); 
+    setValidated(true);
+    return;
+  }
+  
+  if (!bomCode) {
+    toast.error('BOM Code is required');
+    event.stopPropagation();
+    setValidated(true);
+    return;
+  }
+
+  if (form.checkValidity() === false) {
+    event.stopPropagation();
+    setValidated(true);
     return;
   } else {
+    // Rest of your existing code...
     // Fetch item details using skucode
     axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
@@ -314,8 +330,18 @@ const handleSubmit = (event) => {
 const handleRowSubmit = () => {
   console.log("handleRowSubmit triggered");
   console.log(selectedItem);
+  
+  // Check for required fields individually with specific error messages
+  if (!skucode) {
+    toast.error('SKU Code is required');
+    return;
+  }
+  
+  if (!bomCode) {
+    toast.error('BOM Code is required');
+    return;
+  }
   if (rowSelected && selectedItem) {
-    // Fetch item details using skucode
     axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`, {params: { email: user.email }, withCredentials: true })
       .then(response => {
         // Check if item exists
@@ -481,7 +507,7 @@ const exportToExcel = () => {
         <Form noValidate validated={validated} onSubmit={handleSubmit}>
             <Row className="mb-3">
             <Form.Group as={Col} md="4" controlId="validationCustom01">
-          <Form.Label>Bom Code </Form.Label>
+          <Form.Label>Bom Code <span style={{ color: 'red' }}>*</span></Form.Label>
           <Form.Control
             required
             type="text"
@@ -495,7 +521,7 @@ const exportToExcel = () => {
               
               
               <Form.Group as={Col} md="4" controlId="validationCustom01">
-                <Form.Label>SKU Code</Form.Label>
+                <Form.Label>SKU Code <span style={{ color: 'red' }}>*</span></Form.Label>
 
                   <Form.Select
                     required
@@ -688,24 +714,4 @@ const exportToExcel = () => {
               {<FileDownloadIcon style={{marginBottom: "5px"}}/>} Export to Excel
             </Button>
 
-            
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            {rowsPerPageDropdown}
-            
-            <Pagination>
-              {Array.from({ length: Math.ceil(filteredData.length / itemsPerPage) }).map((_, index) => (
-                <Pagination.Item key={index} active={index + 1 === currentPage} onClick={() => paginate(index + 1)}>
-                  {index + 1}
-                </Pagination.Item>
-              ))}
-            </Pagination>
-          </div>
-       
-          </div>
-        </AccordionDetails>
-      </Accordion>
-    </div>
-  );
-}
-
-export default Bom;
+        

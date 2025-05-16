@@ -127,9 +127,33 @@ function Item() {
   const handleSubmit = (event) => {
     event.preventDefault();
     const form = event.currentTarget;
-    if (form.checkValidity() === false || !description || !skucode) {
+    
+    // Check for required fields individually with specific error messages
+    if (!Supplier) {
+      toast.error('Supplier is required');
       event.stopPropagation();
-      setValidated(true); 
+      setValidated(true);
+      return;
+    }
+    
+    if (!skucode) {
+      toast.error('SKU Code is required');
+      event.stopPropagation();
+      setValidated(true);
+      return;
+    }
+    
+    if (!description) {
+      toast.error('Description is required');
+      event.stopPropagation();
+      setValidated(true);
+      return;
+    }
+    
+    if (!sellerSKUCode) {
+      toast.error('Seller/Supplier SKU Code is required');
+      event.stopPropagation();
+      setValidated(true);
       return;
     }
 
@@ -346,6 +370,27 @@ const handleRefresh = () => {
   
 
   const handleRowSubmit = () => {
+    // Check for required fields individually with specific error messages
+    if (!Supplier) {
+      toast.error('Supplier is required');
+      return;
+    }
+    
+    if (!skucode) {
+      toast.error('SKU Code is required');
+      return;
+    }
+    
+    if (!description) {
+      toast.error('Description is required');
+      return;
+    }
+    
+    if (!sellerSKUCode) {
+      toast.error('Seller/Supplier SKU Code is required');
+      return;
+    }
+    
     if (rowSelected && selectedItem) {
       console.log("selected item: " + JSON.stringify(selectedItem));
       
@@ -614,8 +659,8 @@ const postData = async (data) => {
         <Form noValidate validated={validated} onSubmit={handleSubmit}>
           <Row className="mb-3">      
           <Form.Group as={Col} md="4" controlId="validationCustom01">
-            <Form.Label>Supplier</Form.Label>
-            <Form.Select
+          <Form.Label>Supplier <span style={{ color: 'red' }}>*</span></Form.Label>
+          <Form.Select
               required
               onChange={(e) => handleSupplierChange(e, e.target.value)}
               value={Supplier} // Change 'supplier' to 'Supplier'
@@ -633,8 +678,8 @@ const postData = async (data) => {
           </Form.Group>
 
           <Form.Group as={Col} md="4" controlId="validationCustom02">
-            <Form.Label>SKUCode</Form.Label>
-            <Form.Control
+          <Form.Label>SKUCode <span style={{ color: 'red' }}>*</span></Form.Label>
+          <Form.Control
               required
               type="text"
               placeholder="SKUCode"
@@ -646,8 +691,8 @@ const postData = async (data) => {
           </Form.Group>
                   
           <Form.Group as={Col} md="4" controlId="validationCustom01">
-            <Form.Label>Description</Form.Label>
-              <Form.Control
+          <Form.Label>Description <span style={{ color: 'red' }}>*</span></Form.Label>
+          <Form.Control
                 required
                 type="text"
                 placeholder="Description"
@@ -788,8 +833,8 @@ const postData = async (data) => {
         </Form.Group>
                 
         <Form.Group as={Col} md="4" controlId="validationCustom02">
-          <Form.Label>Seller/Supplier SKUcode</Form.Label>
-            <Form.Control
+        <Form.Label>Seller/Supplier SKUcode <span style={{ color: 'red' }}>*</span></Form.Label>
+        <Form.Control
               required
               type="text"
               placeholder="Seller/Supplier SKUcode"
@@ -1080,41 +1125,4 @@ const postData = async (data) => {
               <td>{item.barcode ? item.barcode : ''}</td>
               <td>{item.sellingPrice ? item.sellingPrice : ''}</td>
               <td>{item.mrp ? item.mrp : ''}</td>
-              <td>{item.img ? item.img : ''}</td>
-
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-          
-</div>
-      )}
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-      <Button
-              variant="contained"
-              tabIndex={-1}
-              style={{ height: '33px', backgroundColor: '#5463FF', color: 'white', fontWeight: 'bolder' }}
-              onClick={exportToExcel}
-            >
-              {<FileDownloadIcon style={{marginBottom: "5px"}}/>} Export to Excel
-            </Button>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            {rowsPerPageDropdown}
-            <Pagination>
-              {Array.from({ length: Math.ceil(filteredData.length / itemsPerPage) }).map((_, index) => (
-                <Pagination.Item key={index} active={index + 1 === currentPage} onClick={() => paginate(index + 1)}>
-                  {index + 1}
-                </Pagination.Item>
-              ))}
-            </Pagination>
-            </div>
-          </div>
-          </AccordionDetails>
-          </Accordion>
-
-            </div>
-          
-  );
-}
-
-export default Item;
+              <td>{item.img ? item.im
