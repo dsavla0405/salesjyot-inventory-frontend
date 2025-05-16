@@ -123,51 +123,64 @@ function ItemPortalMapping() {
     const handleSubmit = (event) => {
       event.preventDefault();
       const form = event.currentTarget;
-      if (form.checkValidity() === false) {
+      
+      // Check if all required fields are filled
+      if (form.checkValidity() === false || !portal || !portalSkuCode || !skucode || !supplierId) {
         event.stopPropagation();
-      } else {
-        console.log("supplier = " + supplierId + "sellerSKU =" + skucode);
-
-        axios.get(`${apiUrl}/item/supplier/search/${supplierId}/${skucode}`, { params: { email: user.email }, withCredentials: true })
-          .then(response => {
-            if (response.data) {
-              const item = response.data;
-              const portalUpperCase = formatPortal(portal);
-              const formData = {
-                portal: portalUpperCase,
-                supplier,
-                portalSkuCode,
-                skucode,
-                item: item,
-                userEmail: user.email,
-              };
-              console.log('form data: ', formData);
-              axios.post(`${apiUrl}/itemportalmapping`, formData, { withCredentials: true })
-                .then(response => {
-                  console.log('POST request successful:', response);
-                  toast.success('Item Portal Mapping added successfully', {
-                    autoClose: 2000 // Close after 2 seconds
-                  });
-                  setValidated(false);
-                  setApiData([...apiData, response.data]);
-                  setPortal(""); 
-                  setPortalSKU(""); 
-                  setSkucode("");
-                  setSeller(""); 
-                })
-                .catch(error => {
-                  console.error('Error sending POST request:', error);
-                  toast.error('Failed to add item portal mapping: ' + error.response.data.message);
-                });
-            } else {
-              console.error('No item found for the specified supplier and supplier SKU code.');
-            }
-          })
-          .catch(error => {
-            console.error('Error fetching item:', error);
-          });
+        setValidated(true); // This will trigger the display of validation messages
+        
+        // You can also show a toast message for better user experience
+        if (!portal || !portalSkuCode || !skucode || !supplierId) {
+          toast.error('Please fill out all required fields');
+        }
+        
+        return; // Stop the function execution here if validation fails
       }
+      
+      console.log("supplier = " + supplierId + "sellerSKU =" + skucode);
     
+      // Proceed with API calls only if validation passes
+      axios.get(`${apiUrl}/item/supplier/search/${supplierId}/${skucode}`, { params: { email: user.email }, withCredentials: true })
+        .then(response => {
+          if (response.data) {
+            const item = response.data;
+            const portalUpperCase = formatPortal(portal);
+            const formData = {
+              portal: portalUpperCase,
+              supplier,
+              portalSkuCode,
+              skucode,
+              item: item,
+              userEmail: user.email,
+            };
+            console.log('form data: ', formData);
+            axios.post(`${apiUrl}/itemportalmapping`, formData, { withCredentials: true })
+              .then(response => {
+                console.log('POST request successful:', response);
+                toast.success('Item Portal Mapping added successfully', {
+                  autoClose: 2000 // Close after 2 seconds
+                });
+                setValidated(false);
+                setApiData([...apiData, response.data]);
+                setPortal(""); 
+                setPortalSKU(""); 
+                setSkucode("");
+                setSeller(""); 
+              })
+              .catch(error => {
+                console.error('Error sending POST request:', error);
+                toast.error('Failed to add item portal mapping: ' + error.response.data.message);
+              });
+          } else {
+            console.error('No item found for the specified supplier and supplier SKU code.');
+            toast.error('No item found for the specified supplier and supplier SKU code.');
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching item:', error);
+          toast.error('Error fetching item: ' + (error.response?.data?.message || error.message));
+        });
+      
       setValidated(true);
     };
 
@@ -326,6 +339,22 @@ const handleSupplierChange = (event, name) => {
     const handleRowSubmit = () => {
       console.log("handleRowSubmit triggered");
       console.log(selectedItem)
+      if (!portal) {
+            toast.error('Portal is required');
+            return;
+          }
+      if (!supplier) {
+            toast.error('Supplier is required');
+            return;
+          }
+      if (!portalSkuCode) {
+            toast.error('Portal SKUcode is required');
+            return;
+          }
+      if (!skucode) {
+            toast.error('SKUcode is required');
+            return;
+          }
       if (rowSelected && selectedItem) {
         const formData = {
           portal,
@@ -448,7 +477,7 @@ const handleSupplierChange = (event, name) => {
     <Form noValidate validated={validated} onSubmit={handleSubmit}>
       <Row className="mb-3">
         <Form.Group as={Col} md="4" controlId="validationCustom01">
-          <Form.Label>Portal</Form.Label>
+          <Form.Label>Portal <span style={{ color: 'red' }}>*</span></Form.Label>
           <input 
             className='form-control'
               list="uniquePortals" 
@@ -463,7 +492,7 @@ const handleSupplierChange = (event, name) => {
           <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
         </Form.Group>
         <Form.Group as={Col} md="4" controlId="validationCustom02">
-          <Form.Label>Seller/Supplier</Form.Label>
+          <Form.Label>Seller/Supplier <span style={{ color: 'red' }}>*</span></Form.Label>
           <Form.Select
               required
               onChange={(e) => handleSupplierChange(e, e.target.value.trim())}
@@ -485,7 +514,7 @@ const handleSupplierChange = (event, name) => {
       </Row>
       <Row className="mb-3">
         <Form.Group as={Col} md="4" controlId="validationCustom01">
-          <Form.Label>Portal SKUcode</Form.Label>
+          <Form.Label>Portal SKUcode <span style={{ color: 'red' }}>*</span></Form.Label>
           <Form.Control
             required
             type="text"
@@ -497,7 +526,7 @@ const handleSupplierChange = (event, name) => {
           <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
         </Form.Group>
         <Form.Group as={Col} md="4" controlId="validationCustom02">
-          <Form.Label>SKUcode</Form.Label>
+          <Form.Label>SKUcode <span style={{ color: 'red' }}>*</span></Form.Label>
           <Form.Select
               required
               onChange={(e) => setSkucode(e.target.value)}
@@ -620,40 +649,4 @@ const handleSupplierChange = (event, name) => {
                     </td>
                   <td>{ipm.portal ? ipm.portal : ''}</td>
                   <td>{ipm.portalSkuCode ? ipm.portalSkuCode : ''}</td>
-                  <td>{ipm.supplier ? ipm.supplier.supplierName : ''}</td>
-                  <td>{ipm.item.skucode ? ipm.item.skucode : ''}</td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-          </div>
-          <div style={{display: 'flex', justifyContent: 'space-between'}}>
-          <Button
-              variant="contained"
-              tabIndex={-1}
-              style={{ height: '33px', backgroundColor: '#5463FF', color: 'white', fontWeight: 'bolder' }}
-              onClick={exportToExcel}
-            >
-              {<FileDownloadIcon style={{marginBottom: "5px"}}/>} Export to Excel
-            </Button>
-
-            
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            {rowsPerPageDropdown}
-            
-            <Pagination>
-              {Array.from({ length: Math.ceil(filteredData.length / itemsPerPage) }).map((_, index) => (
-                <Pagination.Item key={index} active={index + 1 === currentPage} onClick={() => paginate(index + 1)}>
-                  {index + 1}
-                </Pagination.Item>
-              ))}
-            </Pagination>
-          </div>
-          </div>
-        </AccordionDetails>
-      </Accordion>
-            </div>
-  );
-}
-
-export default ItemPortalMapping;
+                  <td>{ipm.supplier ? ipm.suppl

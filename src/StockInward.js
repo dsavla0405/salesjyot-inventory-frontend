@@ -191,9 +191,39 @@ const handleFileUpload = (e) => {
 const handleSubmit = async (event) => {
   event.preventDefault();
   const form = event.currentTarget;
+
+  if (!date) {
+      toast.error('date is required');
+      event.stopPropagation();
+      setValidated(true);
+      return;
+    }
+    
+    if (!skucode) {
+      toast.error('skucode is required');
+      event.stopPropagation();
+      setValidated(true);
+      return;
+    }
+    
+    if (!qty) {
+      toast.error('Quantity is required');
+      event.stopPropagation();
+      setValidated(true);
+      return;
+    }
+    
+    if (!location) {
+      toast.error('Location is required');
+      event.stopPropagation();
+      setValidated(true);
+      return;
+    }
   
   if (form.checkValidity() === false) {
     event.stopPropagation();
+    setValidated(true);
+    return;
   } else {
     try {
       // First, fetch the location by name
@@ -259,6 +289,22 @@ const handleSubmit = async (event) => {
 const handleRowSubmit = () => {
   console.log("handleRowSubmit triggered");
   console.log(selectedItem)
+  if (!date) {
+    toast.error('date is required');
+    return;
+  }
+  if (!skucode) {
+    toast.error('skucode is required');
+    return;
+  }
+  if (!qty) {
+    toast.error('qty is required');
+    return;
+  }
+  if (!location) {
+    toast.error('location is required');
+    return;
+  }
   if (rowSelected && selectedItem) {
     const formData = {
       date, 
@@ -417,7 +463,7 @@ const exportToExcel = () => {
     <Form noValidate validated={validated} onSubmit={handleSubmit}>
       <Row className="mb-3">
         <Form.Group as={Col} md="4" controlId="validationCustom01">
-          <Form.Label>Date</Form.Label>
+          <Form.Label>Date <span style={{ color: 'red' }}>*</span></Form.Label>
           <div className="custom-date-picker">
           <DatePicker
             selected={date}
@@ -431,7 +477,7 @@ const exportToExcel = () => {
         </Form.Group>
         
         <Form.Group as={Col} md="4" controlId="validationCustom02">
-          <Form.Label>SKUcode</Form.Label>
+          <Form.Label>SKUcode <span style={{ color: 'red' }}>*</span></Form.Label>
          <Form.Select
           required
           onChange={(e) => {
@@ -455,7 +501,7 @@ const exportToExcel = () => {
 
       <Row className="mb-3">
         <Form.Group as={Col} md="4" controlId="validationCustom02">
-          <Form.Label>Quantity</Form.Label>
+          <Form.Label>Quantity <span style={{ color: 'red' }}>*</span></Form.Label>
           <Form.Control
             required
             type="text"
@@ -468,7 +514,7 @@ const exportToExcel = () => {
         </Form.Group>
 
         <Form.Group as={Col} md="4" controlId="validationCustom02">
-          <Form.Label>Location</Form.Label>
+          <Form.Label>Location <span style={{ color: 'red' }}>*</span></Form.Label>
          <Form.Select
           required
           onChange={(e) => setLocation(e.target.value)}
@@ -610,34 +656,4 @@ const exportToExcel = () => {
             </tbody>
           </Table>
           </div>
-          <div style={{display: 'flex', justifyContent: 'space-between'}}>
-          <Button
-              variant="contained"
-              tabIndex={-1}
-              style={{ height: '33px', backgroundColor: '#5463FF', color: 'white', fontWeight: 'bolder' }}
-              onClick={exportToExcel}
-            >
-              {<FileDownloadIcon style={{marginBottom: "5px"}}/>} Export to Excel
-            </Button>
-
-            
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            {rowsPerPageDropdown}
-            
-            <Pagination>
-              {Array.from({ length: Math.ceil(filteredData.length / itemsPerPage) }).map((_, index) => (
-                <Pagination.Item key={index} active={index + 1 === currentPage} onClick={() => paginate(index + 1)}>
-                  {index + 1}
-                </Pagination.Item>
-              ))}
-            </Pagination>
-          </div>
-          </div>
-        </AccordionDetails>
-      </Accordion>
-                
-            </div>
-  );
-}
-
-export default StockInward;
+          <div style=
