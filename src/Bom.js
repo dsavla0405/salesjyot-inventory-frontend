@@ -1,36 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import Button from 'react-bootstrap/Button';
-import Col from 'react-bootstrap/Col';
-import Form from 'react-bootstrap/Form';
-import Row from 'react-bootstrap/Row';
-import Table from 'react-bootstrap/Table';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import './Item.css';
-import Header from './Header';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import axios from 'axios'; 
-import TextField from '@mui/material/TextField';
-import Autocomplete from '@mui/material/Autocomplete';
-import * as XLSX from 'xlsx';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { saveAs } from 'file-saver';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import Button from "react-bootstrap/Button";
+import Col from "react-bootstrap/Col";
+import Form from "react-bootstrap/Form";
+import Row from "react-bootstrap/Row";
+import Table from "react-bootstrap/Table";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./Item.css";
+import Header from "./Header";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import axios from "axios";
+import TextField from "@mui/material/TextField";
+import Autocomplete from "@mui/material/Autocomplete";
+import * as XLSX from "xlsx";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { saveAs } from "file-saver";
+import { Link } from "react-router-dom";
 import { IoIosRefresh } from "react-icons/io";
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import Pagination from 'react-bootstrap/Pagination';
-import SwapVertIcon from '@mui/icons-material/SwapVert';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import { useDispatch, useSelector } from 'react-redux';
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Pagination from "react-bootstrap/Pagination";
+import SwapVertIcon from "@mui/icons-material/SwapVert";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import { useDispatch, useSelector } from "react-redux";
 
 function Bom() {
-  const user = useSelector((state) => state.user);  // Access user data from Redux store
+  const user = useSelector((state) => state.user); // Access user data from Redux store
 
   const [validated, setValidated] = useState(false);
   const [skucode, setSku] = useState("");
@@ -38,7 +38,7 @@ function Bom() {
   const [bomCode, setBomCode] = useState("");
   const [defaultStartDate, setDefaultStartDate] = useState("");
   const [defaultEndDate, setDefaultEndDate] = useState("");
-  const [apiData, setApiData] = useState([]); 
+  const [apiData, setApiData] = useState([]);
   const [rowSelected, setRowSelected] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,12 +46,16 @@ function Bom() {
   const [skuSearchTerm, setSkuSearchTerm] = useState("");
   const [bomItemSearchTerm, setBomItemSearchTerm] = useState("");
   const [bomCodeSearchTerm, setBomCodeSearchTerm] = useState("");
-  const [defaultStartDateSearchTerm, setDefaultStartDateSearchTerm] = useState("");
+  const [defaultStartDateSearchTerm, setDefaultStartDateSearchTerm] =
+    useState("");
   const [defaultEndDateSearchTerm, setDefaultEndDateSearchTerm] = useState("");
   const [isRotating, setIsRotating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "ascending",
+  });
   const rowsPerPageOptions = [10, 20, 50];
   const apiUrl = process.env.REACT_APP_API_URL;
   // Function to handle change in items per page
@@ -59,11 +63,15 @@ function Bom() {
     setItemsPerPage(parseInt(e.target.value));
     setCurrentPage(1); // Reset to first page when changing items per page
   };
-  
+
   // JSX for the dropdown menu to select rows per page
   const rowsPerPageDropdown = (
     <Form.Group controlId="itemsPerPageSelect">
-      <Form.Select style={{marginLeft: "5px", width : "70px"}} value={itemsPerPage} onChange={handleItemsPerPageChange}>
+      <Form.Select
+        style={{ marginLeft: "5px", width: "70px" }}
+        value={itemsPerPage}
+        onChange={handleItemsPerPageChange}
+      >
         {rowsPerPageOptions.map((option) => (
           <option key={option} value={option}>
             {option}
@@ -80,16 +88,16 @@ function Bom() {
     }, 1000);
   };
 
-  const filteredData = apiData.filter(supplier => {
-    const sku = supplier.skucode?.toLowerCase() ?? '';
-    const startDate = supplier.defaultStartDate?.toLowerCase() ?? '';
-    const endDate = supplier.defaultEndDate?.toLowerCase() ?? '';
-    const bom = supplier.bomCode?.toLowerCase() ?? '';
-    const skuTerm = skuSearchTerm?.toLowerCase() ?? '';
-    const startDateTerm = defaultStartDateSearchTerm?.toLowerCase() ?? '';
-    const endDateTerm = defaultEndDateSearchTerm?.toLowerCase() ?? '';
-    const bomTerm = bomCodeSearchTerm?.toLowerCase() ?? '';
-  
+  const filteredData = apiData.filter((supplier) => {
+    const sku = supplier.skucode?.toLowerCase() ?? "";
+    const startDate = supplier.defaultStartDate?.toLowerCase() ?? "";
+    const endDate = supplier.defaultEndDate?.toLowerCase() ?? "";
+    const bom = supplier.bomCode?.toLowerCase() ?? "";
+    const skuTerm = skuSearchTerm?.toLowerCase() ?? "";
+    const startDateTerm = defaultStartDateSearchTerm?.toLowerCase() ?? "";
+    const endDateTerm = defaultEndDateSearchTerm?.toLowerCase() ?? "";
+    const bomTerm = bomCodeSearchTerm?.toLowerCase() ?? "";
+
     return (
       sku.includes(skuTerm) &&
       startDate.includes(startDateTerm) &&
@@ -97,24 +105,22 @@ function Bom() {
       bom.includes(bomTerm)
     );
   });
-  
-  
 
   const sortedData = filteredData.sort((a, b) => {
     if (sortConfig.key) {
       const aValue = a[sortConfig.key];
       const bValue = b[sortConfig.key];
-      if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
-      if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+      if (aValue < bValue) return sortConfig.direction === "ascending" ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === "ascending" ? 1 : -1;
       return 0;
     }
     return filteredData;
   });
 
   const requestSort = (key) => {
-    let direction = 'ascending';
-    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
     }
     setSortConfig({ key, direction });
   };
@@ -124,275 +130,320 @@ function Bom() {
   const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  
+
   const fetchData = () => {
-    axios.get(`${apiUrl}/item/supplier/user/email`, {params: { email: user.email }, withCredentials: true }) // Fetch SKU codes and descriptions from the items table
-      .then(response => {
+    axios
+      .get(`${apiUrl}/item/supplier/user/email`, {
+        params: { email: user.email },
+        withCredentials: true,
+      }) // Fetch SKU codes and descriptions from the items table
+      .then((response) => {
         // Extract SKU codes and descriptions from the response data and filter out null or undefined values
         const skuData = response.data
-          .filter(item => item.skucode && item.description) // Filter out items where skucode or description is null or undefined
-          .map(item => ({ skucode: item.skucode, description: item.description }));
+          .filter((item) => item.skucode && item.description) // Filter out items where skucode or description is null or undefined
+          .map((item) => ({
+            skucode: item.skucode,
+            description: item.description,
+          }));
         // Set the SKU data list state
         setSkuList(skuData);
       })
-      .catch(error => console.error(error));
-  }
+      .catch((error) => console.error(error));
+  };
 
   useEffect(() => {
-    axios.get(`${apiUrl}/item/supplier/user/email`, { params: { email: user.email }, withCredentials: true }) // Fetch SKU codes and descriptions from the items table
-      .then(response => {
+    axios
+      .get(`${apiUrl}/item/supplier/user/email`, {
+        params: { email: user.email },
+        withCredentials: true,
+      }) // Fetch SKU codes and descriptions from the items table
+      .then((response) => {
         // Extract SKU codes and descriptions from the response data and filter out null or undefined values
         const skuData = response.data
-          .filter(item => item.skucode && item.description) // Filter out items where skucode or description is null or undefined
-          .map(item => ({ skucode: item.skucode, description: item.description }));
+          .filter((item) => item.skucode && item.description) // Filter out items where skucode or description is null or undefined
+          .map((item) => ({
+            skucode: item.skucode,
+            description: item.description,
+          }));
         // Set the SKU data list state
         setSkuList(skuData);
       })
-      .catch(error => console.error(error));
+      .catch((error) => console.error(error));
   }, [user]);
 
   const postData = (data) => {
-    axios.post(`${apiUrl}/boms`, data, { withCredentials: true })
-        .then(response => {
-          toast.success('BOM added successfully', {
-            autoClose: 2000 // Close after 2 seconds
-          });
-            // Handle successful response
-            console.log('Data posted successfully:', response);
-        })
-        .catch(error => {
-            // Handle error
-            toast.error("Failed to Post BOM");
-            console.error('Error posting data:', error);
+    axios
+      .post(`${apiUrl}/boms`, data, { withCredentials: true })
+      .then((response) => {
+        toast.success("BOM added successfully", {
+          autoClose: 2000, // Close after 2 seconds
         });
-};
+        // Handle successful response
+        console.log("Data posted successfully:", response);
+      })
+      .catch((error) => {
+        // Handle error
+        toast.error("Failed to Post BOM");
+        console.error("Error posting data:", error);
+      });
+  };
 
-const handleFileUpload = (e) => {
-  const file = e.target.files[0];
-  const reader = new FileReader();
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
 
-  reader.onload = (evt) => {
+    reader.onload = (evt) => {
       const data = evt.target.result;
-      const workbook = XLSX.read(data, { type: 'binary' });
+      const workbook = XLSX.read(data, { type: "binary" });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(sheet, { raw: false });
 
-      jsonData.forEach(item => {
-          const startDate = parseDate(item.defaultStartDate);
-          const endDate = parseDate(item.defaultEndDate);
-          console.log('Parsed Start Date:', startDate);
-          console.log('Parsed End Date:', endDate);
+      jsonData.forEach((item) => {
+        const startDate = parseDate(item.defaultStartDate);
+        const endDate = parseDate(item.defaultEndDate);
+        console.log("Parsed Start Date:", startDate);
+        console.log("Parsed End Date:", endDate);
 
-          const formattedData = {
-              skucode: item.skucode,
-              bomCode: item.bomCode,
-              defaultStartDate: startDate ? startDate.toISOString() : null,
-              defaultEndDate: endDate ? endDate.toISOString() : null,
-              userEmail: user.email
-          };
+        const formattedData = {
+          skucode: item.skucode,
+          bomCode: item.bomCode,
+          defaultStartDate: startDate ? startDate.toISOString() : null,
+          defaultEndDate: endDate ? endDate.toISOString() : null,
+          userEmail: user.email,
+        };
 
-          // Fetch item details using skucode
-          axios.get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`, {params: { email: user.email }, withCredentials: true })
-              .then(response => {
-                  if (response.data.length === 0) {
-                      console.error('Item not found with SKU code: ' + item.skucode);
-                      return;
-                  }
+        // Fetch item details using skucode
+        axios
+          .get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`, {
+            params: { email: user.email },
+            withCredentials: true,
+          })
+          .then((response) => {
+            if (response.data.length === 0) {
+              console.error("Item not found with SKU code: " + item.skucode);
+              return;
+            }
 
-                  const fetchedItem = response.data;
+            const fetchedItem = response.data;
 
-                  const formData = {
-                      ...formattedData,
-                      bomItems: [fetchedItem]
-                  };
+            const formData = {
+              ...formattedData,
+              bomItems: [fetchedItem],
+            };
 
-                  console.log('Form data:', formData);
-                  postData(formData);
-              })
-              .catch(error => {
-                  console.error('Error fetching item:', error);
-              });
+            console.log("Form data:", formData);
+            postData(formData);
+          })
+          .catch((error) => {
+            console.error("Error fetching item:", error);
+          });
       });
+    };
+
+    reader.readAsBinaryString(file);
   };
 
-  reader.readAsBinaryString(file);
-};
+  const parseDate = (dateString) => {
+    if (!dateString) return null;
 
+    // Check for the format DD-MMM-YYYY
+    const datePattern = /(\d{1,2})-(\w{3})-(\d{4})/;
+    const match = dateString.match(datePattern);
 
-const parseDate = (dateString) => {
-  if (!dateString) return null;
-
-  // Check for the format DD-MMM-YYYY
-  const datePattern = /(\d{1,2})-(\w{3})-(\d{4})/;
-  const match = dateString.match(datePattern);
-
-  if (match) {
+    if (match) {
       const day = parseInt(match[1], 10);
-      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const monthNames = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
       const month = monthNames.indexOf(match[2]); // Get the month index
       const year = parseInt(match[3], 10);
 
       if (month !== -1) {
-          return new Date(year, month, day); // Create date in local time
+        return new Date(year, month, day); // Create date in local time
       }
-  }
-  
-  return null; // Invalid date
-};
+    }
 
+    return null; // Invalid date
+  };
 
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
 
+    // Check for required fields individually with specific error messages
+    if (!skucode) {
+      toast.error("SKU Code is required");
+      event.stopPropagation();
+      setValidated(true);
+      return;
+    }
 
-  
+    if (!bomCode) {
+      toast.error("BOM Code is required");
+      event.stopPropagation();
+      setValidated(true);
+      return;
+    }
 
-const handleSubmit = (event) => {
-  event.preventDefault();
-  const form = event.currentTarget;
+    if (form.checkValidity() === false) {
+      event.stopPropagation();
+      setValidated(true);
+      return;
+    } else {
+      // Rest of your existing code...
+      // Fetch item details using skucode
+      axios
+        .get(`${apiUrl}/item/supplier/search/skucode/${skucode}`, {
+          params: { email: user.email },
+          withCredentials: true,
+        })
+        .then((response) => {
+          console.log("item = " + JSON.stringify(response.data));
+          // Check if item exists
+          if (response.data.length === 0) {
+            toast.error("Item not found with SKU code: " + skucode);
+            return;
+          }
 
-  // Check for required fields individually with specific error messages
-  if (!skucode) {
-    toast.error('SKU Code is required');
-    event.stopPropagation();
-    setValidated(true);
-    return;
-  }
-  
-  if (!bomCode) {
-    toast.error('BOM Code is required');
-    event.stopPropagation();
-    setValidated(true);
-    return;
-  }
+          // Extract item from response data
+          const item = response.data;
 
-  if (form.checkValidity() === false) {
-    event.stopPropagation();
-    setValidated(true);
-    return;
-  } else {
-    // Rest of your existing code...
-    // Fetch item details using skucode
-    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`, {params: { email: user.email }, withCredentials: true })
-      .then(response => {
-        console.log("item = " + JSON.stringify(response.data));
-        // Check if item exists
-        if (response.data.length === 0) {
-          toast.error('Item not found with SKU code: ' + skucode);
-          return;
-        }
+          // Construct formData with item
+          const formData = {
+            skucode,
+            defaultStartDate,
+            bomCode,
+            defaultEndDate,
+            bomItems: [item], // Wrap the single item in an array
+            userEmail: user.email,
+          };
 
-        // Extract item from response data
-        const item = response.data;
-
-        // Construct formData with item
-        const formData = {
-          skucode, 
-          defaultStartDate,
-          bomCode,
-          defaultEndDate,
-          bomItems : [item], // Wrap the single item in an array
-          userEmail : user.email,
-        };
-
-        // Send POST request with formData
-        axios.post(`${apiUrl}/boms` , formData, { withCredentials: true })
-          .then(response => {
-            console.log('POST request successful:', response);
-            toast.success('BOM added successfully', {
-              autoClose: 2000 // Close after 2 seconds
+          // Send POST request with formData
+          axios
+            .post(`${apiUrl}/boms`, formData, { withCredentials: true })
+            .then((response) => {
+              console.log("POST request successful:", response);
+              toast.success("BOM added successfully", {
+                autoClose: 2000, // Close after 2 seconds
+              });
+              console.log("form data: ", formData);
+              setValidated(false);
+              setApiData([...apiData, response.data]);
+              // setBomItem("");
+              // setQty("");
+              setBomCode("");
+              setDefaultStartDate("");
+              setDefaultEndDate("");
+              setSku("");
+            })
+            .catch((error) => {
+              console.error("Error sending POST request:", error);
+              toast.error("Failed to add BOM: " + error.response.data.message);
             });
-            console.log('form data: ', formData);
-            setValidated(false);
-            setApiData([...apiData, response.data]);
-            // setBomItem("");
-            // setQty("");
-            setBomCode("");
-            setDefaultStartDate("");
-            setDefaultEndDate("");
-            setSku("");
-          })
-          .catch(error => {
-            console.error('Error sending POST request:', error);
-            toast.error('Failed to add BOM: ' + error.response.data.message);
-          });
-      })
-      .catch(error => {
-        console.error('Error fetching item:', error);
-        toast.error('Failed to fetch item details: ' + error.response.data.message);
-      });
-  }
+        })
+        .catch((error) => {
+          console.error("Error fetching item:", error);
+          toast.error(
+            "Failed to fetch item details: " + error.response.data.message
+          );
+        });
+    }
 
-  setValidated(true);
-};
+    setValidated(true);
+  };
 
+  const handleRowSubmit = () => {
+    console.log("handleRowSubmit triggered");
+    console.log(selectedItem);
 
+    // Check for required fields individually with specific error messages
+    if (!skucode) {
+      toast.error("SKU Code is required");
+      return;
+    }
 
-const handleRowSubmit = () => {
-  console.log("handleRowSubmit triggered");
-  console.log(selectedItem);
-  
-  // Check for required fields individually with specific error messages
-  if (!skucode) {
-    toast.error('SKU Code is required');
-    return;
-  }
-  
-  if (!bomCode) {
-    toast.error('BOM Code is required');
-    return;
-  }
-  if (rowSelected && selectedItem) {
-    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`, {params: { email: user.email }, withCredentials: true })
-      .then(response => {
-        // Check if item exists
-        if (response.data.length === 0) {
-          toast.error('Item not found with SKU code: ' + skucode);
-          return;
-        }
+    if (!bomCode) {
+      toast.error("BOM Code is required");
+      return;
+    }
+    if (rowSelected && selectedItem) {
+      axios
+        .get(`${apiUrl}/item/supplier/search/skucode/${skucode}`, {
+          params: { email: user.email },
+          withCredentials: true,
+        })
+        .then((response) => {
+          // Check if item exists
+          if (response.data.length === 0) {
+            toast.error("Item not found with SKU code: " + skucode);
+            return;
+          }
 
-        // Extract item from response data
-        const item = response.data;
+          // Extract item from response data
+          const item = response.data;
 
-        // Construct formData with item
-        const formData = {
-          skucode,
-          defaultStartDate,
-          defaultEndDate,
-          bomCode,
-          bomItems: [item], // Wrap the single item in an array
-        };
+          // Construct formData with item
+          const formData = {
+            skucode,
+            defaultStartDate,
+            defaultEndDate,
+            bomCode,
+            bomItems: [item], // Wrap the single item in an array
+          };
 
-        console.log('form data: ', formData);
-        console.log("id: ", selectedItem.bomId);
+          console.log("form data: ", formData);
+          console.log("id: ", selectedItem.bomId);
 
-        axios.put(`${apiUrl}/boms/${selectedItem.bomId}`, formData, { withCredentials: true })
-          .then(response => {
-            console.log('PUT request successful:', response);
-            toast.success('Bom updated successfully', {
-              autoClose: 2000 // Close after 2 seconds
+          axios
+            .put(`${apiUrl}/boms/${selectedItem.bomId}`, formData, {
+              withCredentials: true,
+            })
+            .then((response) => {
+              console.log("PUT request successful:", response);
+              toast.success("Bom updated successfully", {
+                autoClose: 2000, // Close after 2 seconds
+              });
+              setApiData((prevData) =>
+                prevData.map((item) =>
+                  item.bomId === selectedItem.bomId ? response.data : item
+                )
+              ); // Update the specific item
+
+              setValidated(false);
+              setRowSelected(false);
+              setSku("");
+              setBomCode("");
+              setDefaultStartDate("");
+              setDefaultEndDate("");
+            })
+            .catch((error) => {
+              console.error("Error sending PUT request:", error);
+              toast.error(
+                "Failed to update BOM: " + error.response.data.message
+              );
             });
-            setApiData(prevData => prevData.map(item => item.bomId === selectedItem.bomId ? response.data : item)); // Update the specific item
+        })
+        .catch((error) => {
+          console.error("Error fetching item:", error);
+          toast.error(
+            "Failed to fetch item details: " + error.response.data.message
+          );
+        });
+    }
+  };
 
-            setValidated(false);
-            setRowSelected(false);
-            setSku("");
-            setBomCode("");
-            setDefaultStartDate("");
-            setDefaultEndDate("");
-          })
-          .catch(error => {
-            console.error('Error sending PUT request:', error);
-            toast.error('Failed to update BOM: ' + error.response.data.message);
-          });
-      })
-      .catch(error => {
-        console.error('Error fetching item:', error);
-        toast.error('Failed to fetch item details: ' + error.response.data.message);
-      });
-  }
-};
-
-  
   const handleRowClick = (bom) => {
     setBomCode(bom.bomCode);
     setSku(bom.skucode);
@@ -405,328 +456,412 @@ const handleRowSubmit = () => {
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value.toLowerCase()); // Convert search term to lowercase
   };
-  
+
   useEffect(() => {
-    axios.get(`${apiUrl}/boms/user/email`, { params: { email: user.email }, withCredentials: true }) 
-      .then(response => setApiData(response.data))
-      .catch(error => console.error(error));
-    
+    axios
+      .get(`${apiUrl}/boms/user/email`, {
+        params: { email: user.email },
+        withCredentials: true,
+      })
+      .then((response) => setApiData(response.data))
+      .catch((error) => console.error(error));
   }, [user]);
 
   const downloadTemplate = () => {
     const templateData = [
-        {defaultStartDate: 'dd-mmm-yyyy', defaultEndDate: 'dd-mmm-yyyy', bomCode: '', skucode: ''}, 
-        {defaultStartDate: '', defaultEndDate: '', bomCode: '', skucode: ''} 
+      {
+        defaultStartDate: "dd-mmm-yyyy",
+        defaultEndDate: "dd-mmm-yyyy",
+        bomCode: "",
+        skucode: "",
+      },
+      { defaultStartDate: "", defaultEndDate: "", bomCode: "", skucode: "" },
     ];
-    
+
     const ws = XLSX.utils.json_to_sheet(templateData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Template');
-    
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+
     // Adjust column widths to fit the note
-    ws['!cols'] = [
+    ws["!cols"] = [
       { wch: 15 }, // width for defaultStartDate
       { wch: 15 }, // width for defaultEndDate
       { wch: 10 }, // width for bomCode
-      { wch: 10 }  // width for skucode
+      { wch: 10 }, // width for skucode
     ];
-  
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-  
+
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "binary" });
+
     function s2ab(s) {
-        const buf = new ArrayBuffer(s.length);
-        const view = new Uint8Array(buf);
-        for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
-        return buf;
+      const buf = new ArrayBuffer(s.length);
+      const view = new Uint8Array(buf);
+      for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xff;
+      return buf;
     }
-  
-    saveAs(new Blob([s2ab(wbout)], { type: 'application/octet-stream' }), 'bomTemplate.xlsx');
+
+    saveAs(
+      new Blob([s2ab(wbout)], { type: "application/octet-stream" }),
+      "bomTemplate.xlsx"
+    );
   };
-  
 
-const handleDelete = (id) => {
-  console.log("Deleting row with id:", id);
-  // Remove the row from the table
+  const handleDelete = (id) => {
+    console.log("Deleting row with id:", id);
+    // Remove the row from the table
 
-  axios.delete(`${apiUrl}/boms/${id}`, { withCredentials: true })
-  .then(response => {
-    // Handle success response
-    console.log('Row deleted successfully.');
-    toast.success('Bom deleted successfully', {
-      autoClose: 2000 // Close after 2 seconds
-    });
-    setApiData(prevData => prevData.filter(row => row.bomId !== id));
+    axios
+      .delete(`${apiUrl}/boms/${id}`, { withCredentials: true })
+      .then((response) => {
+        // Handle success response
+        console.log("Row deleted successfully.");
+        toast.success("Bom deleted successfully", {
+          autoClose: 2000, // Close after 2 seconds
+        });
+        setApiData((prevData) => prevData.filter((row) => row.bomId !== id));
+      })
+      .catch((error) => {
+        // Handle error
+        console.error("Error deleting row:", error);
+        toast.error("Failed to delete BOM: " + error.response.data.message);
+      });
 
-  })
-  .catch(error => {
-    // Handle error
-    console.error('Error deleting row:', error);
-    toast.error('Failed to delete BOM: ' + error.response.data.message);
-  });
+    console.log("After deletion, apiData:", apiData);
+  };
 
+  const exportToExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(filteredData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "binary" });
 
-  console.log("After deletion, apiData:", apiData);
-};
+    function s2ab(s) {
+      const buf = new ArrayBuffer(s.length);
+      const view = new Uint8Array(buf);
+      for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xff;
+      return buf;
+    }
 
-
-const exportToExcel = () => {
-  const ws = XLSX.utils.json_to_sheet(filteredData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-
-  function s2ab(s) {
-    const buf = new ArrayBuffer(s.length);
-    const view = new Uint8Array(buf);
-    for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
-    return buf;
-  }
-
-  saveAs(new Blob([s2ab(wbout)], { type: 'application/octet-stream' }), 'BomData.xlsx');
-};
-  
+    saveAs(
+      new Blob([s2ab(wbout)], { type: "application/octet-stream" }),
+      "BomData.xlsx"
+    );
+  };
 
   return (
     <div>
       <ToastContainer position="top-right" />
-      <div className='title'>
+      <div className="title">
         <h1>BOM</h1>
       </div>
 
-      
       <Accordion defaultExpanded>
-        <AccordionSummary className='acc-summary'
+        <AccordionSummary
+          className="acc-summary"
           expandIcon={<ExpandMoreIcon />}
           aria-controls="panel3-content"
           id="panel3-header"
-          sx={{ backgroundColor: '#E5E7E9' }} 
+          sx={{ backgroundColor: "#E5E7E9" }}
         >
           <h4>BOM Form</h4>
         </AccordionSummary>
         <AccordionDetails>
-        <Form noValidate validated={validated} onSubmit={handleSubmit}>
+          <Form noValidate validated={validated} onSubmit={handleSubmit}>
             <Row className="mb-3">
-            <Form.Group as={Col} md="4" controlId="validationCustom01">
-          <Form.Label>Bom Code <span style={{ color: 'red' }}>*</span></Form.Label>
-          <Form.Control
-            required
-            type="text"
-            placeholder="Bom Code"
-            defaultValue=""
-            value={ bomCode}
-            onChange={(e) => setBomCode(e.target.value)}
-          />
-          <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
-        </Form.Group>
-              
-              
               <Form.Group as={Col} md="4" controlId="validationCustom01">
-                <Form.Label>SKU Code <span style={{ color: 'red' }}>*</span></Form.Label>
+                <Form.Label>
+                  Bom Code <span style={{ color: "red" }}>*</span>
+                </Form.Label>
+                <Form.Control
+                  required
+                  type="text"
+                  placeholder="Bom Code"
+                  defaultValue=""
+                  value={bomCode}
+                  onChange={(e) => setBomCode(e.target.value)}
+                />
+                <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
+              </Form.Group>
 
-                  <Form.Select
-                    required
-                    onChange={(e) => setSku(e.target.value)}
-                    value={skucode}
+              <Form.Group as={Col} md="4" controlId="validationCustom01">
+                <Form.Label>
+                  SKU Code <span style={{ color: "red" }}>*</span>
+                </Form.Label>
+
+                <Form.Select
+                  required
+                  onChange={(e) => setSku(e.target.value)}
+                  value={skucode}
+                >
+                  <option value="">Select SKU Code</option>
+                  {skuList.map((sku) => (
+                    <option key={sku.itemId} value={sku.skucode}>
+                      {sku.skucode} - {sku.description}
+                    </option>
+                  ))}
+                </Form.Select>
+                <Link to="/Item" target="_blank">
+                  <span
+                    style={{
+                      float: "right",
+                      fontSize: "small",
+                      marginTop: "1%",
+                      marginRight: "1%",
+                    }}
                   >
-                    <option value="">Select SKU Code</option>
-                    {skuList.map((sku) => (
-                      <option key={sku.itemId} value={sku.skucode}>
-                        {sku.skucode} - {sku.description}
-                      </option>
-                    ))}
-                  </Form.Select>
-                  <Link to="/Item" target="_blank"><span style = {{float:"right", fontSize:"small", marginTop:"1%", marginRight:"1%"}}>+ add item</span></Link>
-          <IoIosRefresh onClick={handleRefresh} className={isRotating ? 'refresh-icon rotating' : 'refresh-icon'}/>
-                  <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
-
+                    + add item
+                  </span>
+                </Link>
+                <IoIosRefresh
+                  onClick={handleRefresh}
+                  className={
+                    isRotating ? "refresh-icon rotating" : "refresh-icon"
+                  }
+                />
+                <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
               </Form.Group>
               <Form.Group as={Col} md="4" controlId="validationCustom02">
                 <Form.Label>Default Start Date</Form.Label>
-                
-                  <div className="custom-date-picker">
+
+                <div className="custom-date-picker">
                   <DatePicker
                     selected={defaultStartDate}
-                    onChange={date => setDefaultStartDate(date)}
+                    onChange={(date) => setDefaultStartDate(date)}
                     dateFormat="dd/MM/yyyy"
                     placeholderText="Select Date"
                     className="form-control" // Apply Bootstrap form control class
                   />
                 </div>
-                
+
                 <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
               </Form.Group>
 
               <Form.Group as={Col} md="4" controlId="validationCustom02">
                 <Form.Label>Default End Date</Form.Label>
-                
-                  <div className="custom-date-picker">
+
+                <div className="custom-date-picker">
                   <DatePicker
                     selected={defaultEndDate}
-                    onChange={date => setDefaultEndDate(date)}
+                    onChange={(date) => setDefaultEndDate(date)}
                     dateFormat="dd/MM/yyyy"
                     placeholderText="Select Date"
                     className="form-control" // Apply Bootstrap form control class
                   />
                 </div>
-                
+
                 <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
               </Form.Group>
             </Row>
-            <div className='buttons'>
-      {rowSelected ? (
-        <Button onClick={handleRowSubmit}>Edit</Button>
-      ) : (
-        <Button type="submit" onClick={handleSubmit}>Submit</Button>
-      )}
-      <span style={{ margin: '0 10px' }}>or</span>
-            <input type="file" onChange={handleFileUpload} />
-            <span style={{margin: "auto"}}></span>
-            <Button
-              variant="contained"
-              tabIndex={-1}
-              style={{ height: '33px', backgroundColor: 'orange', color: 'white', fontWeight: 'bolder' }}
-              onClick={downloadTemplate}
-            >
-              {<CloudUploadIcon style={{marginBottom: "5px"}}/>} Download Template
-            </Button> 
-
+            <div className="buttons">
+              {rowSelected ? (
+                <Button onClick={handleRowSubmit}>Edit</Button>
+              ) : (
+                <Button type="submit" onClick={handleSubmit}>
+                  Submit
+                </Button>
+              )}
+              <span style={{ margin: "0 10px" }}>or</span>
+              <input type="file" onChange={handleFileUpload} />
+              <span style={{ margin: "auto" }}></span>
+              <Button
+                variant="contained"
+                tabIndex={-1}
+                style={{
+                  height: "33px",
+                  backgroundColor: "orange",
+                  color: "white",
+                  fontWeight: "bolder",
+                }}
+                onClick={downloadTemplate}
+              >
+                {<CloudUploadIcon style={{ marginBottom: "5px" }} />} Download
+                Template
+              </Button>
             </div>
           </Form>
         </AccordionDetails>
       </Accordion>
-      
+
       <Accordion>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="panel3-content"
           id="panel3-header"
-          sx={{ backgroundColor: '#E5E7E9' }} 
+          sx={{ backgroundColor: "#E5E7E9" }}
         >
           <h4>List View of Bom</h4>
         </AccordionSummary>
         <AccordionDetails>
-        <div style={{ overflowX: 'auto' }}> 
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th></th>
-                <th>
-                <SwapVertIcon style = {{cursor: 'pointer', marginRight: "2%"}}variant="link" onClick={() => requestSort('bomCode')}>
-                  </SwapVertIcon>
-                  Bom Code
-                <span style={{ margin: '0 10px' }}><input
-                  type="text"
-                  placeholder="Search by bomCode"
-                  value={bomCodeSearchTerm}
-                  onChange={(e) => setBomCodeSearchTerm(e.target.value)}
-                /></span>
-                </th>
-                <th>
-                <SwapVertIcon style = {{cursor: 'pointer', marginRight: "2%"}}variant="link" onClick={() => requestSort('skucode')}>
-                  </SwapVertIcon>
-                  SKU
-                <span style={{ margin: '0 10px' }}><input
-                  type="text"
-                  placeholder="Search by SKU"
-                  value={skuSearchTerm}
-                  onChange={(e) => setSkuSearchTerm(e.target.value)}
-                /></span>
-                </th>
-                <th>
-                <SwapVertIcon style = {{cursor: 'pointer', marginRight: "2%"}}variant="link" onClick={() => requestSort('defaultStartDate')}>
-                  </SwapVertIcon>
-                  Default Start Date 
-                <span style={{ margin: '0 10px' }}><input
-                  type="text"
-                  placeholder="Search by start date"
-                  value={defaultStartDateSearchTerm}
-                  onChange={(e) => setDefaultStartDateSearchTerm(e.target.value)}
-                /></span>
-                </th>
-                <th>
-                <SwapVertIcon style = {{cursor: 'pointer', marginRight: "2%"}}variant="link" onClick={() => requestSort('defaultEndDate')}>
-                  </SwapVertIcon>
-                  Default End Date 
-                <span style={{ margin: '0 10px' }}><input
-                  type="text"
-                  placeholder="Search by end date"
-                  value={defaultEndDateSearchTerm}
-                  onChange={(e) => setDefaultEndDateSearchTerm(e.target.value)}
-                /></span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-  {currentItems.map(bom => (
-    <tr key={bom.bomId} onClick={() => handleRowClick(bom)}>
-      <td style={{ width: '50px', textAlign: 'center' }}>
-                      
-      <button
-  style={{ display: 'inline-flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%', padding: '0', border: 'none', background: 'none' }}
-  className="delete-icon"
-  onClick={(e) => {
-    e.stopPropagation(); // Stop propagation of the click event
-    handleDelete(bom.bomId); // Call handleDelete function
-  }}
->
-  <DeleteIcon style={{ color: '#F00' }} />
-</button>
-
-      </td>
-      <td>{bom.bomCode ? bom.bomCode : ''}</td>
-      <td>
-  {bom.bomItems && bom.bomItems.length > 0 && bom.bomItems[0].skucode ? bom.bomItems[0].skucode : ''}
-</td>
-      <td>
-  {(() => {
-    if (!bom.defaultStartDate) return '';
-    const date = new Date(bom.defaultStartDate);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  })()}
-</td>
-<td>
-  {(() => {
-    if (!bom.defaultEndDate) return '';
-    const date = new Date(bom.defaultEndDate);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  })()}
-</td>
-
-    </tr>
-  ))}
-</tbody>
-
-          </Table>
+          <div style={{ overflowX: "auto" }}>
+            <Table striped bordered hover>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>
+                    <SwapVertIcon
+                      style={{ cursor: "pointer", marginRight: "2%" }}
+                      variant="link"
+                      onClick={() => requestSort("bomCode")}
+                    ></SwapVertIcon>
+                    Bom Code
+                    <span style={{ margin: "0 10px" }}>
+                      <input
+                        type="text"
+                        placeholder="Search by bomCode"
+                        value={bomCodeSearchTerm}
+                        onChange={(e) => setBomCodeSearchTerm(e.target.value)}
+                      />
+                    </span>
+                  </th>
+                  <th>
+                    <SwapVertIcon
+                      style={{ cursor: "pointer", marginRight: "2%" }}
+                      variant="link"
+                      onClick={() => requestSort("skucode")}
+                    ></SwapVertIcon>
+                    SKU
+                    <span style={{ margin: "0 10px" }}>
+                      <input
+                        type="text"
+                        placeholder="Search by SKU"
+                        value={skuSearchTerm}
+                        onChange={(e) => setSkuSearchTerm(e.target.value)}
+                      />
+                    </span>
+                  </th>
+                  <th>
+                    <SwapVertIcon
+                      style={{ cursor: "pointer", marginRight: "2%" }}
+                      variant="link"
+                      onClick={() => requestSort("defaultStartDate")}
+                    ></SwapVertIcon>
+                    Default Start Date
+                    <span style={{ margin: "0 10px" }}>
+                      <input
+                        type="text"
+                        placeholder="Search by start date"
+                        value={defaultStartDateSearchTerm}
+                        onChange={(e) =>
+                          setDefaultStartDateSearchTerm(e.target.value)
+                        }
+                      />
+                    </span>
+                  </th>
+                  <th>
+                    <SwapVertIcon
+                      style={{ cursor: "pointer", marginRight: "2%" }}
+                      variant="link"
+                      onClick={() => requestSort("defaultEndDate")}
+                    ></SwapVertIcon>
+                    Default End Date
+                    <span style={{ margin: "0 10px" }}>
+                      <input
+                        type="text"
+                        placeholder="Search by end date"
+                        value={defaultEndDateSearchTerm}
+                        onChange={(e) =>
+                          setDefaultEndDateSearchTerm(e.target.value)
+                        }
+                      />
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentItems.map((bom) => (
+                  <tr key={bom.bomId} onClick={() => handleRowClick(bom)}>
+                    <td style={{ width: "50px", textAlign: "center" }}>
+                      <button
+                        style={{
+                          display: "inline-flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          width: "100%",
+                          height: "100%",
+                          padding: "0",
+                          border: "none",
+                          background: "none",
+                        }}
+                        className="delete-icon"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Stop propagation of the click event
+                          handleDelete(bom.bomId); // Call handleDelete function
+                        }}
+                      >
+                        <DeleteIcon style={{ color: "#F00" }} />
+                      </button>
+                    </td>
+                    <td>{bom.bomCode ? bom.bomCode : ""}</td>
+                    <td>
+                      {bom.bomItems &&
+                      bom.bomItems.length > 0 &&
+                      bom.bomItems[0].skucode
+                        ? bom.bomItems[0].skucode
+                        : ""}
+                    </td>
+                    <td>
+                      {(() => {
+                        if (!bom.defaultStartDate) return "";
+                        const date = new Date(bom.defaultStartDate);
+                        const day = String(date.getDate()).padStart(2, "0");
+                        const month = String(date.getMonth() + 1).padStart(
+                          2,
+                          "0"
+                        );
+                        const year = date.getFullYear();
+                        return `${day}-${month}-${year}`;
+                      })()}
+                    </td>
+                    <td>
+                      {(() => {
+                        if (!bom.defaultEndDate) return "";
+                        const date = new Date(bom.defaultEndDate);
+                        const day = String(date.getDate()).padStart(2, "0");
+                        const month = String(date.getMonth() + 1).padStart(
+                          2,
+                          "0"
+                        );
+                        const year = date.getFullYear();
+                        return `${day}-${month}-${year}`;
+                      })()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
           </div>
-          <div style={{display: 'flex', justifyContent: 'space-between'}}>
-          <Button
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <Button
               variant="contained"
               tabIndex={-1}
-              style={{ height: '33px', backgroundColor: '#5463FF', color: 'white', fontWeight: 'bolder' }}
+              style={{
+                height: "33px",
+                backgroundColor: "#5463FF",
+                color: "white",
+                fontWeight: "bolder",
+              }}
               onClick={exportToExcel}
             >
-              {<FileDownloadIcon style={{marginBottom: "5px"}}/>} Export to Excel
+              {<FileDownloadIcon style={{ marginBottom: "5px" }} />} Export to
+              Excel
             </Button>
 
-            
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            {rowsPerPageDropdown}
-            
-            <Pagination>
-              {Array.from({ length: Math.ceil(filteredData.length / itemsPerPage) }).map((_, index) => (
-                <Pagination.Item key={index} active={index + 1 === currentPage} onClick={() => paginate(index + 1)}>
-                  {index + 1}
-                </Pagination.Item>
-              ))}
-            </Pagination>
-          </div>
-       
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              {rowsPerPageDropdown}
+
+              <Pagination>
+                {Array.from({
+                  length: Math.ceil(filteredData.length / itemsPerPage),
+                }).map((_, index) => (
+                  <Pagination.Item
+                    key={index}
+                    active={index + 1 === currentPage}
+                    onClick={() => paginate(index + 1)}
+                  >
+                    {index + 1}
+                  </Pagination.Item>
+                ))}
+              </Pagination>
+            </div>
           </div>
         </AccordionDetails>
       </Accordion>

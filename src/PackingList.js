@@ -189,12 +189,18 @@ const PicklistComponent = () => {
         description: o.description,
         packQty: o.pickQty,
         skucode: o.skucode,
-        email: user.email
+        userEmail: user.email,
       };
       
       try {
-        console.log("selected order = " + JSON.stringify(selectedOrder));
-        const response = await axios.post(`${apiUrl}/packinglistdata`, selectedOrder);
+        console.log(
+          "selected order in heree= " + JSON.stringify(selectedOrder)
+        );
+        const response = await axios.post(
+          `${apiUrl}/packinglistdata`,
+          selectedOrder,
+          { withCredentials: true }
+        );
         console.log("after post: " + JSON.stringify(response.data));
       } catch (error) {
         console.error('Error posting order:', error);
