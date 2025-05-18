@@ -885,7 +885,7 @@ function Item() {
                   onChange={(e) => handleParentSKUChange(e, e.target.value)}
                   value={parentSKU} // Change 'supplier' to 'Supplier'
                 >
-                  <option value="">Select Supplier</option>
+                  <option value="">Select Parent SKU Code</option>
                   {uniqueSKUCodes.map((item) => (
                     <option key={item.itemId} value={item.parentSKU}>
                       {item}
