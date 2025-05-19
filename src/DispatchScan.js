@@ -8,8 +8,10 @@ import successSound from "./store-scanner-beep-90395.mp3";
 import "./Scan.css"; // Import your custom CSS file
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import { Table } from "react-bootstrap";
+import { useSelector } from "react-redux";
 
 const DispatchScan = () => {
+  const user = useSelector((state) => state.user); // Access user data from Redux store
   const apiUrl = process.env.REACT_APP_API_URL;
   const [barcode, setBarcode] = useState("");
   const [qrCode, setQRCode] = useState("");
@@ -152,7 +154,8 @@ const DispatchScan = () => {
       for (const orderId of selectedOrders) {
         const order = orders.find((o) => o.orderId === orderId);
         const response = await axios.put(
-          `${apiUrl}/orders/dispatchByAwbNo?orderNo=${order.orderNo}`,
+          `${apiUrl}/orders/dispatchByAwbNo?orderNo=${order.orderNo}&email=${user.email}`,
+          {},
           {
             withCredentials: true,
           }
