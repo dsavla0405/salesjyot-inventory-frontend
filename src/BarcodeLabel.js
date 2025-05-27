@@ -12,8 +12,11 @@ import {
   FormControl,
 } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { useDispatch, useSelector } from "react-redux";
 
 const PrintLabel = () => {
+  const user = useSelector((state) => state.user); // Access user data from Redux store
+
   const apiUrl = process.env.REACT_APP_API_URL;
   const [items, setItems] = useState([]);
   const [allItems, setAllItems] = useState([]);
@@ -30,7 +33,8 @@ const PrintLabel = () => {
   // Fetch items from API
   useEffect(() => {
     axios
-      .get(`${apiUrl}/item/supplier`, {
+      .get(`${apiUrl}/item/supplier/user/email`, {
+        params: { email: user.email },
         withCredentials: true,
       }) // Replace with your API endpoint
       .then((response) => {
@@ -156,6 +160,7 @@ const PrintLabel = () => {
         style={{ flex: 1, maxWidth: "300px" }}
       >
         <h2>Label Details</h2>
+        <Row className="mb-3">
         <Form.Group as={Row} controlId="formSkuCode">
           <Form.Label column sm="4">
             SKU Code
@@ -190,6 +195,8 @@ const PrintLabel = () => {
             </Form.Control.Feedback>
           </Col>
         </Form.Group>
+        </Row>
+        <Row className="mb-3">
         <Form.Group as={Row} controlId="formMRP">
           <Form.Label column sm="4">
             MRP
@@ -207,6 +214,8 @@ const PrintLabel = () => {
             </Form.Control.Feedback>
           </Col>
         </Form.Group>
+        </Row>
+        <Row className="mb-3">
         <Form.Group as={Row} controlId="formDescription">
           <Form.Label column sm="4">
             Description
@@ -224,6 +233,8 @@ const PrintLabel = () => {
             </Form.Control.Feedback>
           </Col>
         </Form.Group>
+        </Row>
+        <Row className="mb-3">
         <Form.Group as={Row} controlId="formQuantity">
           <Form.Label column sm="4">
             Quantity
@@ -241,6 +252,8 @@ const PrintLabel = () => {
             </Form.Control.Feedback>
           </Col>
         </Form.Group>
+        </Row>
+        <Row className="mb-3">
         <Form.Group as={Row} controlId="formStartRow">
           <Form.Label column sm="4">
             Start Row
@@ -259,6 +272,8 @@ const PrintLabel = () => {
             </Form.Control.Feedback>
           </Col>
         </Form.Group>
+        </Row>
+        <Row className="mb-3">
         <Form.Group as={Row} controlId="formStartColumn">
           <Form.Label column sm="4">
             Start Column
@@ -277,6 +292,7 @@ const PrintLabel = () => {
             </Form.Control.Feedback>
           </Col>
         </Form.Group>
+        </Row>
         <Button type="submit" variant="primary">
           Add Item
         </Button>

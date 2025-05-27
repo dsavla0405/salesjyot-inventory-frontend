@@ -464,7 +464,7 @@ function StockInward() {
     // Remove the row from the table
 
     axios
-      .delete(`${apiUrl}/stockInward/${id}`, { withCredentials: true })
+      .delete(`${apiUrl}/stockInward/${id}`, { params: { email: user.email }, withCredentials: true })
       .then((response) => {
         // Handle success response
         console.log("Row deleted successfully.");

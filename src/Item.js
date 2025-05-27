@@ -1026,11 +1026,11 @@ function Item() {
               </Form.Group>
 
               <Form.Group as={Col} md="4" controlId="validationCustom02">
-                <Form.Label>SellingPrice</Form.Label>
+                <Form.Label>Selling Price</Form.Label>
                 <Form.Control
                   required
                   type="text"
-                  placeholder="SellingPrice"
+                  placeholder="Selling Price"
                   defaultValue=""
                   value={sellingPrice}
                   onChange={(e) => setSellingPrice(e.target.value)}
@@ -1039,11 +1039,11 @@ function Item() {
               </Form.Group>
 
               <Form.Group as={Col} md="4" controlId="validationCustom01">
-                <Form.Label>MRP</Form.Label>
+                <Form.Label>Cost Price</Form.Label>
                 <Form.Control
                   required
                   type="text"
-                  placeholder="MRP"
+                  placeholder="Cost Price"
                   defaultValue=""
                   value={mrp}
                   onChange={(e) => setMRP(e.target.value)}
@@ -1293,11 +1293,11 @@ function Item() {
                       </span>
                     </th>
                     <th>
-                      MRP
+                      Cost Price
                       <span style={{ margin: "0 10px" }}>
                         <input
                           type="text"
-                          placeholder="Search by MRP"
+                          placeholder="Search by Cost Price"
                           value={searchTermMRP}
                           onChange={(e) => setSearchTermMRP(e.target.value)}
                         />

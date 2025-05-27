@@ -221,7 +221,7 @@ function Home() {
                     )}
                   </div>
                 </div>
-                {index < workflowSteps.length - 1 && (
+                {index < workflowSteps.length && (
                   <div
                     className={`workflow-arrow slide-in-arrow delay-${
                       index % 13
