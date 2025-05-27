@@ -17,6 +17,8 @@ import Table from 'react-bootstrap/Table';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { Link } from "react-router-dom";
+import { IoIosRefresh } from "react-icons/io";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -31,20 +33,27 @@ function Return() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
   const [validated, setValidated] = useState(false);
+  const [ipmId, setIpmId] = useState();
   const [date, setDate] = useState();
   const [skucode, setSkucode] = useState();
   const [portal, setPortal] = useState();
   const [orderNo, setOrderno] = useState();
+  const [isRotating, setIsRotating] = useState(false);
   const [returnCode, setReturnCode] = useState();
   const [trackingNumber, setTrackingNumber] = useState();
   const [okStock, setOkStock] = useState();
   const [sentForRaisingTicketOn, setSentForRaisingTicketOn] = useState();
   const [sentForTicketOn, setSentForTicketOn] = useState();
   const [apiData, setApiData] = useState([]); 
+  const [locations, setLocations] = useState([]);
+  const [location, setLocation] = useState("");
   const [rowSelected, setRowSelected] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [skuList, setSkuList] = useState([]);
+  const [orderList, setOrderList] = useState([]);
+  const [ipmList, setIpmList] = useState([]);
   const [searchTermDate, setSearchTermDate] = useState("");
+  const [searchTermLocation, setSearchTermLocation] = useState("");
   const [searchTermSkuCode, setSeaarchTermSkuCode] = useState("");
   const [searchTermPortal, setSeaarchTermPortal] = useState("");
   const [searchTermOrderNo, setSeaarchTermOrderNo] = useState("");
@@ -75,6 +84,34 @@ function Return() {
     </Form.Group>
   );
 
+  const handleRefresh = () => {
+    fetchData();
+    setIsRotating(true);
+    setTimeout(() => {
+      setIsRotating(false);
+    }, 1000);
+  };
+
+  const fetchData = () => {
+    axios
+      .get(`${apiUrl}/item/supplier/user/email`, {
+        params: { email: user.email },
+        withCredentials: true,
+      }) // Fetch SKU codes and descriptions from the items table
+      .then((response) => {
+        // Extract SKU codes and descriptions from the response data and filter out null or undefined values
+        const skuData = response.data
+          .filter((item) => item.skucode && item.description) // Filter out items where skucode or description is null or undefined
+          .map((item) => ({
+            skucode: item.skucode,
+            description: item.description,
+          }));
+        // Set the SKU data list state
+        setSkuList(skuData);
+      })
+      .catch((error) => console.error(error));
+  };
+
   useEffect(() => {
     const currentDate = new Date(); // Get current date
     const year = currentDate.getFullYear(); // Get current year
@@ -95,8 +132,12 @@ function Return() {
       supplier.returnCode.toString().toLowerCase().includes(searchTermReturnCode.toLowerCase()) &&
       supplier.okStock.toString().toLowerCase().includes(searchTermOkStock.toLowerCase()) &&
       supplier.sentForRaisingTicketOn.toString().toLowerCase().includes(searchTermSentForRaisingTicketOn.toLowerCase()) &&
-      supplier.sentForTicketOn.toString().toLowerCase().includes(searchTermSentForTicketOn.toLowerCase())
-
+      supplier.sentForTicketOn.toString().toLowerCase().includes(searchTermSentForTicketOn.toLowerCase()) &&
+      (!searchTermLocation ||
+        (supplier.location &&
+          supplier.location.locationName
+            .toLowerCase()
+            .includes(searchTermLocation.toLowerCase())))
       );
   });
 
@@ -140,65 +181,97 @@ function Return() {
     reader.readAsBinaryString(file);
 };
 
-const handleSubmit = (event) => {
+const handleSubmit = async (event) => {
   event.preventDefault();
   const form = event.currentTarget;
   if (form.checkValidity() === false) {
     event.stopPropagation();
-  } else {
-    // Fetch item based on supplier and supplier SKU code
-    axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`, {params: { email: user.email }, withCredentials: true })
-      .then(response => {
-        if (response.data) {
-          const item = response.data;
-          const formData = {
-            date,
-            skucode,
-            portal,
-            orderNo,
-            returnCode,
-            trackingNumber,
-            okStock,
-            sentForRaisingTicketOn,
-            sentForTicketOn,
-            item: item,
-            userEmail: user.email,
-          };
-          console.log('form data: ', formData);
-          axios.post(`${apiUrl}/return`, formData, { withCredentials: true })
-            .then(response => {
-              console.log('POST request successful:', response);
-              toast.success('Return added successfully', {
-                autoClose: 2000 // Close after 2 seconds
-              });
-              setValidated(false);
-              setApiData([...apiData, response.data]);
-              setDate("");
-              setOrderno("");
-              setPortal("");
-              setSkucode("");
-              setReturnCode("");
-              setTrackingNumber("");
-              setOkStock("");
-              setSentForRaisingTicketOn("");
-              setSentForTicketOn("");
+    setValidated(true);
+    return;
+  }
 
-            })
-            .catch(error => {
-              console.error('Error sending POST request:', error);
-              toast.error('Failed to add Return: ' + error.response.data.message);
-            });
-        } else {
-          console.error('No item found for the specified supplier and supplier SKU code.');
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching item:', error);
-      });
+  try {
+    // Fetch item
+    const itemResponse = await axios.get(`${apiUrl}/item/supplier/search/skucode/${skucode}`, {
+      params: { email: user.email },
+      withCredentials: true
+    });
+
+    const item = itemResponse.data;
+    if (!item) {
+      toast.error("Item not found for given SKU and supplier.");
+      return;
+    }
+
+    // Fetch order by orderNo (you should have an endpoint for this)
+    const orderResponse = await axios.get(`${apiUrl}/orders/byOrderNo`, {
+      params: {
+        orderNo: orderNo,
+        email: user.email,
+      },
+      withCredentials: true
+    });
+    const order = orderResponse.data;
+
+    if (!order) {
+      toast.error("Order not found for given order number.");
+      return;
+    }
+
+    const ipmResponse = await axios.get(`${apiUrl}/itemportalmapping/${ipmId}`, {
+      params: { email: user.email },
+      withCredentials: true
+    });
+    
+    const itemPortalMapping = ipmResponse.data;
+
+    if (!itemPortalMapping) {
+      toast.error("Item-Portal mapping not found.");
+      return;
+    }
+
+    const formData = {
+      date,
+      skucode,
+      portal,
+      orderNo,
+      returnCode,
+      trackingNumber,
+      okStock,
+      sentForRaisingTicketOn,
+      sentForTicketOn,
+      item: item,
+      order: order,
+      itemPortalMapping: itemPortalMapping,
+      userEmail: user.email,
+    };
+
+    console.log('Submitting return form:', formData);
+
+    const response = await axios.post(`${apiUrl}/return`, formData, { withCredentials: true });
+
+    toast.success('Return added successfully', { autoClose: 2000 });
+    setApiData([...apiData, response.data]);
+
+    // Reset form fields
+    setDate("");
+    setOrderno("");
+    setPortal("");
+    setSkucode("");
+    setReturnCode("");
+    setTrackingNumber("");
+    setOkStock("");
+    setSentForRaisingTicketOn("");
+    setSentForTicketOn("");
+    setValidated(false);
+  } catch (error) {
+    console.error("Error during return submission:", error);
+    toast.error("Failed to add Return: " + (error.response?.data?.message || error.message));
   }
 
   setValidated(true);
 };
+
 
 const handleRowSubmit = () => {
   console.log("handleRowSubmit triggered");
@@ -263,6 +336,52 @@ const handleRowClick = (stock) => {
 
 
 useEffect(() => {
+  axios
+      .get(`${apiUrl}/api/locations/user/email`, {
+        params: { email: user.email },
+        withCredentials: true,
+      })
+      .then((response) => {
+        console.log(JSON.stringify(response.data));
+        setLocations(response.data);
+      });
+  axios
+  .get(`${apiUrl}/item/supplier/user/email`, {
+    params: { email: user.email },
+    withCredentials: true,
+  })
+  .then((response) => {
+    setSkuList(response.data); // Set the data to skuList
+  })
+  .catch((error) => {
+    console.error('Error fetching SKU list:', error);
+  });
+
+  axios
+  .get(`${apiUrl}/orders/user/email`, {
+    params: { email: user.email },
+    withCredentials: true,
+  })
+  .then((response) => {
+    setOrderList(response.data); // Set the data to skuList
+    console.log(orderList)
+  })
+  .catch((error) => {
+    console.error('Error fetching SKU list:', error);
+  });
+
+  axios
+  .get(`${apiUrl}/itemportalmapping/user/email`, {
+    params: { email: user.email },
+    withCredentials: true,
+  })
+  .then((response) => {
+    setIpmList(response.data); // Set the data to skuList
+    console.log(ipmList);
+  })
+  .catch((error) => {
+    console.error('Error fetching SKU list:', error);
+  });
   axios.get(`${apiUrl}/return/user/email`, {params: { email: user.email }, withCredentials: true }) 
     .then(response => setApiData(response.data))
     .catch(error => console.error(error));
@@ -277,7 +396,7 @@ useEffect(() => {
       setSkuList(skuData);
     })
     .catch(error => console.error(error));
-}, []);
+}, [user]);
 
 const postData = (data) => {
     axios.post(`${apiUrl}/return`, data, { withCredentials: true })
@@ -381,47 +500,100 @@ const downloadTemplate = () => {
         </div>
           <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
         </Form.Group>
-        <Form.Group as={Col} md="4" controlId="validationCustom02">
-          <Form.Label>SKUcode</Form.Label>
-          <Form.Control
-            required
-            type="text"
-            placeholder="SKUcode"
-            name="SKUCode"
-            value={skucode}
-            onChange={(e) => setSkucode(e.target.value)}  
-          />
-          <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
-        </Form.Group>
-
         <Form.Group as={Col} md="4" controlId="validationCustom01">
-          <Form.Label>Portal</Form.Label>
-          <Form.Control
-            required
-            type="text"
-            placeholder="Portal"
-            name="portal"
-            value={portal}
-            onChange={(e) => setPortal(e.target.value)}  
-          />
-          <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
-        </Form.Group>
+                <Form.Label>
+                  SKU Code <span style={{ color: "red" }}>*</span>
+                </Form.Label>
+
+                <Form.Select
+                  required
+                  onChange={(e) => setSkucode(e.target.value)}
+                  value={skucode}
+                >
+                  <option value="">Select SKU Code</option>
+                  {skuList.map((sku) => (
+                    <option key={sku.itemId} value={sku.skucode}>
+                      {sku.skucode} - {sku.description}
+                    </option>
+                  ))}
+                </Form.Select>
+                <Link to="/Item" target="_blank">
+                  <span
+                    style={{
+                      float: "right",
+                      fontSize: "small",
+                      marginTop: "1%",
+                      marginRight: "1%",
+                    }}
+                  >
+                    + add item
+                  </span>
+                </Link>
+                <IoIosRefresh
+                  onClick={handleRefresh}
+                  className={
+                    isRotating ? "refresh-icon rotating" : "refresh-icon"
+                  }
+                />
+                <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
+              </Form.Group>
+
+              <Form.Group as={Col} md="4" controlId="validationCustom01">
+  <Form.Label>
+    Portal <span style={{ color: "red" }}>*</span>
+  </Form.Label>
+
+  <Form.Select
+    required
+    onChange={(e) => {
+      const selectedPortal = e.target.value;
+      setPortal(selectedPortal);
+
+      // Find the corresponding ItemPortalMapping and set ipmId
+      const selectedIpm = ipmList.find((sku) => sku.portal === selectedPortal);
+      if (selectedIpm) {
+        setIpmId(selectedIpm.id); // assuming you have useState for ipmId
+      } else {
+        setIpmId(null);
+      }
+    }}
+    value={portal}
+  >
+    <option value="">Select Portal</option>
+    {ipmList.map((sku) => (
+      <option key={sku.id} value={sku.portal}>
+        {sku.portal}
+      </option>
+    ))}
+  </Form.Select>
+
+  <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
+</Form.Group>
+
         
       </Row>
       
                         <Row className="mb-3">
-        <Form.Group as={Col} md="4" controlId="validationCustom01">
-          <Form.Label>Against Order No</Form.Label>
-          <Form.Control
-            required
-            type="text"
-            placeholder="Against Order No"
-            name="Against Order No"
-            value={orderNo}
-            onChange={(e) => setOrderno(e.target.value)}
-          />
-          <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
-        </Form.Group>
+                        <Form.Group as={Col} md="4" controlId="validationCustom01">
+                <Form.Label>
+                  Against Order No <span style={{ color: "red" }}>*</span>
+                </Form.Label>
+
+                <Form.Select
+                  required
+                  onChange={(e) => setOrderno(e.target.value)}
+                  value={orderNo}
+                >
+                  <option value="">Select Oder No</option>
+                  {orderList.map((sku) => (
+                    <option key={sku.orderId} value={sku.orderNo}>
+                      {sku.orderNo}
+                    </option>
+                  ))}
+                </Form.Select>
+                
+                <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
+              </Form.Group>
         <Form.Group as={Col} md="4" controlId="validationCustom02">
           <Form.Label>Return Code</Form.Label>
           <Form.Control
@@ -451,18 +623,21 @@ const downloadTemplate = () => {
         
                     </Row>
                     <Row className="mb-3">
-        <Form.Group as={Col} md="4" controlId="validationCustom01">
-          <Form.Label>OkStock</Form.Label>
-          <Form.Control
-            required
-            type="text"
-            placeholder="OkStock"
-            name="ok stock"
-            value={okStock}
-            onChange={(e) => setOkStock(e.target.value)}
-          />
-          <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
-        </Form.Group>
+                    <Form.Group as={Col} md="4" controlId="validationCustom01">
+  <Form.Label>OkStock</Form.Label>
+  <Form.Select
+    required
+    name="okStock"
+    value={okStock}
+    onChange={(e) => setOkStock(e.target.value)}
+  >
+    <option value="">Select...</option>
+    <option value="Yes">Yes</option>
+    <option value="No">No</option>
+  </Form.Select>
+  <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
+</Form.Group>
+
         <Form.Group as={Col} md="4" controlId="validationCustom02">
           <Form.Label>Sent for raising Ticket On</Form.Label>
           <Form.Control
@@ -487,10 +662,30 @@ const downloadTemplate = () => {
           />
           <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
         </Form.Group>
+        </Row>
+        <Row className="mb-3">
+        <Form.Group as={Col} md="4" controlId="validationCustom02">
+                <Form.Label>
+                  Location <span style={{ color: "red" }}>*</span>
+                </Form.Label>
+                <Form.Select
+                  required
+                  onChange={(e) => setLocation(e.target.value)}
+                  value={location}
+                >
+                  <option value="">Send to Location</option>
+                  {locations.map((sku) => (
+                    <option key={sku.id} value={sku.locationName}>
+                      {sku.locationName}
+                    </option>
+                  ))}
+                </Form.Select>
+                <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
+              </Form.Group>
       </Row>
-      <Row className="mb-3">
+      
         
-                        </Row>
+                      
       
                         <div className='buttons'>
       {rowSelected ? (
@@ -600,7 +795,14 @@ const downloadTemplate = () => {
                   onChange={(e) => setSeaarchTermSentForTicketOn(e.target.value)}
                 /></span>
                 </th>
-                
+                <th>Sent to location
+                <span style={{ margin: '0 10px' }}><input
+                  type="text"
+                  placeholder="Search by lcation"
+                  value={searchTermLocation}
+                  onChange={(e) => setSearchTermLocation(e.target.value)}
+                /></span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -637,10 +839,12 @@ const downloadTemplate = () => {
                   <td>{returns.okStock}</td>
                   <td>{returns.sentForRaisingTicketOn}</td>
                   <td>{returns.sentForTicketOn}</td>
+                  <td>{returns.location?.locationName || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>
           </Table>
+          </div>
           <div style={{display: 'flex', justifyContent: 'space-between'}}>
           <Button
               variant="contained"
@@ -662,7 +866,6 @@ const downloadTemplate = () => {
                 </Pagination.Item>
               ))}
             </Pagination>
-          </div>
           </div>
           </div>
         </AccordionDetails>
