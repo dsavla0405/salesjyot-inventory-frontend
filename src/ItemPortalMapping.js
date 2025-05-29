@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Form from "react-bootstrap/Form";
@@ -52,7 +52,8 @@ function ItemPortalMapping() {
     key: null,
     direction: "ascending",
   });
-
+  const fileInputRef = useRef();
+  const [excelData, setExcelData] = useState([]);
   const rowsPerPageOptions = [10, 20, 50];
 
   // Function to handle change in items per page
@@ -153,6 +154,33 @@ function ItemPortalMapping() {
   const handleSubmit = (event) => {
     event.preventDefault();
     const form = event.currentTarget;
+
+    if (excelData.length > 0) {
+      excelData.forEach((item) => {
+        const { portalSkuCode, portal, skucode, supplierName } = item;
+
+        fetchSupplierAndItem(supplierName, skucode)
+          .then((data) => {
+            console.log(data);
+            // Modify data as needed before posting (optional)
+            data.portal = portal;
+            data.skucode = skucode;
+            data.portalSkuCode = portalSkuCode; // Use optional chaining for potential missing item.portalSkuCode
+            postData(data);
+          })
+          .catch((error) => {
+            console.error("Error handling item for:", item, error);
+            // toast.error("Error:", error.message);
+            // Handle errors (e.g., display error message to user)
+          });
+      });
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null;
+      }
+      setExcelData([]);
+      return; // Don’t proceed with manual form if Excel prese
+    }
 
     // Check if all required fields are filled
     if (
@@ -261,6 +289,7 @@ function ItemPortalMapping() {
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
     const reader = new FileReader();
 
     reader.onload = (evt) => {
@@ -270,30 +299,65 @@ function ItemPortalMapping() {
       const sheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-      jsonData.forEach((item) => {
-        const { portalSkuCode, portal, skucode, supplierName } = item;
+      const invalidRows = [];
 
-        // // Data Validation (optional but recommended)
-        // if (!portal || !sellerSkuCode || !supplierName || !phone) {
-        //   console.error('Missing required field(s) in data:', item);
-        //   // Handle missing data (e.g., skip or log error)
-        //   return;
-        // }
+      const parsedData = jsonData
+        .map((item, index) => {
+          const rowNumber = index + 2;
+          const hasMissing =
+            !item.supplierName ||
+            !item.portalSkuCode ||
+            !item.portal ||
+            !item.skucode;
+          if (hasMissing) invalidRows.push(rowNumber);
 
-        fetchSupplierAndItem(supplierName, skucode)
-          .then((data) => {
-            console.log(data);
-            // Modify data as needed before posting (optional)
-            data.portal = portal;
-            data.skucode = skucode;
-            data.portalSkuCode = portalSkuCode; // Use optional chaining for potential missing item.portalSkuCode
-            postData(data);
-          })
-          .catch((error) => {
-            console.error("Error handling item for:", item, error);
-            // Handle errors (e.g., display error message to user)
-          });
-      });
+          return {
+            portalSkuCode: item.portalSkuCode,
+            portal: item.portal,
+            skucode: item.skucode,
+            supplierName: item.supplierName,
+          };
+        })
+        .filter((row) => row !== null);
+
+      if (invalidRows.length > 0) {
+        toast.error(
+          `Mandatory fields are missing in rows: ${invalidRows.join(", ")}`
+        );
+        setExcelData([]); // Clear previous
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = null; // reset file input
+        }
+      } else {
+        setExcelData(parsedData);
+        toast.success("Excel data loaded. Click Submit to upload.");
+      }
+
+      //   jsonData.forEach((item) => {
+      //     const { portalSkuCode, portal, skucode, supplierName } = item;
+
+      //     // // Data Validation (optional but recommended)
+      //     // if (!portal || !sellerSkuCode || !supplierName || !phone) {
+      //     //   console.error('Missing required field(s) in data:', item);
+      //     //   // Handle missing data (e.g., skip or log error)
+      //     //   return;
+      //     // }
+
+      //     fetchSupplierAndItem(supplierName, skucode)
+      //       .then((data) => {
+      //         console.log(data);
+      //         // Modify data as needed before posting (optional)
+      //         data.portal = portal;
+      //         data.skucode = skucode;
+      //         data.portalSkuCode = portalSkuCode; // Use optional chaining for potential missing item.portalSkuCode
+      //         postData(data);
+      //       })
+      //       .catch((error) => {
+      //         console.error("Error handling item for:", item, error);
+      //         // Handle errors (e.g., display error message to user)
+      //       });
+      //   });
     };
 
     reader.readAsBinaryString(file);
@@ -338,6 +402,7 @@ function ItemPortalMapping() {
       })
       .catch((error) => {
         console.error("Error fetching supplier:", error);
+        toast.error("Error fetching supplier:" + error.message);
         throw error;
       });
   };
@@ -674,7 +739,11 @@ function ItemPortalMapping() {
                 </Button>
               )}
               <span style={{ margin: "0 10px" }}>or</span>
-              <input type="file" onChange={handleFileUpload} />
+              <input
+                type="file"
+                onChange={handleFileUpload}
+                ref={fileInputRef}
+              />
               <span style={{ margin: "auto" }}></span>
               <Button
                 variant="contained"

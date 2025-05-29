@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Form from "react-bootstrap/Form";
@@ -30,6 +30,8 @@ function ImportOrderForm() {
   const user = useSelector((state) => state.user); // Access user data from Redux store
 
   const apiUrl = process.env.REACT_APP_API_URL;
+  const fileInputRef = useRef();
+  const [excelData, setExcelData] = useState([]);
   const [validated, setValidated] = useState(false);
   const [date, setDate] = useState("");
   const [orderNo, setOrderno] = useState("");
@@ -343,45 +345,76 @@ function ImportOrderForm() {
     );
   };
 
-  const parseDate = (dateString) => {
-    if (!dateString || typeof dateString !== "string") {
-      console.error("Invalid dateString:", dateString);
-      return null; // Return null for invalid or non-string input
-    }
+  const parseDate = (value) => {
+    if (!value) return null;
 
-    // Check for the format DD-MMM-YYYY
-    const datePattern = /(\d{1,2})-(\w{3})-(\d{4})/;
-    const match = dateString.match(datePattern);
+    // Try native Date
+    const date = new Date(value);
+    if (!isNaN(date)) return date;
 
-    if (match) {
-      const day = parseInt(match[1], 10);
-      const monthNames = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ];
-      const month = monthNames.indexOf(match[2]); // Get the month index
-      const year = parseInt(match[3], 10);
-
-      if (month !== -1) {
-        return new Date(year, month, day); // Create date in local time
+    // Try manual parsing: dd-mm-yyyy or dd-mmm-yyyy
+    const parts = value.split(/[-\/\s]/);
+    if (parts.length === 3) {
+      let [day, month, year] = parts;
+      if (isNaN(month)) {
+        // Handle mmm month
+        const monthIndex = [
+          "jan",
+          "feb",
+          "mar",
+          "apr",
+          "may",
+          "jun",
+          "jul",
+          "aug",
+          "sep",
+          "oct",
+          "nov",
+          "dec",
+        ].indexOf(month.toLowerCase());
+        if (monthIndex >= 0) {
+          return new Date(year, monthIndex, day);
+        }
+      } else {
+        // numeric month
+        return new Date(`${year}-${month}-${day}`);
       }
     }
 
-    return null; // Return null if no match is found or invalid date format
+    return null;
   };
 
+  const formatDateString = (value) => {
+    // Handle Excel serial numbers
+    if (typeof value === "number") {
+      const date = new Date(Math.round((value - 25569) * 86400 * 1000));
+      return date.toISOString().split("T")[0]; // "YYYY-MM-DD"
+    }
+
+    // Try parsing string date
+    const parsed = new Date(value);
+
+    // If parsed date is valid
+    if (!isNaN(parsed)) {
+      return parsed.toISOString().split("T")[0]; // "YYYY-MM-DD"
+    }
+
+    // Handle dd/mm/yyyy or dd-mm-yyyy formats
+    const parts = value.split(/[\/\-]/);
+    if (parts.length === 3) {
+      let [day, month, year] = parts;
+      // Pad single-digit day/month
+      if (day.length === 1) day = "0" + day;
+      if (month.length === 1) month = "0" + month;
+      return `${year}-${month}-${day}`; // "YYYY-MM-DD"
+    }
+
+    // Fallback
+    return value;
+  };
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
     const reader = new FileReader();
 
     reader.onload = (evt) => {
@@ -391,45 +424,177 @@ function ImportOrderForm() {
       const sheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-      jsonData.forEach((item) => {
-        const orderDate = parseDate(String(item.date));
-        const shipDate = parseDate(String(item.shipByDate));
-        console.log("Parsed order Date:", orderDate);
-        console.log("Parsed ship by Date:", shipDate);
+      const invalidRows = [];
+      const parsedData = jsonData
+        .map((item, index) => {
+          if (index == 0) {
+            return null;
+          }
 
-        const formattedData = {
-          date: orderDate ? orderDate.toISOString() : null,
-          orderNo: item.orderNo,
-          portalOrderNo: item.portalOrderNo,
-          portalOrderLineId: item.portalOrderLineId,
-          portalSKU: item.portalSKU,
-          productDescription: item.productDescription,
-          shipByDate: shipDate ? shipByDate.toISOString() : null,
-          dispatched: item.dispatched,
-          courier: item.courier,
-          portal: item.portal,
-          skucode: item.skucode,
-          qty: item.qty,
-          cancel: item.cancel,
-          awbNo: item.awbNo,
-          orderStatus: item.orderStatus || "Order Received",
-        };
+          const rowNumber = index + 2;
+          const hasMissing = !item.date;
+          if (hasMissing) invalidRows.push(rowNumber);
 
-        console.log("Formatted Data:", formattedData); // Debugging log
+          const orderDate = formatDateString(item.date);
+          const shipByDate = formatDateString(item.shipByDate);
 
-        // Fetch item based on supplier and supplier SKU code
-        const locationResponse = axios.get(
-          `${apiUrl}/api/locations/name/${item.location}`,
-          { params: { email: user.email }, withCredentials: true }
+          return {
+            date: orderDate,
+            orderNo: item.orderNo,
+            portalOrderNo: item.portalOrderNo,
+            portalOrderLineId: item.portalOrderLineId,
+            portalSKU: item.portalSKU,
+            productDescription: item.productDescription,
+            shipByDate: shipByDate,
+            dispatched: item.dispatched,
+            courier: item.courier,
+            portal: item.portal,
+            skucode: item.skucode,
+            qty: item.qty,
+            cancel: item.cancel,
+            awbNo: item.awbNo,
+            orderStatus: item.orderStatus || "Order Received",
+            location: item.location,
+          };
+        })
+        .filter((row) => row !== null);
+
+      if (invalidRows.length > 0) {
+        toast.error(
+          `Mandatory fields (Supplier Name) missing in rows: ${invalidRows.join(
+            ", "
+          )}`
         );
-        const loc = locationResponse.data;
-        formattedData.location = loc;
+        setExcelData([]); // Clear previous
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = null; // reset file input
+        }
+      } else {
+        setExcelData(parsedData);
+        toast.success("Excel data loaded. Click Submit to upload.");
+      }
+
+      // jsonData.forEach((item) => {
+      //   if (item.date != "dd-mmm-yyyy") {
+      //     const orderDate = parseDate(String(item.date));
+      //     const shipDate = parseDate(String(item.shipByDate));
+      //     console.log("Parsed order Date:", orderDate);
+      //     console.log("Parsed ship by Date:", shipDate);
+
+      //     const formattedData = {
+      //       date: orderDate ? orderDate.toISOString() : null,
+      //       orderNo: item.orderNo,
+      //       portalOrderNo: item.portalOrderNo,
+      //       portalOrderLineId: item.portalOrderLineId,
+      //       portalSKU: item.portalSKU,
+      //       productDescription: item.productDescription,
+      //       shipByDate: shipDate ? shipByDate.toISOString() : null,
+      //       dispatched: item.dispatched,
+      //       courier: item.courier,
+      //       portal: item.portal,
+      //       skucode: item.skucode,
+      //       qty: item.qty,
+      //       cancel: item.cancel,
+      //       awbNo: item.awbNo,
+      //       orderStatus: item.orderStatus || "Order Received",
+      //       location: item.location,
+      //     };
+
+      //     console.log("Formatted Data:", formattedData); // Debugging log
+
+      //     // Fetch item based on supplier and supplier SKU code
+
+      //     axios
+      //       .get(`${apiUrl}/api/locations/name/${item.location}`, {
+      //         params: { email: user.email },
+      //         withCredentials: true,
+      //       })
+      //       .then((response) => {
+      //         const loc = response.data;
+      //         formattedData.location = loc;
+      //       });
+
+      //     // Fetch item portal mapping details
+      //     axios
+      //       .get(`${apiUrl}/itemportalmapping/Portal/PortalSku`, {
+      //         params: {
+      //           portal: item.portal,
+      //           portalSKU: item.portalSKU,
+      //           email: user.email,
+      //         },
+      //         withCredentials: true, // Moved outside params object
+      //       })
+      //       .then((res) => {
+      //         const ipm = res.data;
+      //         const itemsArray = [res.data.item];
+      //         // Form the data to be sent in the POST request
+      //         const formData = {
+      //           ...formattedData,
+      //           items: itemsArray,
+      //           itemPortalMapping: ipm,
+      //           userEmail: user.email,
+      //         };
+
+      //         console.log("Form Data for POST:", formData); // Debugging log
+
+      //         // Send the POST request
+      //         axios
+      //           .post(`${apiUrl}/orders`, formData, { withCredentials: true })
+      //           .then((response) => {
+      //             console.log("POST request successful:", response);
+      //             toast.success("Order added successfully", {
+      //               autoClose: 2000, // Close after 2 seconds
+      //             });
+
+      //             // Update the state with the new API data
+      //             setApiData([...apiData, response.data]);
+      //           })
+      //           .catch((error) => {
+      //             console.error("Error sending POST request:", error);
+      //             toast.error(
+      //               "Failed to add Order: " + error.response?.data?.message ||
+      //                 error.message
+      //             );
+      //           });
+      //       })
+      //       .catch((error) => {
+      //         console.error("Error fetching item portal mapping:", error);
+      //         toast.error(
+      //           "Failed to fetch item portal mapping: " +
+      //             error.response?.data?.message || error.message
+      //         );
+      //       });
+      //   }
+      // });
+    };
+
+    reader.readAsBinaryString(file);
+  };
+
+  const handleSubmit = async (event) => {
+    // Add 'async' here
+    event.preventDefault();
+    const form = event.currentTarget;
+
+    if (excelData.length > 0) {
+      excelData.forEach((row) => {
+        axios
+          .get(`${apiUrl}/api/locations/name/${row.location}`, {
+            params: { email: user.email },
+            withCredentials: true,
+          })
+          .then((response) => {
+            const loc = response.data;
+            row.location = loc;
+          });
+
         // Fetch item portal mapping details
         axios
           .get(`${apiUrl}/itemportalmapping/Portal/PortalSku`, {
             params: {
-              portal: item.portal,
-              portalSKU: item.portalSKU,
+              portal: row.portal,
+              portalSKU: row.portalSKU,
               email: user.email,
             },
             withCredentials: true, // Moved outside params object
@@ -439,7 +604,7 @@ function ImportOrderForm() {
             const itemsArray = [res.data.item];
             // Form the data to be sent in the POST request
             const formData = {
-              ...formattedData,
+              ...row,
               items: itemsArray,
               itemPortalMapping: ipm,
               userEmail: user.email,
@@ -475,15 +640,13 @@ function ImportOrderForm() {
             );
           });
       });
-    };
 
-    reader.readAsBinaryString(file);
-  };
-
-  const handleSubmit = async (event) => {
-    // Add 'async' here
-    event.preventDefault();
-    const form = event.currentTarget;
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null;
+      }
+      setExcelData([]);
+      return; // Don’t proceed with manual form if Excel prese
+    }
 
     if (form.checkValidity() === false) {
       event.stopPropagation();
@@ -786,6 +949,7 @@ function ImportOrderForm() {
         cancel: "",
         awbNo: "",
         location: "",
+        orderStatus: "",
       },
       {
         date: "",
@@ -803,6 +967,7 @@ function ImportOrderForm() {
         cancel: "",
         awbNo: "",
         location: "",
+        orderStatus: "",
       }, // Add more fields if needed
     ];
     const ws = XLSX.utils.json_to_sheet(templateData);
@@ -811,11 +976,28 @@ function ImportOrderForm() {
 
     // Adjust column widths to fit the note
     ws["!cols"] = [
-      { wch: 15 }, // width for defaultStartDate
-      { wch: 15 }, // width for defaultEndDate
-      { wch: 10 }, // width for bomCode
-      { wch: 10 }, // width for skucode
+      { wch: 20 }, // width
+      { wch: 20 }, // width
+      { wch: 15 }, // width
+      { wch: 15 }, // width
+      { wch: 20 }, // width
+      { wch: 20 }, // width
+      { wch: 15 }, // width
+      { wch: 15 }, // width
+      { wch: 20 }, // width
+      { wch: 20 }, // width
+      { wch: 15 }, // width
+      { wch: 15 }, // width
+      { wch: 20 }, // width
+      { wch: 20 }, // width
+      { wch: 15 }, // width
+      { wch: 15 }, // width
     ];
+
+    ws["!ref"] = XLSX.utils.encode_range({
+      s: { r: 0, c: 0 },
+      e: { r: templateData.length, c: 17 },
+    });
 
     const wbout = XLSX.write(wb, { bookType: "xlsx", type: "binary" });
 
@@ -1125,7 +1307,11 @@ function ImportOrderForm() {
                 </Button>
               )}
               <span style={{ margin: "0 10px" }}>or</span>
-              <input type="file" onChange={handleFileUpload} />
+              <input
+                type="file"
+                onChange={handleFileUpload}
+                ref={fileInputRef}
+              />
               <span style={{ margin: "auto" }}></span>
               <Button
                 variant="contained"

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Form from "react-bootstrap/Form";
@@ -32,7 +32,8 @@ function StockInward() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
   const [validated, setValidated] = useState(false);
-
+  const fileInputRef = useRef();
+  const [excelData, setExcelData] = useState([]);
   const [date, setDate] = useState("");
   const [skucode, setSkucode] = useState("");
   const [qty, setQty] = useState("");
@@ -144,6 +145,8 @@ function StockInward() {
       .then((response) => {
         // Handle successful response
         console.log("Data posted successfully:", response);
+        setApiData((prevData) => [...prevData, response.data]);
+        toast.success("Data posted successfully");
       })
       .catch((error) => {
         // Handle error
@@ -151,13 +154,43 @@ function StockInward() {
       });
   };
 
-  const formatDateString = (dateString) => {
-    const [day, month, year] = dateString.split("/");
-    return `${year}-${month}-${day}`;
+  // const formatDateString = (dateString) => {
+  //   const [day, month, year] = dateString.split("/");
+  //   return `${year}-${month}-${day}`;
+  // };
+
+  const formatDateString = (value) => {
+    // Handle Excel serial numbers
+    if (typeof value === "number") {
+      const date = new Date(Math.round((value - 25569) * 86400 * 1000));
+      return date.toISOString().split("T")[0]; // "YYYY-MM-DD"
+    }
+
+    // Try parsing string date
+    const parsed = new Date(value);
+
+    // If parsed date is valid
+    if (!isNaN(parsed)) {
+      return parsed.toISOString().split("T")[0]; // "YYYY-MM-DD"
+    }
+
+    // Handle dd/mm/yyyy or dd-mm-yyyy formats
+    const parts = value.split(/[\/\-]/);
+    if (parts.length === 3) {
+      let [day, month, year] = parts;
+      // Pad single-digit day/month
+      if (day.length === 1) day = "0" + day;
+      if (month.length === 1) month = "0" + month;
+      return `${year}-${month}-${day}`; // "YYYY-MM-DD"
+    }
+
+    // Fallback
+    return value;
   };
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
     const reader = new FileReader();
 
     reader.onload = (evt) => {
@@ -167,20 +200,119 @@ function StockInward() {
       const sheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-      jsonData.forEach((item) => {
+      const invalidRows = [];
+
+      const parsedData = jsonData
+        .map((item, index) => {
+          const rowNumber = index + 2;
+          const hasMissing =
+            !item.date || !item.qty || !item.skucode || !item.location;
+          if (hasMissing) invalidRows.push(rowNumber);
+
+          return {
+            date: item.date,
+            qty: item.qty,
+            skucode: item.skucode,
+            location: item.location,
+            userEmail: user.email,
+          };
+        })
+        .filter((row) => row !== null);
+
+      if (invalidRows.length > 0) {
+        toast.error(
+          `Mandatory fields are missing in rows: ${invalidRows.join(", ")}`
+        );
+        setExcelData([]); // Clear previous
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = null; // reset file input
+        }
+      } else {
+        setExcelData(parsedData);
+        toast.success("Excel data loaded. Click Submit to upload.");
+      }
+
+      // jsonData.forEach((item) => {
+      //   const formattedData = {
+      //     date: formatDateString(item.date),
+      //     qty: item.qty,
+      //     skucode: item.skucode,
+      //     userEmail: user.email,
+      //   };
+
+      //   const locationResponse = axios.get(
+      //     `${apiUrl}/api/locations/name/${item.location}`,
+      //     { params: { email: user.email }, withCredentials: true }
+      //   );
+      //   const loc = locationResponse.data;
+      //   formattedData.location = loc;
+      //   // Fetch item details using skucode
+      //   axios
+      //     .get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`, {
+      //       params: { email: user.email },
+      //       withCredentials: true,
+      //     })
+      //     .then((response) => {
+      //       // Check if item exists
+      //       if (!response.data || response.data.length === 0) {
+      //         console.error("Item not found with SKU code: " + item.skucode);
+      //         return;
+      //       }
+
+      //       console.log("found item with skucode: " + item.skucode);
+
+      //       // Extract item from response data
+      //       const fetchedItem = response.data;
+
+      //       // Construct formData with fetched item
+      //       const formData = {
+      //         ...formattedData,
+      //         item: fetchedItem, // Make sure fetchedItem is correctly assigned
+      //       };
+
+      //       console.log("Form data:", formData);
+
+      //       // Send data to server
+      //       postData(formData);
+      //     })
+      //     .catch((error) => {
+      //       console.error("Error fetching item:", error);
+      //     });
+      // });
+    };
+
+    reader.readAsBinaryString(file);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+
+    if (excelData.length > 0) {
+      excelData.forEach((item) => {
         const formattedData = {
           date: formatDateString(item.date),
           qty: item.qty,
           skucode: item.skucode,
-          userEmail: user.email,
+          userEmail: item.userEmail,
         };
+        // const locationResponse = axios.get(
+        //   `${apiUrl}/api/locations/name/${item.location}`,
+        //   { params: { email: user.email }, withCredentials: true }
+        // );
+        // const loc = locationResponse.data;
 
-        const locationResponse = axios.get(
-          `${apiUrl}/api/locations/name/${item.location}`,
-          { params: { email: user.email }, withCredentials: true }
-        );
-        const loc = locationResponse.data;
-        formattedData.location = loc;
+        // formattedData.location = loc;
+
+        axios
+          .get(`${apiUrl}/api/locations/name/${item.location}`, {
+            params: { email: user.email },
+            withCredentials: true,
+          })
+          .then((locationResponse) => {
+            formattedData.location = locationResponse.data;
+          });
         // Fetch item details using skucode
         axios
           .get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`, {
@@ -214,14 +346,13 @@ function StockInward() {
             console.error("Error fetching item:", error);
           });
       });
-    };
 
-    reader.readAsBinaryString(file);
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const form = event.currentTarget;
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null;
+      }
+      setExcelData([]);
+      return; // Don’t proceed with manual form if Excel prese
+    }
 
     if (!date) {
       toast.error("date is required");
@@ -393,10 +524,16 @@ function StockInward() {
   };
 
   const downloadTemplate = () => {
-    const templateData = [{ date: "", qty: "", skucode: "" }];
+    const templateData = [{ date: "", qty: "", skucode: "", location: "" }];
     const ws = XLSX.utils.json_to_sheet(templateData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Template");
+
+    ws["!ref"] = XLSX.utils.encode_range({
+      s: { r: 0, c: 0 },
+      e: { r: templateData.length, c: 3 },
+    });
+
     const wbout = XLSX.write(wb, { bookType: "xlsx", type: "binary" });
 
     function s2ab(s) {
@@ -408,7 +545,7 @@ function StockInward() {
 
     saveAs(
       new Blob([s2ab(wbout)], { type: "application/octet-stream" }),
-      "bomTemplate.xlsx"
+      "StockInwardTemplate.xlsx"
     );
   };
 
@@ -464,7 +601,10 @@ function StockInward() {
     // Remove the row from the table
 
     axios
-      .delete(`${apiUrl}/stockInward/${id}`, { params: { email: user.email }, withCredentials: true })
+      .delete(`${apiUrl}/stockInward/${id}`, {
+        params: { email: user.email },
+        withCredentials: true,
+      })
       .then((response) => {
         // Handle success response
         console.log("Row deleted successfully.");
@@ -638,7 +778,11 @@ function StockInward() {
                 </Button>
               )}
               <span style={{ margin: "0 10px" }}>or</span>
-              <input type="file" onChange={handleFileUpload} />
+              <input
+                type="file"
+                onChange={handleFileUpload}
+                ref={fileInputRef}
+              />
               <span style={{ margin: "auto" }}></span>
               <Button
                 variant="contained"

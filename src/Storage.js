@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Form from "react-bootstrap/Form";
@@ -28,6 +28,8 @@ function Storage() {
   const user = useSelector((state) => state.user); // Access user data from Redux store
 
   const apiUrl = process.env.REACT_APP_API_URL;
+  const fileInputRef = useRef();
+  const [excelData, setExcelData] = useState([]);
   const [validated, setValidated] = useState(false);
   const [binNumber, setBin] = useState("");
   const [rackNumber, setRack] = useState("");
@@ -138,6 +140,7 @@ function Storage() {
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
     const reader = new FileReader();
 
     reader.onload = (evt) => {
@@ -147,29 +150,148 @@ function Storage() {
       const sheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-      jsonData.forEach((item) => {
-        const formattedData = {
-          binNumber: item.binNumber,
-          rackNumber: item.rackNumber,
-          skucode: item.skucode,
-          qty: item.qty,
-          userEmail: user.email,
-        };
+      const invalidRows = [];
 
-        // Fetch item details using skucode
+      const parsedData = jsonData
+        .map((item, index) => {
+          const rowNumber = index + 2;
+          const hasMissing = !item.skucode;
+          if (hasMissing) invalidRows.push(rowNumber);
+
+          return {
+            binNumber: item.binNumber,
+            rackNumber: item.rackNumber,
+            skucode: item.skucode,
+            qty: item.qty,
+            userEmail: user.email,
+            location: item.location,
+          };
+        })
+        .filter((row) => row !== null);
+
+      if (invalidRows.length > 0) {
+        toast.error(
+          `Mandatory fields (skucode) is missing in rows: ${invalidRows.join(
+            ", "
+          )}`
+        );
+        setExcelData([]); // Clear previous
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = null; // reset file input
+        }
+      } else {
+        setExcelData(parsedData);
+        toast.success("Excel data loaded. Click Submit to upload.");
+      }
+
+      // jsonData.forEach((item) => {
+      //   const formattedData = {
+      //     binNumber: item.binNumber,
+      //     rackNumber: item.rackNumber,
+      //     skucode: item.skucode,
+      //     qty: item.qty,
+      //     userEmail: user.email,
+      //     // location: item.location,
+      //   };
+      //   axios
+      //     .get(`${apiUrl}/api/locations/name/${item.location}`, {
+      //       params: { email: user.email },
+      //       withCredentials: true,
+      //     })
+      //     .then((response) => {
+      //       const loc = response.data;
+      //       formattedData.location = loc;
+      //     });
+      //   // Fetch item details using skucode
+      //   axios
+      //     .get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`, {
+      //       params: { email: user.email },
+      //       withCredentials: true,
+      //     })
+      //     .then((response) => {
+      //       // Check if item exists
+      //       if (!response.data || response.data.length === 0) {
+      //         console.error("Item not found with SKU code: " + item.skucode);
+      //         return;
+      //       }
+
+      //       console.log("found item with skucode: " + item.skucode);
+
+      //       // Extract item from response data
+      //       const fetchedItem = response.data;
+
+      //       // Construct formData with fetched item in the items list
+      //       const formData = {
+      //         ...formattedData,
+      //         items: [fetchedItem], // Add the fetched item to an items array
+      //       };
+
+      //       console.log("Form data:", formData);
+
+      //       // Send data to server
+      //       axios
+      //         .post(`${apiUrl}/storage`, formData, {
+      //           withCredentials: true,
+      //         })
+      //         .then((response) => {
+      //           console.log("POST request successful:", response);
+      //           setApiData([...apiData, response.data]);
+      //           toast.success("Data imported successfully", {
+      //             autoClose: 2000, // Close after 2 seconds
+      //           });
+      //         })
+      //         .catch((error) => {
+      //           console.error("Error sending POST request:", error);
+      //           toast.error(
+      //             "Failed to import data: " +
+      //               (error.response?.data?.message || error.message)
+      //           );
+      //         });
+      //     })
+      //     .catch((error) => {
+      //       console.error("Error fetching item:", error);
+      //     });
+      // });
+    };
+
+    reader.readAsBinaryString(file);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+
+    if (excelData.length > 0) {
+      excelData.forEach((formattedData) => {
         axios
-          .get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`, {
+          .get(`${apiUrl}/api/locations/name/${formattedData.location}`, {
             params: { email: user.email },
             withCredentials: true,
           })
           .then((response) => {
+            const loc = response.data;
+            formattedData.location = loc;
+          });
+        // Fetch item details using skucode
+        axios
+          .get(
+            `${apiUrl}/item/supplier/search/skucode/${formattedData.skucode}`,
+            {
+              params: { email: user.email },
+              withCredentials: true,
+            }
+          )
+          .then((response) => {
             // Check if item exists
             if (!response.data || response.data.length === 0) {
-              console.error("Item not found with SKU code: " + item.skucode);
+              console.error(
+                "Item not found with SKU code: " + formattedData.skucode
+              );
               return;
             }
 
-            console.log("found item with skucode: " + item.skucode);
+            console.log("found item with skucode: " + formattedData.skucode);
 
             // Extract item from response data
             const fetchedItem = response.data;
@@ -184,11 +306,12 @@ function Storage() {
 
             // Send data to server
             axios
-              .post(`${apiUrl}/your-endpoint`, formData, {
+              .post(`${apiUrl}/storage`, formData, {
                 withCredentials: true,
               })
               .then((response) => {
                 console.log("POST request successful:", response);
+                setApiData([...apiData, response.data]);
                 toast.success("Data imported successfully", {
                   autoClose: 2000, // Close after 2 seconds
                 });
@@ -205,14 +328,13 @@ function Storage() {
             console.error("Error fetching item:", error);
           });
       });
-    };
 
-    reader.readAsBinaryString(file);
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const form = event.currentTarget;
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null;
+      }
+      setExcelData([]);
+      return; // Don’t proceed with manual form if Excel prese
+    }
 
     if (form.checkValidity() === false) {
       event.stopPropagation();
@@ -403,7 +525,7 @@ function Storage() {
 
   const downloadTemplate = () => {
     const templateData = [
-      { rackNumber: "", binNumber: "", skucode: "", qty: "" },
+      { rackNumber: "", binNumber: "", skucode: "", qty: "", location: "" },
     ];
     const ws = XLSX.utils.json_to_sheet(templateData);
     const wb = XLSX.utils.book_new();
@@ -419,7 +541,7 @@ function Storage() {
 
     saveAs(
       new Blob([s2ab(wbout)], { type: "application/octet-stream" }),
-      "bomTemplate.xlsx"
+      "StorageTemplate.xlsx"
     );
   };
 
@@ -605,7 +727,11 @@ function Storage() {
                 </Button>
               )}
               <span style={{ margin: "0 10px" }}>or</span>
-              <input type="file" onChange={handleFileUpload} />
+              <input
+                type="file"
+                onChange={handleFileUpload}
+                ref={fileInputRef}
+              />
               <span style={{ margin: "auto" }}></span>
               <Button
                 variant="contained"

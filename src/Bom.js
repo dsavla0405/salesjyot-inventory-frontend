@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Form from "react-bootstrap/Form";
@@ -31,6 +31,9 @@ import { useDispatch, useSelector } from "react-redux";
 
 function Bom() {
   const user = useSelector((state) => state.user); // Access user data from Redux store
+
+  const [excelData, setExcelData] = useState([]);
+  const fileInputRef = useRef();
 
   const [validated, setValidated] = useState(false);
   const [skucode, setSku] = useState("");
@@ -180,6 +183,7 @@ function Bom() {
         });
         // Handle successful response
         console.log("Data posted successfully:", response);
+        setApiData([...apiData, response.data]);
       })
       .catch((error) => {
         // Handle error
@@ -190,6 +194,8 @@ function Bom() {
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
+
     const reader = new FileReader();
 
     reader.onload = (evt) => {
@@ -199,88 +205,132 @@ function Bom() {
       const sheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(sheet, { raw: false });
 
-      jsonData.forEach((item) => {
-        const startDate = parseDate(item.defaultStartDate);
-        const endDate = parseDate(item.defaultEndDate);
-        console.log("Parsed Start Date:", startDate);
-        console.log("Parsed End Date:", endDate);
+      const invalidRows = [];
 
-        const formattedData = {
-          skucode: item.skucode,
-          bomCode: item.bomCode,
-          defaultStartDate: startDate ? startDate.toISOString() : null,
-          defaultEndDate: endDate ? endDate.toISOString() : null,
-          userEmail: user.email,
-        };
+      const parsedData = jsonData
+        .map((item, index) => {
+          const rowNumber = index + 2;
+          if (index == 0) {
+            return null;
+          }
+          const hasMissing = !item.bomCode || !item.skucode;
+          if (hasMissing) invalidRows.push(rowNumber);
 
-        // Fetch item details using skucode
-        axios
-          .get(`${apiUrl}/item/supplier/search/skucode/${item.skucode}`, {
-            params: { email: user.email },
-            withCredentials: true,
-          })
-          .then((response) => {
-            if (response.data.length === 0) {
-              console.error("Item not found with SKU code: " + item.skucode);
-              return;
-            }
+          return {
+            skucode: item.skucode?.trim(),
+            bomCode: item.bomCode?.trim(),
+            defaultStartDate:
+              parseDate(item.defaultStartDate)?.toISOString() || null,
+            defaultEndDate:
+              parseDate(item.defaultEndDate)?.toISOString() || null,
+          };
+        })
+        .filter((row) => row !== null);
 
-            const fetchedItem = response.data;
+      if (invalidRows.length > 0) {
+        toast.error(
+          `Mandatory fields (bomCode and skucode) missing in rows: ${invalidRows.join(
+            ", "
+          )}`
+        );
+        setExcelData([]); // Clear previous
 
-            const formData = {
-              ...formattedData,
-              bomItems: [fetchedItem],
-            };
-
-            console.log("Form data:", formData);
-            postData(formData);
-          })
-          .catch((error) => {
-            console.error("Error fetching item:", error);
-          });
-      });
+        if (fileInputRef.current) {
+          fileInputRef.current.value = null; // reset file input
+        }
+      } else {
+        setExcelData(parsedData);
+      }
     };
 
     reader.readAsBinaryString(file);
   };
 
-  const parseDate = (dateString) => {
-    if (!dateString) return null;
+  const parseDate = (value) => {
+    if (!value) return null;
 
-    // Check for the format DD-MMM-YYYY
-    const datePattern = /(\d{1,2})-(\w{3})-(\d{4})/;
-    const match = dateString.match(datePattern);
+    // Try native Date
+    const date = new Date(value);
+    if (!isNaN(date)) return date;
 
-    if (match) {
-      const day = parseInt(match[1], 10);
-      const monthNames = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ];
-      const month = monthNames.indexOf(match[2]); // Get the month index
-      const year = parseInt(match[3], 10);
-
-      if (month !== -1) {
-        return new Date(year, month, day); // Create date in local time
+    // Try manual parsing: dd-mm-yyyy or dd-mmm-yyyy
+    const parts = value.split(/[-\/\s]/);
+    if (parts.length === 3) {
+      let [day, month, year] = parts;
+      if (isNaN(month)) {
+        // Handle mmm month
+        const monthIndex = [
+          "jan",
+          "feb",
+          "mar",
+          "apr",
+          "may",
+          "jun",
+          "jul",
+          "aug",
+          "sep",
+          "oct",
+          "nov",
+          "dec",
+        ].indexOf(month.toLowerCase());
+        if (monthIndex >= 0) {
+          return new Date(year, monthIndex, day);
+        }
+      } else {
+        // numeric month
+        return new Date(`${year}-${month}-${day}`);
       }
     }
 
-    return null; // Invalid date
+    return null;
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
     const form = event.currentTarget;
+
+    if (excelData.length > 0) {
+      // Loop over Excel rows and submit one by one
+      excelData.forEach((row) => {
+        axios
+          .get(`${apiUrl}/item/supplier/search/skucode/${row.skucode}`, {
+            params: { email: user.email },
+            withCredentials: true,
+          })
+          .then((response) => {
+            if (response.data.length === 0) {
+              toast.error("Item not found with SKU code: " + row.skucode);
+              return;
+            }
+
+            const formData = {
+              ...row,
+              userEmail: user.email,
+              bomItems: [response.data],
+            };
+
+            axios
+              .post(`${apiUrl}/boms`, formData, { withCredentials: true })
+              .then((response) => {
+                toast.success(`BOM for ${row.skucode} added successfully`);
+                setApiData((prev) => [...prev, response.data]);
+              })
+              .catch((error) => {
+                console.error("POST failed:", error);
+                toast.error(`Failed to upload for ${row.skucode}`);
+              });
+          })
+          .catch((error) => {
+            console.error("Fetch failed:", error);
+            toast.error(`Failed to fetch ${row.skucode}`);
+          });
+      });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null;
+      }
+      setExcelData([]);
+      return; // Don’t proceed with manual form if Excel present
+    }
 
     // Check for required fields individually with specific error messages
     if (!skucode) {
@@ -484,11 +534,16 @@ function Bom() {
 
     // Adjust column widths to fit the note
     ws["!cols"] = [
-      { wch: 15 }, // width for defaultStartDate
-      { wch: 15 }, // width for defaultEndDate
+      { wch: 20 }, // width for defaultStartDate
+      { wch: 20 }, // width for defaultEndDate
       { wch: 10 }, // width for bomCode
       { wch: 10 }, // width for skucode
     ];
+
+    ws["!ref"] = XLSX.utils.encode_range({
+      s: { r: 0, c: 0 },
+      e: { r: templateData.length, c: 3 },
+    });
 
     const wbout = XLSX.write(wb, { bookType: "xlsx", type: "binary" });
 
@@ -660,7 +715,11 @@ function Bom() {
                 </Button>
               )}
               <span style={{ margin: "0 10px" }}>or</span>
-              <input type="file" onChange={handleFileUpload} />
+              <input
+                type="file"
+                onChange={handleFileUpload}
+                ref={fileInputRef}
+              />
               <span style={{ margin: "auto" }}></span>
               <Button
                 variant="contained"

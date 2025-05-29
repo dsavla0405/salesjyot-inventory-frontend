@@ -499,9 +499,9 @@ function LocationForm() {
                         />
                       </span>
                     </th>
-                    <th>Quantity</th>
                     <th>Pick up Rack</th>
                     <th>Pick up Bin</th>
+                    <th>Quantity</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -521,34 +521,7 @@ function LocationForm() {
                       </td>
                       <td>{item.skucode}</td>
                       <td>{item.description}</td>
-                      <td>
-                        <Form.Control
-                          type="number"
-                          min="0"
-                          max={(() => {
-                            const selected = selectedItems.find(
-                              (i) => i.itemId === item.itemId
-                            );
-                            const rack = selected?.rackNumber;
-                            const bin = selected?.binNumber;
-                            const match = storageMap[item.itemId]?.find(
-                              (s) =>
-                                s.rackNumber === rack && s.binNumber === bin
-                            );
-                            return match?.qty || 0;
-                          })()}
-                          value={
-                            selectedItems.find((i) => i.itemId === item.itemId)
-                              ?.quantity || ""
-                          }
-                          onChange={(e) =>
-                            handleQuantityChange(item.itemId, e.target.value)
-                          }
-                          disabled={
-                            !selectedItems.some((i) => i.itemId === item.itemId)
-                          }
-                        />
-                      </td>
+
                       {/* shubham */}
                       <td>
                         <Form.Select
@@ -641,6 +614,34 @@ function LocationForm() {
                             ));
                           })()}
                         </Form.Select>
+                      </td>
+                      <td>
+                        <Form.Control
+                          type="number"
+                          min="0"
+                          max={(() => {
+                            const selected = selectedItems.find(
+                              (i) => i.itemId === item.itemId
+                            );
+                            const rack = selected?.rackNumber;
+                            const bin = selected?.binNumber;
+                            const match = storageMap[item.itemId]?.find(
+                              (s) =>
+                                s.rackNumber === rack && s.binNumber === bin
+                            );
+                            return match?.qty || 0;
+                          })()}
+                          value={
+                            selectedItems.find((i) => i.itemId === item.itemId)
+                              ?.quantity || ""
+                          }
+                          onChange={(e) =>
+                            handleQuantityChange(item.itemId, e.target.value)
+                          }
+                          disabled={
+                            !selectedItems.some((i) => i.itemId === item.itemId)
+                          }
+                        />
                       </td>
                     </tr>
                   ))}

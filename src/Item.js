@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Form from "react-bootstrap/Form";
@@ -30,7 +30,8 @@ function Item() {
   const user = useSelector((state) => state.user);
 
   console.log("user email in item = " + user.email);
-
+  const [excelData, setExcelData] = useState([]);
+  const fileInputRef = useRef();
   const [validated, setValidated] = useState(false);
   const [Supplier, setSupplier] = useState("");
   const [skucode, setSKUCode] = useState("");
@@ -197,6 +198,60 @@ function Item() {
     event.preventDefault();
     const form = event.currentTarget;
 
+    if (excelData.length > 0) {
+      // Loop over Excel rows and submit one by one
+
+      excelData.forEach((row) => {
+        axios
+          .get(`${apiUrl}/supplier/name/${row.suppliers}?email=${user.email}`, {
+            withCredentials: true,
+          })
+          .then((response) => {
+            console.log("response data for supplier = " + response.data);
+            if (response.data.length === 0) {
+              toast.error("Supplier not found with name: " + row.supplierName);
+              return;
+            }
+            console.log("response data  = " + response.data);
+
+            const formData = {
+              ...row,
+
+              suppliers: [response.data],
+            };
+
+            axios
+              .post(`${apiUrl}/item/supplier`, formData, {
+                withCredentials: true,
+              })
+              .then((response) => {
+                console.log("POST request successful:", response);
+                toast.success("Item added successfully", {
+                  autoClose: 2000, // Close after 2 seconds
+                });
+
+                // Update the state with the new API data
+                setApiData((prevApiData) => [...prevApiData, response.data]);
+              })
+              .catch((error) => {
+                console.error("Error sending POST request:", error);
+                toast.error(
+                  "Failed to add item: " +
+                    (error.response?.data?.message || error.message)
+                );
+              });
+          })
+          .catch((error) => {
+            console.error("Fetch failed:", error);
+            toast.error(`Failed to fetch ${row.skucode}`);
+          });
+      });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null;
+      }
+      setExcelData([]);
+      return; // Don’t proceed with manual form if Excel present
+    }
     // Check for required fields individually with specific error messages
     if (!Supplier) {
       toast.error("Supplier is required");
@@ -563,6 +618,7 @@ function Item() {
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
     const reader = new FileReader();
 
     reader.onload = (evt) => {
@@ -572,71 +628,126 @@ function Item() {
       const sheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-      jsonData.forEach((item) => {
-        let formData = {
-          skucode: item.skucode,
-          description: item.description,
-          packOf: item.packOf,
-          parentSKU: item.parentSKU,
-          group1: item.group1,
-          group2: item.group2,
-          group3: item.group3,
-          sizeRange: item.sizeRange,
-          size: item.size,
-          unit: item.unit,
-          barcode: item.barcode,
-          sellingPrice: item.sellingPrice,
-          mrp: item.mrp,
-          sellerSKUCode: item.sellerSKUCode,
-          img: item.img,
-          userEmail: user.email,
-        };
+      const invalidRows = [];
 
-        // Fetch supplier based on supplier name
-        axios
-          .get(`${apiUrl}/supplier/name/${item.supplierName}`, {
-            withCredentials: true,
-          })
-          .then((response) => {
-            console.log("response data for supplier = " + response.data);
-            if (response.data.length === 0) {
-              toast.error("Supplier not found with name: " + item.supplierName);
-              return;
-            }
-            console.log("response data  = " + response.data);
-            // Add suppliers to formData
-            formData.suppliers = [response.data];
+      const parsedData = jsonData
+        .map((item, index) => {
+          const rowNumber = index + 2;
 
-            // Post formData
-            axios
-              .post(`${apiUrl}/item/supplier`, formData, {
-                withCredentials: true,
-              })
-              .then((response) => {
-                console.log("POST request successful:", response);
-                toast.success("Item added successfully", {
-                  autoClose: 2000, // Close after 2 seconds
-                });
+          const hasMissing =
+            !item.supplierName ||
+            !item.skucode ||
+            !item.description ||
+            !item.sellerSKUCode;
+          if (hasMissing) invalidRows.push(rowNumber);
 
-                // Update the state with the new API data
-                setApiData((prevApiData) => [...prevApiData, response.data]);
-              })
-              .catch((error) => {
-                console.error("Error sending POST request:", error);
-                toast.error(
-                  "Failed to add item: " +
-                    (error.response?.data?.message || error.message)
-                );
-              });
-          })
-          .catch((error) => {
-            console.error("Error fetching supplier:", error);
-            toast.error(
-              "Failed to fetch supplier: " +
-                (error.response?.data?.message || error.message)
-            );
-          });
-      });
+          return {
+            skucode: item.skucode?.trim(),
+            description: item.description?.trim(),
+            packOf: item.packOf?.trim(),
+            parentSKU: item.parentSKU?.trim(),
+            group1: item.group1?.trim(),
+            group2: item.group2?.trim(),
+            group3: item.group3?.trim(),
+            sizeRange: item.sizeRange?.trim(),
+            size: item.size?.trim(),
+            unit: item.unit?.trim(),
+            barcode: item.barcode?.trim(),
+            sellingPrice: item.sellingPrice?.trim(),
+            mrp: item.mrp?.trim(),
+            sellerSKUCode: item.sellerSKUCode?.trim(),
+            img: item.img?.trim(),
+            userEmail: user.email?.trim(),
+            suppliers: item.supplierName,
+          };
+        })
+        .filter((row) => row !== null);
+
+      // Fetch supplier based on supplier name
+
+      if (invalidRows.length > 0) {
+        toast.error(
+          `Mandatory fields (Suppiler, skucode, description or Seller SKUcode ) is/are missing in rows: ${invalidRows.join(
+            ", "
+          )}`
+        );
+        setExcelData([]); // Clear previous
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = null; // reset file input
+        }
+      } else {
+        setExcelData(parsedData);
+      }
+
+      // jsonData.forEach((item) => {
+      //   let formData = {
+      //     skucode: item.skucode,
+      //     description: item.description,
+      //     packOf: item.packOf,
+      //     parentSKU: item.parentSKU,
+      //     group1: item.group1,
+      //     group2: item.group2,
+      //     group3: item.group3,
+      //     sizeRange: item.sizeRange,
+      //     size: item.size,
+      //     unit: item.unit,
+      //     barcode: item.barcode,
+      //     sellingPrice: item.sellingPrice,
+      //     mrp: item.mrp,
+      //     sellerSKUCode: item.sellerSKUCode,
+      //     img: item.img,
+      //     userEmail: user.email,
+      //   };
+
+      // Fetch supplier based on supplier name
+      // axios
+      //   .get(
+      //     `${apiUrl}/supplier/name/${item.supplierName}?email=${user.email}`,
+      //     {
+      //       withCredentials: true,
+      //     }
+      //   )
+      //   .then((response) => {
+      //     console.log("response data for supplier = " + response.data);
+      //     if (response.data.length === 0) {
+      //       toast.error("Supplier not found with name: " + item.supplierName);
+      //       return;
+      //     }
+      //     console.log("response data  = " + response.data);
+      //     // Add suppliers to formData
+      //     formData.suppliers = [response.data];
+
+      //       // Post formData
+      //       axios
+      //         .post(`${apiUrl}/item/supplier`, formData, {
+      //           withCredentials: true,
+      //         })
+      //         .then((response) => {
+      //           console.log("POST request successful:", response);
+      //           toast.success("Item added successfully", {
+      //             autoClose: 2000, // Close after 2 seconds
+      //           });
+
+      //           // Update the state with the new API data
+      //           setApiData((prevApiData) => [...prevApiData, response.data]);
+      //         })
+      //         .catch((error) => {
+      //           console.error("Error sending POST request:", error);
+      //           toast.error(
+      //             "Failed to add item: " +
+      //               (error.response?.data?.message || error.message)
+      //           );
+      //         });
+      //     })
+      //     .catch((error) => {
+      //       console.error("Error fetching supplier:", error);
+      //       toast.error(
+      //         "Failed to fetch supplier: " +
+      //           (error.response?.data?.message || error.message)
+      //       );
+      //     });
+      // });
     };
 
     reader.readAsBinaryString(file);
@@ -673,6 +784,7 @@ function Item() {
   const downloadTemplate = () => {
     const templateData = [
       {
+        supplierName: "",
         skucode: "",
         description: "",
         packOf: "",
@@ -688,7 +800,6 @@ function Item() {
         mrp: "",
         sellerSKUCode: "",
         img: "",
-        supplierName: "",
         phone: "",
       },
     ];
@@ -1089,6 +1200,7 @@ function Item() {
                 type="file"
                 accept=".xlsx, .xls"
                 onChange={handleFileUpload}
+                ref={fileInputRef}
               />
               <span style={{ margin: "auto" }}></span>
               <Button

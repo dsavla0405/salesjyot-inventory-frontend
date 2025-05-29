@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Form from "react-bootstrap/Form";
@@ -30,6 +30,8 @@ function Supplier() {
 
   console.log("User from Redux in Supplier:", user);
   const [validated, setValidated] = useState(false);
+  const fileInputRef = useRef();
+  const [excelData, setExcelData] = useState([]);
   const [phonel, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [supplierName, setName] = useState("");
@@ -123,6 +125,7 @@ function Supplier() {
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
     const reader = new FileReader();
 
     reader.onload = (evt) => {
@@ -132,16 +135,48 @@ function Supplier() {
       const sheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-      jsonData.forEach((item) => {
-        const formattedData = {
-          address: item.address,
-          phonel: item.phone,
-          supplierName: item.supplier_name,
-          userEmail: user.email,
-        };
-        console.log(formattedData);
-        postData(formattedData);
-      });
+      const invalidRows = [];
+
+      const parsedData = jsonData
+        .map((item, index) => {
+          const rowNumber = index + 2;
+          const hasMissing = !item.supplier_name;
+          if (hasMissing) invalidRows.push(rowNumber);
+
+          return {
+            address: item.address,
+            phonel: item.phone,
+            supplierName: item.supplier_name,
+            userEmail: user.email,
+          };
+        })
+        .filter((row) => row !== null);
+
+      if (invalidRows.length > 0) {
+        toast.error(
+          `Mandatory fields (Supplier Name) missing in rows: ${invalidRows.join(
+            ", "
+          )}`
+        );
+        setExcelData([]); // Clear previous
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = null; // reset file input
+        }
+      } else {
+        setExcelData(parsedData);
+      }
+
+      // jsonData.forEach((item) => {
+      //   const formattedData = {
+      //     address: item.address,
+      //     phonel: item.phone,
+      //     supplierName: item.supplier_name,
+      //     userEmail: user.email,
+      //   };
+      //   console.log(formattedData);
+      //   postData(formattedData);
+      // });
     };
 
     reader.readAsBinaryString(file);
@@ -165,14 +200,25 @@ function Supplier() {
 
     saveAs(
       new Blob([s2ab(wbout)], { type: "application/octet-stream" }),
-      "Template.xlsx"
+      "SupplierTemplate.xlsx"
     );
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
     const form = event.currentTarget;
-    console.log("Submitting with email:", user?.email);
+
+    if (excelData.length > 0) {
+      excelData.forEach((row) => {
+        postData(row);
+      });
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null;
+      }
+      setExcelData([]);
+      return; // Don’t proceed with manual form if Excel present
+    }
 
     if (!supplierName) {
       toast.error("Supplier Name is required");
@@ -278,6 +324,7 @@ function Supplier() {
       .post(`${apiUrl}/supplier `, data, { withCredentials: true })
       .then((response) => {
         console.log("Data posted successfully:", response);
+        toast.success("Data Posted Successfully");
         setApiData((prevData) => [...prevData, response.data]);
       })
       .catch((error) => {
@@ -400,7 +447,11 @@ function Supplier() {
                 </Button>
               )}
               <span style={{ margin: "0 10px" }}>or</span>
-              <input type="file" onChange={handleFileUpload} />
+              <input
+                type="file"
+                onChange={handleFileUpload}
+                ref={fileInputRef}
+              />
               <span style={{ margin: "auto" }}></span>
               <Button
                 variant="contained"
