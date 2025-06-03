@@ -150,6 +150,7 @@ function Bom() {
           }));
         // Set the SKU data list state
         setSkuList(skuData);
+        console.log("skulist:::", skuList);
       })
       .catch((error) => console.error(error));
   };
@@ -630,7 +631,6 @@ function Bom() {
                   required
                   type="text"
                   placeholder="Bom Code"
-                  defaultValue=""
                   value={bomCode}
                   onChange={(e) => setBomCode(e.target.value)}
                 />
@@ -639,7 +639,7 @@ function Bom() {
 
               <Form.Group as={Col} md="4" controlId="validationCustom01">
                 <Form.Label>
-                  SKU Code <span style={{ color: "red" }}>*</span>
+                  SKU Code<span style={{ color: "red" }}>*</span>
                 </Form.Label>
 
                 <Form.Select

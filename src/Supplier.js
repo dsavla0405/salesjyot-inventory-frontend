@@ -408,6 +408,7 @@ function Supplier() {
                   name="supplierName"
                   value={supplierName}
                   onChange={(e) => setName(e.target.value)}
+                  onBlur={(e) => setName(e.target.value.trim())}
                 />
                 <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
               </Form.Group>

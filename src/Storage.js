@@ -434,6 +434,7 @@ function Storage() {
         skucode,
         qty,
         location: loc,
+        userEmail: user.email,
       };
       console.log("------------------------LOcation iss-----" + location);
       console.log("form data: ", formData);
@@ -663,7 +664,7 @@ function Storage() {
                 >
                   <option value="">Select SKU Code</option>
                   {skuList.map((sku) => (
-                    <option key={sku.id} value={sku.skucode}>
+                    <option key={sku.skucode} value={sku.skucode}>
                       {sku.skucode} - {sku.description}
                     </option>
                   ))}
@@ -708,9 +709,9 @@ function Storage() {
                   value={location}
                 >
                   <option value="">Select Location</option>
-                  {locations.map((sku) => (
-                    <option key={sku.id} value={sku.locationName}>
-                      {sku.locationName}
+                  {locations.map((loc) => (
+                    <option key={loc.locationId} value={loc.locationName}>
+                      {loc.locationName}
                     </option>
                   ))}
                 </Form.Select>

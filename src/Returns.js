@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Form from "react-bootstrap/Form";
@@ -32,6 +32,9 @@ function Return() {
   const user = useSelector((state) => state.user); // Access user data from Redux store
 
   const apiUrl = process.env.REACT_APP_API_URL;
+
+  const fileInputRef = useRef();
+  const [excelData, setExcelData] = useState([]);
   const [validated, setValidated] = useState(false);
   const [ipmId, setIpmId] = useState();
   const [date, setDate] = useState();
@@ -181,8 +184,48 @@ function Return() {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  const parseDate = (value) => {
+    if (!value) return null;
+
+    // Try native Date
+    const date = new Date(value);
+    if (!isNaN(date)) return date;
+
+    // Try manual parsing: dd-mm-yyyy or dd-mmm-yyyy
+    const parts = value.split(/[-\/\s]/);
+    if (parts.length === 3) {
+      let [day, month, year] = parts;
+      if (isNaN(month)) {
+        // Handle mmm month
+        const monthIndex = [
+          "jan",
+          "feb",
+          "mar",
+          "apr",
+          "may",
+          "jun",
+          "jul",
+          "aug",
+          "sep",
+          "oct",
+          "nov",
+          "dec",
+        ].indexOf(month.toLowerCase());
+        if (monthIndex >= 0) {
+          return new Date(year, monthIndex, day);
+        }
+      } else {
+        // numeric month
+        return new Date(`${year}-${month}-${day}`);
+      }
+    }
+
+    return null;
+  };
+
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
     const reader = new FileReader();
 
     reader.onload = (evt) => {
@@ -192,24 +235,65 @@ function Return() {
       const sheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-      jsonData.shift();
+      // jsonData.shift();
 
-      jsonData.forEach((item) => {
-        const formattedData = {
-          date: item.date,
-          skucode: item.skucode,
-          portal: item.portal,
-          orderNo: item.orderNo,
-          returnCode: item.returnCode,
-          trackingNumber: item.trackingNumber,
-          okStock: item.okStock,
-          sentForRaisingTicketOn: item.sentForRaisingTicketOn,
-          sentForTicketOn: item.sentForTicketOn,
-          userEmail: user.email,
-        };
-        console.log(formattedData);
-        postData(formattedData);
-      });
+      const invalidRows = [];
+
+      const parsedData = jsonData
+        .map((item, index) => {
+          const rowNumber = index + 2;
+          const hasMissing = !item.date;
+          if (hasMissing) invalidRows.push(rowNumber);
+
+          return {
+            date: parseDate(item.date)?.toISOString() || null,
+            skucode: item.skucode,
+            portal: item.portal,
+            orderNo: item.orderNo,
+            returnCode: item.returnCode,
+            trackingNumber: item.trackingNumber,
+            okStock: item.okStock,
+            sentForRaisingTicketOn: item.sentForRaisingTicketOn,
+            sentForTicketOn: item.sentForTicketOn,
+            location: item.location,
+            userEmail: user.email,
+          };
+        })
+        .filter((row) => row !== null);
+
+      if (invalidRows.length > 0) {
+        toast.error(
+          `Mandatory fields (Supplier Name) missing in rows: ${invalidRows.join(
+            ", "
+          )}`
+        );
+        setExcelData([]); // Clear previous
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = null; // reset file input
+        }
+      } else {
+        setExcelData(parsedData);
+        toast.success("Excel data loaded. Click Submit to upload.");
+      }
+
+      // jsonData.forEach((item) => {
+      //   const formattedData = {
+      //     date: item.date,
+      //     skucode: item.skucode,
+      //     portal: item.portal,
+      //     orderNo: item.orderNo,
+      //     returnCode: item.returnCode,
+      //     trackingNumber: item.trackingNumber,
+      //     okStock: item.okStock,
+      //     sentForRaisingTicketOn: item.sentForRaisingTicketOn,
+      //     sentForTicketOn: item.sentForTicketOn,
+      //     location: item.location,
+      //     userEmail: user.email,
+      //   };
+      //   console.log(formattedData);
+      //   postData(formattedData);
+      // });
     };
 
     reader.readAsBinaryString(file);
@@ -218,6 +302,45 @@ function Return() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
+    console.log("hereee::::");
+    if (excelData.length > 0) {
+      excelData.forEach((formattedData) => {
+        const loc = locations.find(
+          (i) => i.locationId === +formattedData.location
+        );
+
+        const order = orderList.find(
+          (o) => +o.orderNo === formattedData.orderNo
+        );
+
+        const itemPortalMapping = ipmList.find(
+          (ipm) => +ipm.portal === formattedData.portal
+        );
+        // formattedData.item = item;
+        formattedData.order = order;
+        formattedData.location = loc;
+        formattedData.itemPortalMapping = itemPortalMapping;
+        axios
+          .get(
+            `${apiUrl}/item/supplier/search/skucode/${formattedData.skucode}`,
+            {
+              params: { email: user.email },
+              withCredentials: true,
+            }
+          )
+          .then((response) => {
+            formattedData.item = response.data;
+            postData(formattedData);
+          });
+      });
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null;
+      }
+      setExcelData([]);
+      return; // Don’t proceed with manual form if Excel prese
+    }
+
     if (form.checkValidity() === false) {
       event.stopPropagation();
       setValidated(true);
@@ -269,6 +392,7 @@ function Return() {
         toast.error("Item-Portal mapping not found.");
         return;
       }
+      const loc = locations.find((i) => i.locationId === +location);
 
       const formData = {
         date,
@@ -282,6 +406,7 @@ function Return() {
         sentForTicketOn,
         item: item,
         order: order,
+        location: loc,
         itemPortalMapping: itemPortalMapping,
         userEmail: user.email,
       };
@@ -305,6 +430,7 @@ function Return() {
       setOkStock("");
       setSentForRaisingTicketOn("");
       setSentForTicketOn("");
+      setLocation("");
       setValidated(false);
     } catch (error) {
       console.error("Error during return submission:", error);
@@ -331,10 +457,15 @@ function Return() {
         okStock,
         sentForRaisingTicketOn,
         sentForTicketOn,
+
         userEmail: user.email,
       };
+
+      const loc = locations.find((i) => i.locationId === +location);
+      formData.location = loc;
       console.log("form data: ", formData);
       console.log("id: ", selectedItem.returnId);
+
       axios
         .put(`${apiUrl}/return/${selectedItem.returnId}`, formData, {
           withCredentials: true,
@@ -361,6 +492,7 @@ function Return() {
           setOkStock("");
           setSentForRaisingTicketOn("");
           setSentForTicketOn("");
+          setLocation("");
         })
         .catch((error) => {
           console.error("Error sending PUT request:", error);
@@ -392,7 +524,7 @@ function Return() {
         withCredentials: true,
       })
       .then((response) => {
-        console.log(JSON.stringify(response.data));
+        console.log("locations::::" + JSON.stringify(response.data));
         setLocations(response.data);
       });
     axios
@@ -414,7 +546,7 @@ function Return() {
       })
       .then((response) => {
         setOrderList(response.data); // Set the data to skuList
-        console.log(orderList);
+        console.log("order:::", orderList);
       })
       .catch((error) => {
         console.error("Error fetching SKU list:", error);
@@ -427,7 +559,7 @@ function Return() {
       })
       .then((response) => {
         setIpmList(response.data); // Set the data to skuList
-        console.log(ipmList);
+        console.log("ItemPortal Mapping::", ipmList);
       })
       .catch((error) => {
         console.error("Error fetching SKU list:", error);
@@ -465,10 +597,13 @@ function Return() {
       .then((response) => {
         // Handle successful response
         console.log("Data posted successfully:", response);
+        setApiData([...apiData, response.data]);
+        toast.success("Data posted Successfully");
       })
       .catch((error) => {
         // Handle error
         console.error("Error posting data:", error);
+        toast.error("Error occured :" + error.message);
       });
   };
 
@@ -751,7 +886,7 @@ function Return() {
                 >
                   <option value="">Send to Location</option>
                   {locations.map((sku) => (
-                    <option key={sku.id} value={sku.locationName}>
+                    <option key={sku.locationId} value={sku.locationId}>
                       {sku.locationName}
                     </option>
                   ))}
@@ -769,7 +904,11 @@ function Return() {
                 </Button>
               )}
               <span style={{ margin: "0 10px" }}>or</span>
-              <input type="file" onChange={handleFileUpload} />
+              <input
+                type="file"
+                onChange={handleFileUpload}
+                ref={fileInputRef}
+              />
               <span style={{ margin: "auto" }}></span>
               <Button
                 variant="contained"

@@ -407,7 +407,7 @@ function ItemPortalMapping() {
       });
   };
 
-  const handleSupplierChange = (event, name) => {
+  const handleSupplierChange = (name) => {
     if (name) {
       const selectedSupplier = suppliersList.find(
         (supplier) => supplier.supplierName === name
@@ -425,10 +425,11 @@ function ItemPortalMapping() {
             // Split the response data into an array of strings, assuming it's comma-separated
             const sellerSKUs = response.data.split(", ");
             // Update the sellerSKUList state with the fetched values
-            setSkucodeList((prevSellerSKUs) => [
-              ...prevSellerSKUs,
-              ...sellerSKUs,
-            ]);
+            // setSkucodeList((prevSellerSKUs) => [
+            //   ...prevSellerSKUs,
+            //   ...sellerSKUs,
+            // ]);
+            setSkucodeList(sellerSKUs);
             console.log(skucodeList);
           })
           .catch((error) => {
@@ -532,6 +533,7 @@ function ItemPortalMapping() {
     setPortal(ipm.portal);
     setSeller(ipm.supplier);
     setPortalSKU(ipm.portalSkuCode);
+    handleSupplierChange(ipm.supplier.supplierName);
     setSkucode(ipm.skucode);
     setRowSelected(true);
     setSelectedItem(ipm);
@@ -659,9 +661,7 @@ function ItemPortalMapping() {
                 </Form.Label>
                 <Form.Select
                   required
-                  onChange={(e) =>
-                    handleSupplierChange(e, e.target.value.trim())
-                  }
+                  onChange={(e) => handleSupplierChange(e.target.value.trim())}
                   value={supplier ? supplier.supplierName : ""}
                 >
                   <option value="">Select Supplier</option>
@@ -704,7 +704,6 @@ function ItemPortalMapping() {
                   required
                   type="text"
                   placeholder="Portal SKUcode"
-                  defaultValue=""
                   value={portalSkuCode}
                   onChange={(e) => setPortalSKU(e.target.value)}
                 />
