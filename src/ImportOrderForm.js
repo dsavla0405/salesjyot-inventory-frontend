@@ -7,7 +7,7 @@ import Row from "react-bootstrap/Row";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./Item.css";
 import { Table } from "react-bootstrap";
-import Header from "./Header";
+
 import * as XLSX from "xlsx";
 import axios from "axios";
 import Accordion from "@mui/material/Accordion";
@@ -24,7 +24,7 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { saveAs } from "file-saver";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 function ImportOrderForm() {
   const user = useSelector((state) => state.user); // Access user data from Redux store
@@ -90,6 +90,89 @@ function ImportOrderForm() {
   });
   const [searchTermLocation, setSearchTermLocation] = useState("");
 
+  const [productRows, setProductRows] = useState([
+    { portalSKU: "", skuCode: "", productDescription: "", quantity: "" },
+  ]);
+
+  const [filteredOptions, setFilteredOptions] = useState([]);
+
+  const [showTable, setShowTable] = useState(false);
+
+  const handleAddRow = () => {
+    setShowTable(true);
+    setProductRows([
+      ...productRows,
+      {
+        portalSKU: "",
+        productDescription: "",
+        skuCode: "",
+        quantity: "",
+      },
+    ]);
+  };
+
+  const handlePortalSKUChange = (value, index) => {
+    const updatedRows = [...productRows];
+    const selectedData = filteredOptions.find(
+      (item) => item.portalSkuCode === value
+    );
+
+    updatedRows[index].portalSKU = value;
+    updatedRows[index].skuCode = selectedData ? selectedData.skucode : "";
+    updatedRows[index].productDescription = selectedData
+      ? selectedData.item.description
+      : "";
+
+    setProductRows(updatedRows);
+  };
+
+  const handleSkuCodeChange = (value, index) => {
+    const updatedRows = [...productRows];
+    updatedRows[index].skuCode = value;
+    setProductRows(updatedRows);
+  };
+
+  const handleProductDescriptionChange = (value, index) => {
+    const updatedRows = [...productRows];
+    updatedRows[index].productDescription = value;
+    setProductRows(updatedRows);
+  };
+
+  const handleQuantityChange = (value, index) => {
+    const updatedRows = [...productRows];
+    updatedRows[index].quantity = value;
+    setProductRows(updatedRows);
+  };
+
+  const handleRemoveRow = (index) => {
+    const updatedRows = [...productRows];
+    updatedRows.splice(index, 1);
+    setProductRows(updatedRows);
+  };
+  const uniquePortalSKUs = [
+    ...new Set(filteredOptions.map((item) => item.portalSkuCode)),
+  ];
+
+  useEffect(() => {
+    setProductRows([
+      {
+        portalSKU: "",
+        productDescription: "",
+        skuCode: "",
+        quantity: "",
+      },
+    ]);
+  }, [selectedPortal]);
+
+  useEffect(() => {
+    if (!portalMapping || portalMapping.length === 0 || !selectedPortal) return;
+
+    const filtered = portalMapping.filter(
+      (item) => item.portal === selectedPortal
+    );
+    setFilteredOptions(filtered);
+  }, [portalMapping, selectedPortal]);
+
   // Function to handle change in items per page
   const handleItemsPerPageChange = (e) => {
     setItemsPerPage(parseInt(e.target.value));
@@ -120,75 +203,86 @@ function ImportOrderForm() {
   };
 
   const updateOrderNumber = () => {
-    const lastSerialNumber =
-      parseInt(localStorage.getItem("lastSerialNumber")) || 0;
-    const formattedDate = formatDateOrderNo(new Date());
-    const paddedSerialNumber = String(lastSerialNumber + 1).padStart(4, "0");
-    const newOrderNumber = `${formattedDate}-${paddedSerialNumber}`;
-    setOrderno(newOrderNumber);
-  };
+    // const lastSerialNumber =
+    //   parseInt(localStorage.getItem("lastSerialNumber")) || 0;
+    // const formattedDate = formatDateOrderNo(new Date());
+    // const paddedSerialNumber = String(lastSerialNumber + 1).padStart(4, "0");
+    // const newOrderNumber = `${formattedDate}-${paddedSerialNumber}`;
 
-  useEffect(() => {
-    updateOrderNumber(); // Initial update when component mounts
-  }, []); // Empty dependency array ensures it only runs once
-
-  useEffect(() => {
-    const fetchPortalMapping = async () => {
-      try {
-        const response = await axios.get(
-          `${apiUrl}/itemportalmapping/user/email`,
-          { params: { email: user.email }, withCredentials: true }
-        ); // Replace 'your-api-endpoint' with the actual API endpoint
-        setPortalMapping(response.data); // Set portal mapping data
-        console.log("iitem portal mapping: " + JSON.stringify(portalMapping));
-      } catch (error) {
-        console.error("Error fetching portal mapping:", error);
-      }
-    };
-
-    fetchPortalMapping(); // Call the fetchPortalMapping function
-  }, [user]);
-
-  useEffect(() => {
     axios
-      .get(`${apiUrl}/api/locations/user/email`, {
+      .get(`${apiUrl}/orders/setNewOrderNo`, {
         params: { email: user.email },
         withCredentials: true,
-      }) // Update with your API endpoint
-      .then((response) => {
-        setLocations(response.data);
       })
-      .catch((error) => {
-        console.error("Error fetching locations:", error);
+      .then((response) => {
+        const newOrderNumber = response.data;
+        console.log("newOrderNumber:::", response.data);
+        setOrderno(newOrderNumber);
       });
-  }, [user]);
+  };
 
-  useEffect(() => {
-    if (Object.keys(portalMapping).length === 0) return;
+  // useEffect(() => {
+  //   if (Object.keys(portalMapping).length === 0) return;
 
-    const filteredPortalSKUs = portalMapping
-      .filter((item) => item.portal === selectedPortal)
-      .map((item) => item.portalSkuCode);
-    setFilteredPortalSKUList(filteredPortalSKUs);
+  //   const filteredPortalSKUs = portalMapping
+  //     .filter((item) => item.portal === selectedPortal)
+  //     .map((item) => item.portalSkuCode);
+  //   setFilteredPortalSKUList(filteredPortalSKUs);
 
-    // Filter seller SKU list based on selected portal SKU
-    const filteredSkucode = portalMapping
-      .filter(
-        (item) =>
-          item.portal === selectedPortal && item.portalSkuCode === portalSKU
-      )
-      .map((item) => item.skucode);
-    setFilteredSkucodeList(filteredSkucode);
+  //   // Filter seller SKU list based on selected portal SKU
+  //   const filteredSkucode = portalMapping
+  //     .filter(
+  //       (item) =>
+  //         item.portal === selectedPortal && item.portalSkuCode === portalSKU
+  //     )
+  //     .map((item) => item.skucode);
+  //   setFilteredSkucodeList(filteredSkucode);
 
-    // Filter item description list based on selected portal SKU
-    const filteredItemDescriptions = portalMapping
-      .filter(
-        (item) =>
-          item.portal === selectedPortal && item.portalSkuCode === portalSKU
-      )
-      .map((item) => item.item.description);
-    setFilteredItemDescriptionList(filteredItemDescriptions);
-  }, [selectedPortal, portalSKU, portalMapping]); // Include portalMapping in the dependencies array
+  //   // Filter item description list based on selected portal SKU
+  //   const filteredItemDescriptions = portalMapping
+  //     .filter(
+  //       (item) =>
+  //         item.portal === selectedPortal && item.portalSkuCode === portalSKU
+  //     )
+  //     .map((item) => item.item.description);
+  //   setFilteredItemDescriptionList(filteredItemDescriptions);
+  // }, [selectedPortal, portalSKU, portalMapping]); // Include portalMapping in the dependencies array
+
+  // useEffect(() => {
+  //   if (Object.keys(portalMapping).length === 0) return;
+
+  //   // Dynamically update dropdowns per row
+  //   const updatedRows = productRows.map((row) => {
+  //     const availablePortalSKUs = portalMapping
+  //       .filter((item) => item.portal === selectedPortal)
+  //       .map((item) => item.portalSkuCode);
+
+  //     const availableSkuCodes = portalMapping
+  //       .filter(
+  //         (item) =>
+  //           item.portal === selectedPortal &&
+  //           item.portalSkuCode === row.portalSKU
+  //       )
+  //       .map((item) => item.skucode);
+
+  //     const availableDescriptions = portalMapping
+  //       .filter(
+  //         (item) =>
+  //           item.portal === selectedPortal &&
+  //           item.portalSkuCode === row.portalSKU
+  //       )
+  //       .map((item) => item.item.description);
+
+  //     return {
+  //       ...row,
+  //       availablePortalSKUs,
+  //       availableSkuCodes,
+  //       availableDescriptions,
+  //     };
+  //   });
+
+  //   setProductRows(updatedRows);
+  // }, [selectedPortal, productRows.length, portalMapping]);
 
   // Your JSX component rendering goes here
 
@@ -199,13 +293,14 @@ function ImportOrderForm() {
     const day = String(currentDate.getDate() + 1).padStart(2, "0"); // Get current day and pad with leading zero if needed
     const formattedDate = `${year}-${month}-${day}`; // Format date as YYYY-MM-DD
     setDate(formattedDate); // Set the default date state
+    updateOrderNumber();
   }, []);
 
   const formatDate = (date) => {
     return date ? new Date(date).toLocaleDateString().toLowerCase() : "";
   };
 
-  console.log("apiData:", apiData);
+  // console.log("apiData:", apiData);
   const filteredData = apiData.filter(
     (item) =>
       (item.date &&
@@ -317,72 +412,72 @@ function ImportOrderForm() {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  console.log("filteredData:", filteredData);
+  // console.log("filteredData:", filteredData);
 
-  const excelDateToJSDate = (serial) => {
-    const utc_days = Math.floor(serial - 25569);
-    const utc_value = utc_days * 86400; // seconds in a day
-    const date_info = new Date(utc_value * 1000);
+  // const excelDateToJSDate = (serial) => {
+  //   const utc_days = Math.floor(serial - 25569);
+  //   const utc_value = utc_days * 86400; // seconds in a day
+  //   const date_info = new Date(utc_value * 1000);
 
-    const fractional_day = serial - Math.floor(serial) + 0.0000001;
+  //   const fractional_day = serial - Math.floor(serial) + 0.0000001;
 
-    const total_seconds = Math.floor(86400 * fractional_day);
+  //   const total_seconds = Math.floor(86400 * fractional_day);
 
-    const seconds = total_seconds % 60;
+  //   const seconds = total_seconds % 60;
 
-    const total_seconds_remaining = total_seconds - seconds;
+  //   const total_seconds_remaining = total_seconds - seconds;
 
-    const hours = Math.floor(total_seconds_remaining / (60 * 60));
-    const minutes = Math.floor(total_seconds_remaining / 60) % 60;
+  //   const hours = Math.floor(total_seconds_remaining / (60 * 60));
+  //   const minutes = Math.floor(total_seconds_remaining / 60) % 60;
 
-    return new Date(
-      date_info.getFullYear(),
-      date_info.getMonth(),
-      date_info.getDate(),
-      hours,
-      minutes,
-      seconds
-    );
-  };
+  //   return new Date(
+  //     date_info.getFullYear(),
+  //     date_info.getMonth(),
+  //     date_info.getDate(),
+  //     hours,
+  //     minutes,
+  //     seconds
+  //   );
+  // };
 
-  const parseDate = (value) => {
-    if (!value) return null;
+  // const parseDate = (value) => {
+  //   if (!value) return null;
 
-    // Try native Date
-    const date = new Date(value);
-    if (!isNaN(date)) return date;
+  //   // Try native Date
+  //   const date = new Date(value);
+  //   if (!isNaN(date)) return date;
 
-    // Try manual parsing: dd-mm-yyyy or dd-mmm-yyyy
-    const parts = value.split(/[-\/\s]/);
-    if (parts.length === 3) {
-      let [day, month, year] = parts;
-      if (isNaN(month)) {
-        // Handle mmm month
-        const monthIndex = [
-          "jan",
-          "feb",
-          "mar",
-          "apr",
-          "may",
-          "jun",
-          "jul",
-          "aug",
-          "sep",
-          "oct",
-          "nov",
-          "dec",
-        ].indexOf(month.toLowerCase());
-        if (monthIndex >= 0) {
-          return new Date(year, monthIndex, day);
-        }
-      } else {
-        // numeric month
-        return new Date(`${year}-${month}-${day}`);
-      }
-    }
+  //   // Try manual parsing: dd-mm-yyyy or dd-mmm-yyyy
+  //   const parts = value.split(/[-\/\s]/);
+  //   if (parts.length === 3) {
+  //     let [day, month, year] = parts;
+  //     if (isNaN(month)) {
+  //       // Handle mmm month
+  //       const monthIndex = [
+  //         "jan",
+  //         "feb",
+  //         "mar",
+  //         "apr",
+  //         "may",
+  //         "jun",
+  //         "jul",
+  //         "aug",
+  //         "sep",
+  //         "oct",
+  //         "nov",
+  //         "dec",
+  //       ].indexOf(month.toLowerCase());
+  //       if (monthIndex >= 0) {
+  //         return new Date(year, monthIndex, day);
+  //       }
+  //     } else {
+  //       // numeric month
+  //       return new Date(`${year}-${month}-${day}`);
+  //     }
+  //   }
 
-    return null;
-  };
+  //   return null;
+  // };
 
   const formatDateString = (value) => {
     // Handle Excel serial numbers
@@ -474,99 +569,6 @@ function ImportOrderForm() {
         setExcelData(parsedData);
         toast.success("Excel data loaded. Click Submit to upload.");
       }
-
-      // jsonData.forEach((item) => {
-      //   if (item.date != "dd-mmm-yyyy") {
-      //     const orderDate = parseDate(String(item.date));
-      //     const shipDate = parseDate(String(item.shipByDate));
-      //     console.log("Parsed order Date:", orderDate);
-      //     console.log("Parsed ship by Date:", shipDate);
-
-      //     const formattedData = {
-      //       date: orderDate ? orderDate.toISOString() : null,
-      //       orderNo: item.orderNo,
-      //       portalOrderNo: item.portalOrderNo,
-      //       portalOrderLineId: item.portalOrderLineId,
-      //       portalSKU: item.portalSKU,
-      //       productDescription: item.productDescription,
-      //       shipByDate: shipDate ? shipByDate.toISOString() : null,
-      //       dispatched: item.dispatched,
-      //       courier: item.courier,
-      //       portal: item.portal,
-      //       skucode: item.skucode,
-      //       qty: item.qty,
-      //       cancel: item.cancel,
-      //       awbNo: item.awbNo,
-      //       orderStatus: item.orderStatus || "Order Received",
-      //       location: item.location,
-      //     };
-
-      //     console.log("Formatted Data:", formattedData); // Debugging log
-
-      //     // Fetch item based on supplier and supplier SKU code
-
-      //     axios
-      //       .get(`${apiUrl}/api/locations/name/${item.location}`, {
-      //         params: { email: user.email },
-      //         withCredentials: true,
-      //       })
-      //       .then((response) => {
-      //         const loc = response.data;
-      //         formattedData.location = loc;
-      //       });
-
-      //     // Fetch item portal mapping details
-      //     axios
-      //       .get(`${apiUrl}/itemportalmapping/Portal/PortalSku`, {
-      //         params: {
-      //           portal: item.portal,
-      //           portalSKU: item.portalSKU,
-      //           email: user.email,
-      //         },
-      //         withCredentials: true, // Moved outside params object
-      //       })
-      //       .then((res) => {
-      //         const ipm = res.data;
-      //         const itemsArray = [res.data.item];
-      //         // Form the data to be sent in the POST request
-      //         const formData = {
-      //           ...formattedData,
-      //           items: itemsArray,
-      //           itemPortalMapping: ipm,
-      //           userEmail: user.email,
-      //         };
-
-      //         console.log("Form Data for POST:", formData); // Debugging log
-
-      //         // Send the POST request
-      //         axios
-      //           .post(`${apiUrl}/orders`, formData, { withCredentials: true })
-      //           .then((response) => {
-      //             console.log("POST request successful:", response);
-      //             toast.success("Order added successfully", {
-      //               autoClose: 2000, // Close after 2 seconds
-      //             });
-
-      //             // Update the state with the new API data
-      //             setApiData([...apiData, response.data]);
-      //           })
-      //           .catch((error) => {
-      //             console.error("Error sending POST request:", error);
-      //             toast.error(
-      //               "Failed to add Order: " + error.response?.data?.message ||
-      //                 error.message
-      //             );
-      //           });
-      //       })
-      //       .catch((error) => {
-      //         console.error("Error fetching item portal mapping:", error);
-      //         toast.error(
-      //           "Failed to fetch item portal mapping: " +
-      //             error.response?.data?.message || error.message
-      //         );
-      //       });
-      //   }
-      // });
     };
 
     reader.readAsBinaryString(file);
@@ -655,108 +657,177 @@ function ImportOrderForm() {
       return;
     }
 
-    try {
-      // Make the location API call
-      const locationResponse = await axios.get(
-        `${apiUrl}/api/locations/name/${location}`,
-        { params: { email: user.email }, withCredentials: true }
-      );
-      const loc = locationResponse.data;
+    // productRows.forEach((pr) => {
+    //   console.log("products::::", pr.skuCode);
 
-      // Fetch item based on supplier and seller SKU code
-      const itemResponse = await axios.get(
-        `${apiUrl}/item/supplier/order/search/${skucode}/${productDescription}`,
-        { params: { email: user.email }, withCredentials: true }
-      );
+    const formData = {
+      date,
+      orderNo,
+      portal,
+      portalOrderNo,
+      portalOrderLineId,
+      products: productRows,
+      shipByDate,
+      dispatched,
+      courier,
+      cancel,
+      awbNo,
+      orderStatus: "Order Received",
+      location: location,
+      userEmail: user.email,
+    };
 
-      if (itemResponse.data) {
-        const itemsArray = [itemResponse.data]; // Store item data in an array
+    console.log("Form data: ", formData);
 
-        // Fetch item portal mapping details
-        const ipmResponse = await axios.get(
-          `${apiUrl}/itemportalmapping/Portal/PortalSku`,
-          {
-            params: {
-              portal,
-              portalSKU,
-              email: user.email,
-            },
-            withCredentials: true,
-          }
-        );
-
-        const ipm = ipmResponse.data;
-
-        // Build the form data object dynamically
-        const formData = {
-          orderNo,
-          portalSKU,
-          productDescription,
-          orderStatus: "Order Received",
-          items: itemsArray,
-          itemPortalMapping: ipm,
-          location: loc,
-          userEmail: user.email,
-          ...(date && { date }),
-          ...(portalOrderNo && { portalOrderNo }),
-          ...(portalOrderLineId && { portalOrderLineId }),
-          ...(shipByDate && { shipByDate }),
-          ...(dispatched && { dispatched }),
-          ...(courier && { courier }),
-          ...(portal && { portal }),
-          ...(skucode && { skucode }),
-          ...(qty && { qty }),
-          ...(cancel && { cancel }),
-          ...(awbNo && { awbNo }),
-        };
-
-        console.log("Form data: ", formData);
-
-        // Send the POST request
-        const postResponse = await axios.post(`${apiUrl}/orders`, formData, {
-          withCredentials: true,
-        });
+    axios
+      .post(`${apiUrl}/orders/new`, formData, { withCredentials: true })
+      .then((postResponse) => {
         console.log("POST request successful:", postResponse);
 
         toast.success("Order added successfully", { autoClose: 2000 });
 
-        const lastSerialNumber =
-          parseInt(localStorage.getItem("lastSerialNumber")) || 0;
-        const newSerialNumber = lastSerialNumber + 1;
-        localStorage.setItem("lastSerialNumber", newSerialNumber);
+        // const lastSerialNumber =
+        //   parseInt(localStorage.getItem("lastSerialNumber")) || 0;
+        // const newSerialNumber = lastSerialNumber + 1;
+        // localStorage.setItem("lastSerialNumber", newSerialNumber);
 
         updateOrderNumber();
         setValidated(false);
-        setApiData([...apiData, postResponse.data]);
+        for (let index = 0; index < postResponse.data.length; index++) {
+          setApiData([...apiData, postResponse.data[index]]);
+        }
 
         setCourier("");
         setDispatched("");
         setPortal("");
         setPortalOrderno("");
         setPortalOrderLineid("");
-        setQuantity("");
         setShipbyDate("");
-        setProductDescription("");
-        setSkucode("");
-        setPortalSKU("");
+        // setQuantity("");
+        // setProductDescription("");
+        // setSkucode("");
+        // setPortalSKU("");
         setSelectedPortal("");
         setCancel("");
         setAwbNo("");
         setOrderStatus("");
         setLocation("");
-      } else {
-        console.error(
-          "No item found for the specified supplier and supplier SKU code."
-        );
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error(
-        "Failed to process the order: " + error.response?.data?.message ||
-          error.message
-      );
-    }
+        setProductRows([
+          {
+            portalSKU: "",
+            productDescription: "",
+            skuCode: "",
+            quantity: "",
+          },
+        ]);
+      })
+      .catch((error) => {
+        console.error("Error sending Post request:", error);
+        toast.error("Failed to add new Order: " + error.response.data.message);
+      });
 
+    // try {
+    //   // Make the location API call
+    //   const locationResponse = await axios.get(
+    //     `${apiUrl}/api/locations/name/${location}`,
+    //     { params: { email: user.email }, withCredentials: true }
+    //   );
+    //   const loc = locationResponse.data;
+
+    //   // Fetch item based on supplier and seller SKU code
+    //   const itemResponse = await axios.get(
+    //     `${apiUrl}/item/supplier/order/search/${skucode}/${productDescription}`,
+    //     { params: { email: user.email }, withCredentials: true }
+    //   );
+
+    //   if (itemResponse.data) {
+    //     const itemsArray = [itemResponse.data]; // Store item data in an array
+
+    //     // Fetch item portal mapping details
+    //     const ipmResponse = await axios.get(
+    //       `${apiUrl}/itemportalmapping/Portal/PortalSku`,
+    //       {
+    //         params: {
+    //           portal,
+    //           portalSKU,
+    //           email: user.email,
+    //         },
+    //         withCredentials: true,
+    //       }
+    //     );
+
+    //     const ipm = ipmResponse.data;
+
+    //     // Build the form data object dynamically
+    //     const formData = {
+    //       orderNo,
+    //       portalSKU,
+    //       productDescription,
+    //       orderStatus: "Order Received",
+    //       items: itemsArray,
+    //       itemPortalMapping: ipm,
+    //       location: loc,
+    //       userEmail: user.email,
+    //       ...(date && { date }),
+    //       ...(portalOrderNo && { portalOrderNo }),
+    //       ...(portalOrderLineId && { portalOrderLineId }),
+    //       ...(shipByDate && { shipByDate }),
+    //       ...(dispatched && { dispatched }),
+    //       ...(courier && { courier }),
+    //       ...(portal && { portal }),
+    //       ...(skucode && { skucode }),
+    //       ...(qty && { qty }),
+    //       ...(cancel && { cancel }),
+    //       ...(awbNo && { awbNo }),
+    //     };
+
+    //     console.log("Form data: ", formData);
+
+    //     // Send the POST request
+    //     const postResponse = await axios.post(`${apiUrl}/orders`, formData, {
+    //       withCredentials: true,
+    //     });
+    //     console.log("POST request successful:", postResponse);
+
+    //     toast.success("Order added successfully", { autoClose: 2000 });
+
+    //     const lastSerialNumber =
+    //       parseInt(localStorage.getItem("lastSerialNumber")) || 0;
+    //     const newSerialNumber = lastSerialNumber + 1;
+    //     localStorage.setItem("lastSerialNumber", newSerialNumber);
+
+    //     updateOrderNumber();
+    //     setValidated(false);
+    //     setApiData([...apiData, postResponse.data]);
+
+    //     setCourier("");
+    //     setDispatched("");
+    //     setPortal("");
+    //     setPortalOrderno("");
+    //     setPortalOrderLineid("");
+    //     setQuantity("");
+    //     setShipbyDate("");
+    //     setProductDescription("");
+    //     setSkucode("");
+    //     setPortalSKU("");
+    //     setSelectedPortal("");
+    //     setCancel("");
+    //     setAwbNo("");
+    //     setOrderStatus("");
+    //     setLocation("");
+    //   } else {
+    //     console.error(
+    //       "No item found for the specified supplier and supplier SKU code."
+    //     );
+    //   }
+    // } catch (error) {
+    //   console.error("Error:", error);
+    //   toast.error(
+    //     "Failed to process the order: " + error.response?.data?.message ||
+    //       error.message
+    //   );
+    // }
+    // });
     setValidated(false);
   };
 
@@ -770,14 +841,15 @@ function ImportOrderForm() {
         orderNo,
         portalOrderNo,
         portalOrderLineId,
-        portalSKU,
-        productDescription,
+        products: productRows,
+        // portalSKU,
+        // productDescription,
         shipByDate,
         dispatched,
         courier,
         portal,
-        skucode,
-        qty,
+        // skucode,
+        // qty,
         cancel,
         awbNo,
         orderStatus,
@@ -785,6 +857,9 @@ function ImportOrderForm() {
       };
       console.log("form data: ", formData);
       console.log("id: ", selectedItem.orderId);
+
+      // const loc = locations.filter((i) => i.locationName == location);
+      // formData.location = loc[0];
       axios
         .put(`${apiUrl}/orders/${selectedItem.orderId}`, formData, {
           withCredentials: true,
@@ -808,17 +883,27 @@ function ImportOrderForm() {
           setPortalOrderLineid("");
           setPortal("");
           setSelectedPortal("");
-          setPortalSKU("");
-          setProductDescription("");
+          // setPortalSKU("");
+          // setProductDescription("");
           setCourier("");
           setDispatched("");
-          setQuantity("");
-          setSkucode("");
+          // setQuantity("");
+          // setSkucode("");
           setShipbyDate("");
           setCancel("");
           setAwbNo("");
           setOrderStatus("");
           setLocation("");
+          setProductRows([
+            {
+              portalSKU: "",
+              productDescription: "",
+              skuCode: "",
+              quantity: "",
+            },
+          ]);
+
+          updateOrderNumber();
         })
         .catch((error) => {
           console.error("Error sending PUT request:", error);
@@ -829,18 +914,25 @@ function ImportOrderForm() {
 
   const handleRowClick = (order) => {
     console.log("order: ", order);
+
     setDate(order.date);
     setOrderno(order.orderNo);
     setPortalOrderno(order.portalOrderNo);
     setPortalOrderLineid(order.portalOrderLineId);
     setSelectedPortal(order.portal); // Assuming 'portal' property exists in the order object
     setPortal(order.portal); // Assuming 'portal' property exists in the order object
-    setPortalSKU(order.portalSKU);
-    setProductDescription(order.productDescription);
+    setProductRows([
+      {
+        portalSKU: order.portalSKU,
+        productDescription: order.productDescription,
+        skuCode: order.itemPortalMapping.skucode,
+        quantity: order.qty,
+      },
+    ]);
+
     setCourier(order.courier);
     setDispatched(order.dispatched);
-    setQuantity(order.qty);
-    setSkucode(order.itemPortalMapping.skucode);
+
     setShipbyDate(order.shipByDate);
     setCancel(order.cancel);
     setAwbNo(order.awbNo);
@@ -856,15 +948,19 @@ function ImportOrderForm() {
         params: { email: user.email },
         withCredentials: true,
       })
-      .then((response) => setApiData(response.data))
+      .then((response) => {
+        setApiData(response.data);
+        console.log("response::::::", response.data);
+      })
       .catch((error) => console.error(error));
-    console.log(apiData);
+    // console.log("hereeeeeee-------", apiData);
     axios
       .get(`${apiUrl}/itemportalmapping/user/email`, {
         params: { email: user.email },
         withCredentials: true,
       })
       .then((response) => {
+        console.log("in first itemportalmapping ----", response.data);
         // Extract portal SKUs from the response data
         const portalSKUs = response.data.map((item) => item.portalSkuCode);
         const filteredSkucodeList = response.data.map(
@@ -873,41 +969,56 @@ function ImportOrderForm() {
         const portalNames = new Set(response.data.map((item) => item.portal));
         // Convert the Set of portal names to an array
         const portalNameList = Array.from(portalNames);
-        setSkucodeList(filteredSkucodeList);
         setPortalSKUList(portalSKUs);
+        setSkucodeList(filteredSkucodeList);
         setPortalNameList(portalNameList); // Now it should work without error
+        setPortalMapping(response.data); // Set portal mapping data
       })
       .catch((error) => {
         console.error("Error fetching portal SKUs:", error);
       });
+    // axios
+    //   .get(`${apiUrl}/item/supplier/user/email`, {
+    //     params: { email: user.email },
+    //     withCredentials: true,
+    //   })
+    //   .then((response) => {
+    //     // Extract portal SKUs from the response data
+    //     const itemDescription = response.data.map((item) => item.description);
+    //     setItemDescriptionList(itemDescription);
+    //     console.log("portal list = " + portalSKUList);
+    //   })
+    //   .catch((error) => {
+    //     console.error("Error fetching portal SKUs:", error);
+    //   });
+
     axios
-      .get(`${apiUrl}/item/supplier/user/email`, {
+      .get(`${apiUrl}/api/locations/user/email`, {
         params: { email: user.email },
         withCredentials: true,
-      })
+      }) // Update with your API endpoint
       .then((response) => {
-        // Extract portal SKUs from the response data
-        const itemDescription = response.data.map((item) => item.description);
-        setItemDescriptionList(itemDescription);
-        console.log("portal list = " + portalSKUList);
+        setLocations(response.data);
       })
       .catch((error) => {
-        console.error("Error fetching portal SKUs:", error);
+        console.error("Error fetching locations:", error);
       });
-  }, [user]);
+    const fetchPortalMapping = async () => {
+      try {
+        const response = await axios.get(
+          `${apiUrl}/itemportalmapping/user/email`,
+          { params: { email: user.email }, withCredentials: true }
+        ); // Replace 'your-api-endpoint' with the actual API endpoint
+        setPortalMapping(response.data); // Set portal mapping data
+        console.log("item portal mapping Response data: ", response.data);
+        console.log("item portal mapping: ", portalMapping);
+      } catch (error) {
+        console.error("Error fetching portal mapping:", error);
+      }
+    };
 
-  const postData = (data) => {
-    axios
-      .post(`${apiUrl}/orders`, data, { withCredentials: true })
-      .then((response) => {
-        // Handle successful response
-        console.log("Data posted successfully:", response);
-      })
-      .catch((error) => {
-        // Handle error
-        console.error("Error posting data:", error);
-      });
-  };
+    // fetchPortalMapping(); // Call the fetchPortalMapping function
+  }, [user]);
 
   const handleDelete = (id) => {
     console.log("Deleting row with id:", id);
@@ -1072,7 +1183,6 @@ function ImportOrderForm() {
                   required
                   type="text"
                   placeholder="Order No"
-                  defaultValue=""
                   value={orderNo}
                   onChange={(e) => setOrderno(e.target.value)}
                 />
@@ -1087,7 +1197,7 @@ function ImportOrderForm() {
                   onChange={(e) => {
                     setSelectedPortal(e.target.value); // Handle value change
                     setPortal(e.target.value);
-                    setPortalSKU(""); // Reset portal SKU when portal changes
+                    // setPortalSKU(""); // Reset portal SKU when portal changes
                   }}
                 >
                   <option value="">Select Portal</option>
@@ -1109,7 +1219,6 @@ function ImportOrderForm() {
                   required
                   type="text"
                   placeholder="Portal OrderNo"
-                  defaultValue=""
                   value={portalOrderNo}
                   onChange={(e) => setPortalOrderno(e.target.value)}
                 />
@@ -1121,7 +1230,6 @@ function ImportOrderForm() {
                   required
                   type="text"
                   placeholder="Portal OrderLineid"
-                  defaultValue=""
                   value={portalOrderLineId}
                   onChange={(e) => setPortalOrderLineid(e.target.value)}
                 />
@@ -1129,43 +1237,114 @@ function ImportOrderForm() {
               </Form.Group>
 
               <Form.Group as={Col} md="4" controlId="validationCustom01">
-                <Form.Label>Portal SKU</Form.Label>
+                {/* <Form.Label>Portal SKU</Form.Label>
                 <Form.Select
                   required
                   value={portalSKU} // Set the selected value
                   onChange={(e) => setPortalSKU(e.target.value)} // Handle value change
                 >
-                  <option value="">Select Portal SKU</option>
-                  {/* Map over filteredPortalSKUList and create options */}
-                  {filteredPortalSKUList.map((sku, index) => (
+                  <option value="">Select Portal SKU</option> */}
+                {/* Map over filteredPortalSKUList and create options */}
+                {/* {filteredPortalSKUList.map((sku, index) => (
                     <option key={index} value={sku}>
                       {sku}
                     </option>
                   ))}
                 </Form.Select>
-                <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
+                <Form.Control.Feedback>Looks good!</Form.Control.Feedback> */}
               </Form.Group>
             </Row>
+            {/* shubham */}
+
+            <Table striped bordered hover>
+              <thead>
+                <tr>
+                  <th>Sr. No.</th>
+                  <th>Portal SKU Code</th>
+                  <th>Product Code</th>
+                  <th>Product Description</th>
+                  <th>Quantity</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {productRows.map((row, index) => (
+                  <tr key={index}>
+                    <td>{index + 1}</td>
+                    <td>
+                      <Form.Select
+                        value={row.portalSKU}
+                        onChange={(e) =>
+                          handlePortalSKUChange(e.target.value, index)
+                        }
+                      >
+                        <option value="">Select Portal SKU</option>
+                        {uniquePortalSKUs.map((sku, i) => (
+                          <option key={i} value={sku}>
+                            {sku}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </td>
+                    <td>
+                      <Form.Control
+                        type="text"
+                        value={row.skuCode}
+                        disabled
+                        readOnly
+                      />
+                    </td>
+                    <td>
+                      <Form.Control
+                        type="text"
+                        value={row.productDescription}
+                        disabled
+                        readOnly
+                      />
+                    </td>
+                    <td>
+                      <Form.Control
+                        type="number"
+                        value={row.quantity}
+                        onChange={(e) =>
+                          handleQuantityChange(e.target.value, index)
+                        }
+                      />
+                    </td>
+                    <td>
+                      <Button
+                        variant="danger"
+                        onClick={() => handleRemoveRow(index)}
+                      >
+                        Delete
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
 
             <Row className="mb-3">
               <Form.Group as={Col} md="4" controlId="validationCustom01">
-                <Form.Label>SKUCode</Form.Label>
-                <Form.Select
+                <Form.Label></Form.Label>
+
+                <Button onClick={handleAddRow}>Add New Product</Button>
+                {/* <Form.Select
                   required
                   value={skucode} // Set the selected value
                   onChange={(e) => setSkucode(e.target.value)} // Handle value change
                 >
-                  <option value="">Select SKUCode</option>
-                  {/* Map over filteredSellerSKUList and create options */}
-                  {filteredSkucodeList.map((sku, index) => (
+                  <option value="">Select SKUCode</option> */}
+                {/* Map over filteredSellerSKUList and create options */}
+                {/* {filteredSkucodeList.map((sku, index) => (
                     <option key={index} value={sku}>
                       {sku}
                     </option>
                   ))}
                 </Form.Select>
-                <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
+                <Form.Control.Feedback>Looks good!</Form.Control.Feedback> */}
               </Form.Group>
-              <Form.Group as={Col} md="4" controlId="validationCustom02">
+              {/* <Form.Group as={Col} md="4" controlId="validationCustom02">
                 <Form.Label>Product Description</Form.Label>
                 <Form.Select
                   required
@@ -1174,6 +1353,7 @@ function ImportOrderForm() {
                 >
                   <option value="">Select Product Description</option>
                   {/* Map over filteredItemDescriptionList and create options */}
+              {/*
                   {filteredItemDescriptionList.map((description, index) => (
                     <option key={index} value={description}>
                       {description}
@@ -1189,17 +1369,16 @@ function ImportOrderForm() {
                   required
                   type="text"
                   placeholder="Quantity"
-                  defaultValue=""
                   value={qty}
                   onChange={(e) => setQuantity(e.target.value)}
                 />
                 <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
-              </Form.Group>
+              </Form.Group> */}
             </Row>
 
             <Row className="mb-3">
               <Form.Group as={Col} md="4" controlId="validationCustom01">
-                <Form.Label>Shipby Date</Form.Label>
+                <Form.Label>Ship by Date</Form.Label>
                 <div className="custom-date-picker">
                   <DatePicker
                     selected={shipByDate}
@@ -1231,7 +1410,6 @@ function ImportOrderForm() {
                   required
                   type="text"
                   placeholder="Courier"
-                  defaultValue=""
                   value={courier}
                   onChange={(e) => setCourier(e.target.value)}
                 />
@@ -1260,7 +1438,6 @@ function ImportOrderForm() {
                   required
                   type="text"
                   placeholder="AWB No"
-                  defaultValue=""
                   value={awbNo}
                   onChange={(e) => setAwbNo(e.target.value)}
                 />
@@ -1273,7 +1450,6 @@ function ImportOrderForm() {
                   required
                   type="text"
                   placeholder="Order Status"
-                  defaultValue=""
                   value={orderStatus}
                   onChange={(e) => setOrderStatus(e.target.value)}
                 />
@@ -1288,9 +1464,9 @@ function ImportOrderForm() {
                   value={location}
                 >
                   <option value="">Select Location</option>
-                  {locations.map((sku) => (
-                    <option key={sku.id} value={sku.locationName}>
-                      {sku.locationName}
+                  {locations.map((loc) => (
+                    <option key={loc.locationId} value={loc.locationName}>
+                      {loc.locationName}
                     </option>
                   ))}
                 </Form.Select>
